@@ -106,7 +106,7 @@ module.exports = function(app) {
 
   function calcDepthBelowKeel(depthBelowSurface)
   {
-    var draft = _.get(app.signalk.self, 'design.draft.maximum')
+    var draft = _.get(app.signalk.self, 'design.draft.maximum.value')
     if ( typeof draft !== 'undefined' ) {
       return [{ path: 'environment.depth.belowKeel', value: depthBelowSurface - draft}]
     } else {
@@ -116,7 +116,7 @@ module.exports = function(app) {
 
   function calcDepthBelowSurface(depthBelowKeel)
   {
-    var draft = _.get(app.signalk.self, 'design.draft.maximum')
+    var draft = _.get(app.signalk.self, 'design.draft.maximum.value')
     if ( typeof draft !== 'undefined' ) {
       return [{ path: 'environment.depth.belowSurface', value: depthBelowKeel + draft}]
     } else {
