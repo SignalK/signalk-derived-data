@@ -84,15 +84,45 @@ module.exports = function(app) {
   var calculations = {
     groundWind: {
       title: "Ground Wind Angle and Speed (based on SOG, AWA and AWS)",
-      derivedFrom: [ "navigation.courseOverGroundTrue", "navigation.speedOverGround", "environment.wind.speedApparent", "environment.wind.angleApparent" ],
+      derivedFrom: [ "navigation.speedOverGround", "environment.wind.speedApparent", "environment.wind.angleApparent" ],
       calculator: calcGroundWindAndSpeed
     },
     trueWind: {
       title: "True Wind Angle and Speed (based on speed through water, AWA and AWS)",
       derivedFrom: [ "navigation.headingTrue", "navigation.speedThroughWater", "environment.wind.speedApparent", "environment.wind.angleApparent" ],
       calculator: calcTrueWindAndSpeed
-    }  
+    },
+    belowKeel: {
+      title: "Depth Below Keel (based on depth.belowSurface and design.draft.maximum)",
+      derivedFrom: [ "environment.depth.belowSurface" ],
+      calculator: calcDepthBelowKeel
+    },
+    belowSurface: {
+      title: "Depth Below Surface (based on depth.belowKeel and design.draft.maximum)",
+      derivedFrom: [ "environment.depth.belowKeel" ],
+      calculator: calcDepthBelowSurface
+    }
   };
+
+  function calcDepthBelowKeel(depthBelowSurface)
+  {
+    var draft = _.get(app.signalk.self, 'design.draft.maximum')
+    if ( typeof draft !== 'undefined' ) {
+      return [{ path: 'environment.depth.belowKeel', value: depthBelowSurface - draft}]
+    } else {
+      return undefined
+    }
+  }
+
+  function calcDepthBelowSurface(depthBelowKeel)
+  {
+    var draft = _.get(app.signalk.self, 'design.draft.maximum')
+    if ( typeof draft !== 'undefined' ) {
+      return [{ path: 'environment.depth.belowSurface', value: depthBelowKeel + draft}]
+    } else {
+      return undefined
+    }
+  }
 
   _.keys(calculations).forEach(key => {
     plugin.schema.properties[key] = {
@@ -107,7 +137,7 @@ module.exports = function(app) {
   return plugin;
 }
 
-function calcGroundWindAndSpeed(cog, sog, aws, awa) {
+function calcGroundWindAndSpeed(sog, aws, awa) {
   var apparentX = Math.cos(awa) * aws;
   var apparentY = Math.sin(awa) * aws;
   var angle = Math.atan2(apparentY, -sog + apparentX);
@@ -132,3 +162,4 @@ function calcTrueWindAndSpeed(headTrue, speed, aws, awa) {
   return [{ path: "environment.wind.directionTrue", value: angle},
           { path: "environment.wind.speedTrue", value: speed}]
 }
+
