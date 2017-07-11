@@ -101,9 +101,25 @@ module.exports = function(app) {
       title: "Depth Below Surface (based on depth.belowKeel and design.draft.maximum)",
       derivedFrom: [ "environment.depth.belowKeel" ],
       calculator: calcDepthBelowSurface
+    },
+    vmg: {
+      title: "Velocity Made Goog (based on courseGreatCircle.nextPoint.bearingTrue heading true and speedOverGround)",
+      derivedFrom: [ "navigation.courseGreatCircle.nextPoint.bearingTrue",
+                     "navigation.headingTrue",
+                     "navigation.speedOverGround" ],
+      calculator: calcVMG
     }
   };
 
+  function calcVMG(bearingTrue, headingTrue, speedOverGround)
+  {
+    var angle = bearingTrue-headingTrue
+    if ( angle < 0 )
+      angle = angle * -1
+    return [{ path: "navigation.courseGreatCircle.nextPoint.velocityMadeGood",
+              value: Math.cos(bearingTrue-headingTrue) * speedOverGround}]
+  }
+  
   function calcDepthBelowKeel(depthBelowSurface)
   {
     var draft = _.get(app.signalk.self, 'design.draft.maximum.value')
