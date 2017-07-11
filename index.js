@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-const debug = require('debug')('derived-data')
+const debug = require('debug')('signalk-derived-data')
 const Bacon = require('baconjs');
 const util = require('util')
 const _ = require('lodash')
@@ -27,10 +27,8 @@ module.exports = function(app) {
   plugin.start = function(props) {
     debug("starting")
 
-
-    _.keys(calculations).forEach(key => {
-      calculation = calculations[key]
-      if ( !props[key] )
+    calculations.forEach(calculation => {
+      if ( !props[calculation.optionKey] )
         return
       
       unsubscribes.push(
@@ -41,21 +39,23 @@ module.exports = function(app) {
           .changes()
           .debounceImmediate(20)
           .onValue(values => {
+            if ( typeof values !== 'undefined' ) {
               var delta = {
                 "context": "vessels." + app.selfId,
                 "updates": [
                   {
                     "source": {
-                      "label": "derived-data-plugin"
+                      //"src": key
                     },
                     "timestamp": (new Date()).toISOString(),
                     "values": values
                   }
                 ]
               }
-
-            debug("got delta: " + JSON.stringify(delta))
-            app.handleMessage(plugin.id, delta)
+              
+              debug("got delta: " + JSON.stringify(delta))
+              app.handleMessage(plugin.id, delta)
+            }
           })
       );
     });
@@ -67,6 +67,13 @@ module.exports = function(app) {
     debug("stopping")
     unsubscribes.forEach(f => f());
     unsubscribes = [];
+
+    calculations.forEach(calc => {
+      if ( calc.stop ) {
+        calc.stop()
+      }
+    });
+    
     debug("stopped")
   }
 
@@ -74,75 +81,19 @@ module.exports = function(app) {
   plugin.name = "Derived Data"
   plugin.description = "Plugin that derives data"
 
+
+  var calculations = load_calcs(app, plugin, 'calcs')
+
   plugin.schema = {
     title: "Derived Data",
     type: "object",
     properties: {
     }
   }
-
-  var calculations = {
-    groundWind: {
-      title: "Ground Wind Angle and Speed (based on SOG, AWA and AWS)",
-      derivedFrom: [ "navigation.speedOverGround", "environment.wind.speedApparent", "environment.wind.angleApparent" ],
-      calculator: calcGroundWindAndSpeed
-    },
-    trueWind: {
-      title: "True Wind Angle and Speed (based on speed through water, AWA and AWS)",
-      derivedFrom: [ "navigation.headingTrue", "navigation.speedThroughWater", "environment.wind.speedApparent", "environment.wind.angleApparent" ],
-      calculator: calcTrueWindAndSpeed
-    },
-    belowKeel: {
-      title: "Depth Below Keel (based on depth.belowSurface and design.draft.maximum)",
-      derivedFrom: [ "environment.depth.belowSurface" ],
-      calculator: calcDepthBelowKeel
-    },
-    belowSurface: {
-      title: "Depth Below Surface (based on depth.belowKeel and design.draft.maximum)",
-      derivedFrom: [ "environment.depth.belowKeel" ],
-      calculator: calcDepthBelowSurface
-    },
-    vmg: {
-      title: "Velocity Made Goog (based on courseGreatCircle.nextPoint.bearingTrue heading true and speedOverGround)",
-      derivedFrom: [ "navigation.courseGreatCircle.nextPoint.bearingTrue",
-                     "navigation.headingTrue",
-                     "navigation.speedOverGround" ],
-      calculator: calcVMG
-    }
-  };
-
-  function calcVMG(bearingTrue, headingTrue, speedOverGround)
-  {
-    var angle = bearingTrue-headingTrue
-    if ( angle < 0 )
-      angle = angle * -1
-    return [{ path: "navigation.courseGreatCircle.nextPoint.velocityMadeGood",
-              value: Math.cos(bearingTrue-headingTrue) * speedOverGround}]
-  }
   
-  function calcDepthBelowKeel(depthBelowSurface)
-  {
-    var draft = _.get(app.signalk.self, 'design.draft.maximum.value')
-    if ( typeof draft !== 'undefined' ) {
-      return [{ path: 'environment.depth.belowKeel', value: depthBelowSurface - draft}]
-    } else {
-      return undefined
-    }
-  }
-
-  function calcDepthBelowSurface(depthBelowKeel)
-  {
-    var draft = _.get(app.signalk.self, 'design.draft.maximum.value')
-    if ( typeof draft !== 'undefined' ) {
-      return [{ path: 'environment.depth.belowSurface', value: depthBelowKeel + draft}]
-    } else {
-      return undefined
-    }
-  }
-
-  _.keys(calculations).forEach(key => {
-    plugin.schema.properties[key] = {
-      title: calculations[key].title,
+  calculations.forEach(calc => {
+    plugin.schema.properties[calc.optionKey] = {
+      title: calc.title,
       type: "boolean",
       default: false
     }
@@ -153,29 +104,11 @@ module.exports = function(app) {
   return plugin;
 }
 
-function calcGroundWindAndSpeed(sog, aws, awa) {
-  var apparentX = Math.cos(awa) * aws;
-  var apparentY = Math.sin(awa) * aws;
-  var angle = Math.atan2(apparentY, -sog + apparentX);
-  var speed = Math.sqrt(Math.pow(apparentY, 2) + Math.pow(-sog + apparentX, 2));
-
-  if ( angle > 1.5 ) {
-    angle = angle - 3.0
-  }
-  
-  return [{ path: "environment.wind.angleTrueGround", value: angle},
-          { path: "environment.wind.speedOverGround", value: speed}]
+function load_calcs (app, plugin, dir) {
+  fpath = path.join(__dirname, dir)
+  files = fs.readdirSync(fpath)
+  return files.map(fname => {
+    pgn = path.basename(fname, '.js')
+    return require(path.join(fpath, pgn))(app, plugin)
+  })
 }
-
-function calcTrueWindAndSpeed(headTrue, speed, aws, awa) {
-  var apparentX = Math.cos(awa) * aws;
-  var apparentY = Math.sin(awa) * aws;
-  var angle = Math.atan2(apparentY, -speed + apparentX);
-  var speed = Math.sqrt(Math.pow(apparentY, 2) + Math.pow(-speed + apparentX, 2));
-
-  angle = headTrue + angle
-  
-  return [{ path: "environment.wind.directionTrue", value: angle},
-          { path: "environment.wind.speedTrue", value: speed}]
-}
-
