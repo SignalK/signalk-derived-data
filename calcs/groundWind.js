@@ -10,8 +10,8 @@ module.exports = function(app) {
       var angle = Math.atan2(apparentY, -sog + apparentX);
       var speed = Math.sqrt(Math.pow(apparentY, 2) + Math.pow(-sog + apparentX, 2));
       
-      if ( angle > 1.5 ) {
-        angle = angle - 3.0
+      if ( angle > Math.PI/2 ) {
+        angle = angle - Math.PI
       }
       
       return [{ path: "environment.wind.angleTrueGround", value: angle},

@@ -39,7 +39,7 @@ module.exports = function(app, plugin) {
       var values = undefined
       debug("angleApparent: " + angleApparent)
       if ( angleApparent < 0 )
-        angleApparent = angleApparent + 1.5;
+        angleApparent = angleApparent + Math.PI/2;
       debug("angleApparent2: " + angleApparent)
       debug("alarm: " + alarm)
       if ( typeof windAvg === 'undefined' ) {

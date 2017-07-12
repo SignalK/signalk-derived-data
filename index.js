@@ -44,9 +44,6 @@ module.exports = function(app) {
                 "context": "vessels." + app.selfId,
                 "updates": [
                   {
-                    "source": {
-                      //"src": key
-                    },
                     "timestamp": (new Date()).toISOString(),
                     "values": values
                   }
