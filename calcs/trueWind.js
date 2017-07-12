@@ -11,10 +11,11 @@ module.exports = function(app) {
       var angle = Math.atan2(apparentY, -speed + apparentX);
       var speed = Math.sqrt(Math.pow(apparentY, 2) + Math.pow(-speed + apparentX, 2));
       
-      angle = headTrue + angle
+      var dir = headTrue + angle
       
-      return [{ path: "environment.wind.directionTrue", value: angle},
-            { path: "environment.wind.speedTrue", value: speed}]
+      return [{ path: "environment.wind.directionTrue", value: dir},
+              { path: "environment.wind.angleTrueWater", value: angle},
+              { path: "environment.wind.speedTrue", value: speed}]
     }
   };
 }
