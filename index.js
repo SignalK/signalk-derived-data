@@ -94,6 +94,9 @@ module.exports = function(app) {
       type: "boolean",
       default: false
     }
+    if ( calc.properties ) {
+      _.extend(plugin.schema.properties, calc.properties)
+    }
   });
  
   debug("schema: " + JSON.stringify(plugin.schema))
