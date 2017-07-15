@@ -57,6 +57,8 @@ module.exports = function(app) {
       );
     });
 
+    plugin.properties = props;
+
     debug("started")
   }
 
