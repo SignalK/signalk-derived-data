@@ -1,6 +1,5 @@
 const _ = require("lodash")
 const debug = require('debug')('signalk-derived-data')
-var util = require('util')
 
 module.exports = function(app) {
   //produce enum from propulsion *
@@ -17,11 +16,10 @@ module.exports = function(app) {
     derivedFrom: [ "propulsion." + instance + ".revolutions", "navigation.speedThroughWater"],
 
     calculator: function(revolutions, stw){
-      var addlOption = instance//replace
-      var gearRatio = _.get(app.signalk.self, 'propulsion.' + addlOption + '.transmission.gearRatio.value')
-      var pitch = _.get(app.signalk.self, 'propulsion.' + addlOption + '.drive.propeller.pitch.value')
+      var gearRatio = _.get(app.signalk.self, 'propulsion.' + instance + '.transmission.gearRatio.value')
+      var pitch = _.get(app.signalk.self, 'propulsion.' + instance + '.drive.propeller.pitch.value')
       if ( typeof gearRatio !== 'undefined' && typeof pitch!== 'undefined') {
-        return [{ path: 'propulsion.' + addlOption + '.drive.propeller.slip', value: 1 - ((stw * gearRatio)/(revolutions*pitch))}]
+        return [{ path: 'propulsion.' + instance + '.drive.propeller.slip', value: 1 - ((stw * gearRatio)/(revolutions*pitch))}]
         //from http://teaguecustommarine.com/teagueblog/how-to-correctly-determine-propeller-slip/ , normalized for SI units
       } else {
         debug("not enough info for prop slip calculation")
