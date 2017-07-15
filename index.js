@@ -27,14 +27,23 @@ module.exports = function(app) {
   plugin.start = function(props) {
     debug("starting")
 
+    plugin.properties = props;
+    
     calculations.forEach(calculation => {
       if ( !props[calculation.optionKey] )
         return
+
+      var derivedFrom;
+
+      if ( typeof calculation.derivedFrom == 'function' )
+        derivedFrom = calculation.derivedFrom()
+      else
+        derivedFrom = calculation.derivedFrom
       
       unsubscribes.push(
         Bacon.combineWith(
           calculation.calculator,
-          calculation.derivedFrom.map(app.streambundle.getSelfStream, app.streambundle)
+          derivedFrom.map(app.streambundle.getSelfStream, app.streambundle)
         )
           .changes()
           .debounceImmediate(20)
@@ -56,8 +65,6 @@ module.exports = function(app) {
           })
       );
     });
-
-    plugin.properties = props;
 
     debug("started")
   }
