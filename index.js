@@ -29,9 +29,7 @@ module.exports = function(app) {
 
     plugin.properties = props;
 
-    var all =  [].concat.apply([], calculations)
-    
-    all.forEach(calculation => {
+    calculations.forEach(calculation => {
       if ( !props[calculation.optionKey] )
         return
 
@@ -67,7 +65,7 @@ module.exports = function(app) {
           })
       );
     });
-
+    
     debug("started")
   }
 
@@ -91,6 +89,7 @@ module.exports = function(app) {
 
 
   var calculations = load_calcs(app, plugin, 'calcs')
+  calculations = [].concat.apply([], calculations)
 
   plugin.schema = {
     title: "Derived Data",
@@ -98,7 +97,7 @@ module.exports = function(app) {
     properties: {
     }
   }
-  
+
   calculations.forEach(calc => {
     plugin.schema.properties[calc.optionKey] = {
       title: calc.title,
@@ -120,6 +119,6 @@ function load_calcs (app, plugin, dir) {
   files = fs.readdirSync(fpath)
   return files.map(fname => {
     pgn = path.basename(fname, '.js')
-    return require(path.join(fpath, pgn))(app, plugin)
-  })
+    return require(path.join(fpath, pgn))(app, plugin);
+  }).filter(calc => { return typeof calc !== 'undefined'; });
 }
