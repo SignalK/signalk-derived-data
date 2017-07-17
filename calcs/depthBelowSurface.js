@@ -6,6 +6,7 @@ module.exports = function(app) {
   var derivedFrom = typeof draft === 'undefined' ? [] : [ "environment.depth.belowKeel" ];
   
   return {
+    group: "depth",
     optionKey: 'belowSurface',
     title: "Depth Below Surface (based on depth.belowKeel and design.draft.maximum)",
     derivedFrom: derivedFrom,

@@ -30,8 +30,14 @@ module.exports = function(app) {
     plugin.properties = props;
 
     calculations.forEach(calculation => {
-      if ( !props[calculation.optionKey] )
+      
+      if ( calculation.group ) {
+        if ( !props[calculation.group] || !props[calculation.group][calculation.optionKey] ) {
+          return
+        }
+      } else if ( !props[calculation.optionKey] ) {
         return
+      }
 
       var derivedFrom;
 
@@ -98,14 +104,66 @@ module.exports = function(app) {
     }
   }
 
+  var groups = {}
+
   calculations.forEach(calc => {
-    plugin.schema.properties[calc.optionKey] = {
-      title: calc.title,
-      type: "boolean",
-      default: false
+    var groupName
+
+    if ( typeof calc.group !== 'undefined' ) {
+      groupName = calc.group
+    } else {
+      groupName = 'nogroup'
     }
-    if ( calc.properties ) {
-      _.extend(plugin.schema.properties, calc.properties)
+      
+    if ( !(groups[groupName]) ) {
+      groups[groupName] = []
+    }
+    groups[groupName].push(calc)
+  });
+
+  plugin.uiSchema = {
+    "ui:order": []
+  };
+
+  if ( groups.nogroup ) {
+    groups.nogroup.forEach(calc => {
+      plugin.uiSchema['ui:order'].push(calc.optionKey)
+      plugin.schema.properties[calc.optionKey] = {
+        title: calc.title,
+        type: "boolean",
+        default: false
+      }
+      if ( calc.properties ) {
+        _.extend(plugin.schema.properties, calc.properties)
+      }
+    });
+  }
+
+  _.keys(groups).forEach(groupName => {
+    if ( groupName != 'nogroup' ) {
+      plugin.uiSchema['ui:order'].push(groupName)
+      plugin.uiSchema[groupName] = {
+        'ui:order': []
+      };
+      var group = {
+        title: groupName.charAt(0).toUpperCase() + groupName.slice(1),
+        type: "object",
+        properties: {}
+      }
+      groups[groupName].forEach(calc => {
+        var order = plugin.uiSchema[groupName]['ui:order']
+        order.push(calc.optionKey)
+        group.properties[calc.optionKey] = {
+        title: calc.title,
+          type: "boolean",
+          default: false
+        }
+        if ( calc.properties ) {
+          _.extend(group.properties, calc.properties)
+          _.keys(calc.properties).forEach(key => { order.push(key) })
+        }
+      });
+      plugin.schema.properties[groupName] = group;
     }
   });
  

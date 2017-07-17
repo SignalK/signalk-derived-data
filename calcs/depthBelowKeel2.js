@@ -6,6 +6,7 @@ module.exports = function(app) {
   var derivedFrom = typeof depthTransducerToKeel === 'undefined' ? [] : [ "environment.depth.belowTransducer"];
 
   return {
+    group: "depth",
     optionKey: 'belowKeel_2',
     title: "Depth Below Keel (based on depth.belowTransducer and depth.transducerToKeel)",
     derivedFrom: derivedFrom,

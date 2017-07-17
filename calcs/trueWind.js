@@ -2,6 +2,7 @@
 
 module.exports = function(app) {
   return {
+    group: 'wind',
     optionKey: 'trueWind',
     title: "True Wind Angle and Speed (based on speed through water, AWA and AWS)",
     derivedFrom: [ "navigation.headingTrue", "navigation.speedThroughWater", "environment.wind.speedApparent", "environment.wind.angleApparent" ],
@@ -10,6 +11,10 @@ module.exports = function(app) {
       var apparentY = Math.sin(awa) * aws;
       var angle = Math.atan2(apparentY, -speed + apparentX);
       var speed = Math.sqrt(Math.pow(apparentY, 2) + Math.pow(-speed + apparentX, 2));
+
+      if ( angle > Math.PI/2 ) {
+        angle = angle - Math.PI
+      }
       
       var dir = headTrue + angle
       

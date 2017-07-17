@@ -12,6 +12,7 @@ module.exports = function(app, plugin) {
   }
 
   return {
+    group: 'propulsion',
     optionKey: "propslip",
     title: "Propeller slip (based on RPM, propulsion.*.transmission.gearRatio and propulsion.*.drive.propeller.pitch)",
     derivedFrom: function(){ return [ "propulsion." + plugin.properties.prop_instance + ".revolutions", "navigation.speedThroughWater"] },
