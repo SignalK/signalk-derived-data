@@ -7,6 +7,7 @@ It currently calculates:
 * Ground Wind
 * Depth Below Surface
 * Depth Below Keel
+* Propeller Slip calculation (requires defaults.json to include propulsion.\*.drive.propeller.pitch and propulsion.\*.transmission.gearRatio)
 * VMG
 * Wind Shift (experimental)
 
