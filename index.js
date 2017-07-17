@@ -28,8 +28,10 @@ module.exports = function(app) {
     debug("starting")
 
     plugin.properties = props;
+
+    var all =  [].concat.apply([], calculations)
     
-    calculations.forEach(calculation => {
+    all.forEach(calculation => {
       if ( !props[calculation.optionKey] )
         return
 
