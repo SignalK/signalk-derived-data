@@ -18,6 +18,7 @@ For example. This is the VMG calculator.
 ```
 module.exports = function(app) {
   return {
+    group: 'vmg',
     optionKey: 'vmg',
     title: "Velocity Made Goog (based on courseGreatCircle.nextPoint.bearingTrue heading true and speedOverGround)",
     derivedFrom: [ "navigation.courseGreatCircle.nextPoint.bearingTrue",
