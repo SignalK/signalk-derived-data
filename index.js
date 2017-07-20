@@ -49,6 +49,11 @@ module.exports = function(app) {
       if (calculation.ttl === undefined ) {
         calculation.ttl = 1000; // default to a ttl of 1s.
       }
+
+      if ( typeof calculation.init === 'function' ) {
+        // might need to add configuration options here in the future.
+        calculation.init();
+      }
       
       unsubscribes.push(
         Bacon.combineWith(
