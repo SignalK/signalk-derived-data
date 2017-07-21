@@ -183,7 +183,7 @@ module.exports = function(app) {
         targets.stw = polarPerf.polarSpeed;
       }
     }
-    console.log("Targets tws",msToKnots(tws),"twa:",radToDeg(targets.twa),"psp:",msToKnots(targets.stw),"vmg:",msToKnots(targets.vmg));
+    //console.log("Targets tws",msToKnots(tws),"twa:",radToDeg(targets.twa),"psp:",msToKnots(targets.stw),"vmg:",msToKnots(targets.vmg));
     return targets;
   }
 
@@ -253,7 +253,7 @@ module.exports = function(app) {
       var polarPerformance = getPerformance(polarPerf.polar, tws,twa, stw, targets);
       var track = calcOtherTrack(polarPerformance, targets, tws, twa, stw, trueHeading, magneticVariation);
 
-      console.log("performance,",
+      /*console.log("performance,",
         msToKnots(tws).toFixed(2),
         ",twa,",
         radToDeg(twa).toFixed(2),
@@ -281,7 +281,7 @@ module.exports = function(app) {
         radToDeg(track.headingTrue).toFixed(2),
         ",thm,",
         radToDeg(track.headingMagnetic).toFixed(2)
-        );
+        ); */
       return [
       { path: 'performance.polarSpeed', value: polarPerformance.polarSpeed},   // polar speed at this twa
       { path: 'performance.polarSpeedRatio', value: polarPerformance.polarSpeedRatio}, // polar speed ratio
