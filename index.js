@@ -46,8 +46,32 @@ module.exports = function(app) {
       else
         derivedFrom = calculation.derivedFrom
 
-      if (calculation.ttl === undefined ) {
-        calculation.ttl = 1000; // default to a ttl of 1s.
+      var skip_function
+      if ( (calculation.ttl !== 'undefined' &&calculation.ttl > 0)
+           || props.default_ttl > 0 ) {
+        debug("using skip")  
+        skip_function = function(before, after) {
+          var tnow = (new Date()).getTime();
+          if ( _.isEqual(before,after) ) {
+            // values are equial, but should we emit the delta anyway.
+            // This protects from a sequence of changes that produce no change from
+            // generating events, but ensures events are still generated at 
+            // a default rate. On  Pi Zero W, the extra cycles reduce power consumption.
+            if ( calculation.nextOutput > tnow ) {
+              //console.log("Rejected dupilate ", calculation.nextOutput - tnow);
+              return true;
+            }
+           //console.log("Sent dupilate ", calculation.nextOutput - tnow);
+          }
+
+          var ttl = calculation.ttl === 'undefined' ? props.default_ttl : calculation.ttl;
+          
+          //calculation.nextOutput = tnow + (calculation.ttl*1000);
+          console.log("New Value ----------------------------- ", before, after);
+          return false;
+        }
+      } else {
+        skip_function = function(before, after) { return false }
       }
       
       unsubscribes.push(
@@ -57,23 +81,7 @@ module.exports = function(app) {
         )
           .changes()
           .debounceImmediate(20)
-          .skipDuplicates(function(before,after) {
-            var tnow = (new Date()).getTime();
-            if ( _.isEqual(before,after) ) {
-              // values are equial, but should we emit the delta anyway.
-              // This protects from a sequence of changes that produce no change from
-              // generating events, but ensures events are still generated at 
-              // a default rate. On  Pi Zero W, the extra cycles reduce power consumption.
-              if ( calculation.nextOutput > tnow ) {
-                //console.log("Rejected dupilate ", calculation.nextOutput - tnow);
-                return true;
-              }
-              //console.log("Sent dupilate ", calculation.nextOutput - tnow);
-            }
-            calculation.nextOutput = tnow+calculation.ttl;
-            // console.log("New Value ----------------------------- ", before, after);
-            return false;
-          })
+          .skipDuplicates(skip_function)
           .onValue(values => {
             if ( typeof values !== 'undefined' ) {
               var delta = {
@@ -122,6 +130,12 @@ module.exports = function(app) {
     title: "Derived Data",
     type: "object",
     properties: {
+      default_ttl: {
+        title: "Default TTL",
+        type: "number",
+        description: "The plugin won't send out duplicate calculation values for this time period (s) (0=no ttl check)",
+        default: 0
+      }
     }
   }
 
@@ -143,7 +157,7 @@ module.exports = function(app) {
   });
 
   plugin.uiSchema = {
-    "ui:order": []
+    "ui:order": [ "default_ttl" ]
   };
 
   if ( groups.nogroup ) {
