@@ -45,6 +45,10 @@ module.exports = function(app) {
         derivedFrom = calculation.derivedFrom()
       else
         derivedFrom = calculation.derivedFrom
+
+      if (calculation.ttl === undefined ) {
+        calculation.ttl = 1000; // default to a ttl of 1s.
+      }
       
       unsubscribes.push(
         Bacon.combineWith(
@@ -53,6 +57,23 @@ module.exports = function(app) {
         )
           .changes()
           .debounceImmediate(20)
+          .skipDuplicates(function(before,after) {
+            var tnow = (new Date()).getTime();
+            if ( _.isEqual(before,after) ) {
+              // values are equial, but should we emit the delta anyway.
+              // This protects from a sequence of changes that produce no change from
+              // generating events, but ensures events are still generated at 
+              // a default rate. On  Pi Zero W, the extra cycles reduce power consumption.
+              if ( calculation.nextOutput > tnow ) {
+                //console.log("Rejected dupilate ", calculation.nextOutput - tnow);
+                return true;
+              }
+              //console.log("Sent dupilate ", calculation.nextOutput - tnow);
+            }
+            calculation.nextOutput = tnow+calculation.ttl;
+            // console.log("New Value ----------------------------- ", before, after);
+            return false;
+          })
           .onValue(values => {
             if ( typeof values !== 'undefined' ) {
               var delta = {
