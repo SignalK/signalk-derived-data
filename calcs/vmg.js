@@ -2,8 +2,8 @@
 module.exports = function(app) {
   return {
     group: 'vmg',
-    optionKey: 'vmg',
-    title: "Velocity Made Goog (based on courseGreatCircle.nextPoint.bearingTrue heading true and speedOverGround)",
+    optionKey: 'vmg_Course',
+    title: "Velocity Made Good to Course (based on courseGreatCircle.nextPoint.bearingTrue heading true and speedOverGround)",
     derivedFrom: [ "navigation.courseGreatCircle.nextPoint.bearingTrue",
                    "navigation.headingTrue",
                    "navigation.speedOverGround" ],
