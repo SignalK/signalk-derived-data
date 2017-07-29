@@ -47,7 +47,7 @@ module.exports = function(app) {
         derivedFrom = calculation.derivedFrom
 
       var skip_function
-      if ( (calculation.ttl !== 'undefined' &&calculation.ttl > 0)
+      if ( (typeof calculation.ttl !== 'undefined' && calculation.ttl > 0)
            || props.default_ttl > 0 ) {
         debug("using skip")  
         skip_function = function(before, after) {
@@ -64,9 +64,10 @@ module.exports = function(app) {
            console.log("Sent dupilate ", calculation.nextOutput - tnow);
           }
 
-          var ttl = calculation.ttl === 'undefined' ? props.default_ttl : calculation.ttl;
+          var ttl = typeof calculation.ttl === 'undefined' ? props.default_ttl : calculation.ttl;
+          debug("ttl: " + ttl, "def: " + props.default_ttl)
           
-          calculation.nextOutput = tnow + (calculation.ttl*1000);
+          calculation.nextOutput = tnow + (ttl*1000);
           console.log("New Value ----------------------------- ", before, after);
           return false;
         }
