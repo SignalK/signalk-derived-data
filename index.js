@@ -49,7 +49,7 @@ module.exports = function(app) {
       var skip_function
       if ( (typeof calculation.ttl !== 'undefined' && calculation.ttl > 0)
            || props.default_ttl > 0 ) {
-        debug("using skip")  
+        //debug("using skip")  
         skip_function = function(before, after) {
           var tnow = (new Date()).getTime();
           if ( _.isEqual(before,after) ) {
@@ -58,17 +58,17 @@ module.exports = function(app) {
             // generating events, but ensures events are still generated at 
             // a default rate. On  Pi Zero W, the extra cycles reduce power consumption.
             if ( calculation.nextOutput > tnow ) {
-              console.log("Rejected dupilate ", calculation.nextOutput - tnow);
+              //console.log("Rejected dupilate ", calculation.nextOutput - tnow);
               return true;
             }
-           console.log("Sent dupilate ", calculation.nextOutput - tnow);
+           //console.log("Sent dupilate ", calculation.nextOutput - tnow);
           }
 
           var ttl = typeof calculation.ttl === 'undefined' ? props.default_ttl : calculation.ttl;
-          debug("ttl: " + ttl, "def: " + props.default_ttl)
+          //debug("ttl: " + ttl, "def: " + props.default_ttl)
           
           calculation.nextOutput = tnow + (ttl*1000);
-          console.log("New Value ----------------------------- ", before, after);
+          //console.log("New Value ----------------------------- ", before, after);
           return false;
         }
       } else {
