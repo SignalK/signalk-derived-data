@@ -74,6 +74,11 @@ module.exports = function(app) {
       } else {
         skip_function = function(before, after) { return false }
       }
+
+      if ( typeof calculation.init === 'function' ) {
+        // might need to add configuration options here in the future.
+        calculation.init();
+      }
       
       unsubscribes.push(
         Bacon.combineWith(
@@ -89,6 +94,9 @@ module.exports = function(app) {
                 "context": "vessels." + app.selfId,
                 "updates": [
                   {
+                    "source": {
+                      "src": "derived_data"
+                    },
                     "timestamp": (new Date()).toISOString(),
                     "values": values
                   }

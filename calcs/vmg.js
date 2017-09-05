@@ -9,9 +9,12 @@ module.exports = function(app) {
                    "navigation.speedOverGround" ],
     calculator: function (bearingTrue, headingTrue, speedOverGround)
     {
-      var angle = Math.abs(bearingTrue-headingTrue)
+      var angle = Math.abs(bearingTrue-headingTrue);
+      var vmgWaypoint = Math.cos(bearingTrue-headingTrue) * speedOverGround;
       return [{ path: "navigation.courseGreatCircle.nextPoint.velocityMadeGood",
-                value: Math.cos(bearingTrue-headingTrue) * speedOverGround}]
+                value: vmgWaypoint},
+              {path: "performance.velocityMadeGoodToWaypoint",
+                value: vmgWaypoint}]
     }
   };
 }

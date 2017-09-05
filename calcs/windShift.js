@@ -33,7 +33,7 @@ module.exports = function(app, plugin) {
                         'environment.wind.directionChangeAlarm.value')
       if ( typeof alarm === 'undefined' )
       {
-        console.log("signall-Derived-data: no directionChangeAlarm value")
+        //console.log("signall-Derived-data: no directionChangeAlarm value")
         return undefined
       }
 

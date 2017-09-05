@@ -21,7 +21,7 @@ module.exports = function(app) {
       }
       
       return [{ path: "environment.wind.directionTrue", value: dir},
-              { path: "environment.wind.angleTrueWater", value: angle},
+              { path: "environment.wind.angleTrue", value: angle},
               { path: "environment.wind.speedTrue", value: speed}]
     }
   };
