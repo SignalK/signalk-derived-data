@@ -22,8 +22,22 @@ module.exports = function(app, plugin) {
             "enum": [0,1,2]//enumm
           }, 
           calibration:{
-            type: "object"
-            // MISSING PIECE
+            type: "array",
+            title: "Calibration points",
+            items:{
+              title: " ",
+              type: "object",
+              properties: {
+                "level": {
+                  title: "level reading",
+                  type: "number"
+                  },
+                "volume": {
+                  title: "volume reading (litres)",
+                  type: "number"
+                }
+              }
+            }    
           }
         }
         calculator: function(level) { // and arrays of volumes and levels
