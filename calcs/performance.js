@@ -161,6 +161,7 @@ module.exports = function(app) {
    */ 
   function calcTargetAngleSpeed(polarData,tws, twa) {
     // everything in SI here.
+    var intwa = twa;
     if ( twa < 0) twa = -twa;
     var twal = 0; twah = Math.PI;
     if ( twa < Math.PI/2 ) {
@@ -174,7 +175,7 @@ module.exports = function(app) {
       twa: 0,
       stw: 0
     };
-    for(var t = twal; t <= twah; t += Math.PI/108) {
+    for(var t = twal; t <= twah; t += Math.PI/180) {
       var polarPerf = getPerformance(polarData, tws, t, 0);
       var vmg = polarPerf.polarSpeed*Math.cos(t);
       if ( Math.abs(vmg) > Math.abs(targets.vmg) ) {
@@ -182,6 +183,9 @@ module.exports = function(app) {
         targets.twa = t;
         targets.stw = polarPerf.polarSpeed;
       }
+    }
+    if ( intwa < 0 ) {
+      targets.twa = -targets.twa;
     }
     //console.log("Targets tws",msToKnots(tws),"twa:",radToDeg(targets.twa),"psp:",msToKnots(targets.stw),"vmg:",msToKnots(targets.vmg));
     return targets;

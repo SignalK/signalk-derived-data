@@ -85,6 +85,9 @@ module.exports = function(app) {
                 "context": "vessels." + app.selfId,
                 "updates": [
                   {
+                    "source": {
+                      "src": "derived_data"
+                    },
                     "timestamp": (new Date()).toISOString(),
                     "values": values
                   }
