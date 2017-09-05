@@ -15,6 +15,17 @@ module.exports = function(app, plugin) {
         optionKey: 'tankVolume' + instance,
         title: "tanks." + instance + ".currentVolume (based on currentLevel (requires calibration points (>2 for parallell sides, >3 for straight wedge and >4 for more complex shapes))",
         derivedFrom: function() { return [ "tanks." + instance + ".currentLevel"] },
+        properties:{
+          tank_instance: {
+            type: "string",
+            title: "Propulsion Instance (one at a time currently)",
+            "enum": [0,1,2]//enumm
+          }, 
+          calibration:{
+            type: "object"
+            // MISSING PIECE
+          }
+        }
         calculator: function(level) { // and arrays of volumes and levels
           return [{ path: 'tanks.' + instance + '.currentVolume', value: spline(level, levelArray, volumeArray)}]
         }
