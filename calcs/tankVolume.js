@@ -11,35 +11,48 @@ module.exports = function(app, plugin) {
   return {
     group: 'tanks',
     optionKey: 'tankVolume',
-    title: "[tank instance].currentVolume (based on currentLevel (requires calibration pairs (>2 for parallell sides, >3 for straight wedge and >4 for more complex shapes))",
+    title: "Tank Volume (based on currentLevel (requires calibration pairs (>2 for parallell sides, >3 for straight wedge and >4 for more complex shapes))",
     derivedFrom: function(){
       return [  plugin.properties.tanks.tank_instance + ".currentLevel" ] },
-    properties: {
-      tank_instance: {
+    properties: function() {
+      var tank_types = _.keys(app.signalk.self.tanks)
+      var instances = []
+      tank_types.forEach(type => {
+        _.keys(app.signalk.self.tanks[type]).forEach(i => {
+          instances.push("tanks." + type + "." + i)
+        })
+      })
+
+      instance_prop = {
         type: "string",
         title: "Tank Instance",
-        default: "tanks.fuel.0",
-      },
+      }
 
-      calibrations: {
-        "type": "array",
-        "title": "Calibration entries (pairs of level => volume)",
-        "items": {
-          "type": "object",
-          "required": [
-            "level",
-            "volume"
-          ],
-          "properties": {
-            "level": {
-              "type": "number",
-              "title": "level (ratio max 1)",
-              "description": " "
-            },
-            "volume": {
-              "type": "number",
-              "title": "corresponding volume (m^3)",
-              "description": " "
+      if ( instances.length > 0 )
+        instance_prop.enum = instances
+      
+      return {
+        tank_instance: instance_prop,
+        calibrations: {
+          "type": "array",
+          "title": "Calibration entries (pairs of level => volume)",
+          "items": {
+            "type": "object",
+            "required": [
+              "level",
+              "volume"
+            ],
+            "properties": {
+              "level": {
+                "type": "number",
+                "title": "level (ratio max 1)",
+                "description": " "
+              },
+              "volume": {
+                "type": "number",
+                "title": "corresponding volume (m^3)",
+                "description": " "
+              }
             }
           }
         }
