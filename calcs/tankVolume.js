@@ -11,8 +11,9 @@ module.exports = function(app, plugin) {
   return {
     group: 'tanks',
     optionKey: 'tankVolume',
-    title: ".currentVolume (based on currentLevel (requires calibration points (>2 for parallell sides, >3 for straight wedge and >4 for more complex shapes))",
-    derivedFrom: function(){ return [  plugin.properties.tank_instance + ".currentLevel" ] },
+    title: "[tank instance].currentVolume (based on currentLevel (requires calibration pairs (>2 for parallell sides, >3 for straight wedge and >4 for more complex shapes))",
+    derivedFrom: function(){
+      return [  plugin.properties.tanks.tank_instance + ".currentLevel" ] },
     properties: {
       tank_instance: {
         type: "string",
@@ -44,9 +45,17 @@ module.exports = function(app, plugin) {
         }
       }
     },
-    calculator: function(level) { // and arrays of volumes and levels
-      var inst = plugin.properties.tank_instance
-      return [{ path: inst + '.currentVolume', value: spline(level, [0,2,4], [0,1,2])}]//..calibrations.level, ..calibrations.volume)}]
+    calculator: function(level) {
+      var inst = plugin.properties.tanks.tank_instance
+      var calLevels = []
+      calVolumes = []
+
+      plugin.properties.tanks.calibrations.forEach(function(i) {
+        calLevels.push(i.level)
+        calVolumes.push(i.volume)
+      });
+
+      return [{ path: inst + '.currentVolume', value: spline(level, calLevels, calVolumes)}]
     }
   }
 }
