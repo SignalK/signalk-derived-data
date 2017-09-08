@@ -7,12 +7,14 @@ const debug = require('debug')('derived-tank')
 //tankInstances = ["tanks.fuel.*", "tanks.fuel.1", "tanks.water.0" ]
 module.exports = function(app, plugin) {
   var instances = []
-
+  debug(_.keys(app.signalk.self.tanks))
   if ( _.get(app.signalk.self, "tanks") ){
     debug("tanks found")
     var tank_types = _.keys(app.signalk.self.tanks)
     tank_types.forEach(type => {
+      debug(type)
       _.keys(app.signalk.self.tanks[type]).forEach(i => {
+        debug(i)
         instances.push("tanks." + type + "." + i)
       })
     })
