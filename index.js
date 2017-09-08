@@ -23,6 +23,8 @@ const fs = require('fs')
 module.exports = function(app) {
   var plugin = {};
   var unsubscribes = []
+  var schema
+  var uiSchema
 
   plugin.start = function(props) {
     debug("starting")
@@ -127,83 +129,99 @@ module.exports = function(app) {
   var calculations = load_calcs(app, plugin, 'calcs')
   calculations = [].concat.apply([], calculations)
 
-  plugin.schema = {
-    title: "Derived Data",
-    type: "object",
-    properties: {
-      default_ttl: {
-        title: "Default TTL",
-        type: "number",
-        description: "The plugin won't send out duplicate calculation values for this time period (s) (0=no ttl check)",
-        default: 0
-      }
-    }
+  plugin.schema = function()
+  {
+    updateSchema()
+    return schema
   }
 
-  var groups = {}
+  plugin.uiSchema = function()
+  {
+    updateSchema()
+    return uiSchema
+  }
 
-  calculations.forEach(calc => {
-    var groupName
-
-    if ( typeof calc.group !== 'undefined' ) {
-      groupName = calc.group
-    } else {
-      groupName = 'nogroup'
+  function updateSchema()
+  {
+    schema = {
+      title: "Derived Data",
+      type: "object",
+      properties: {
+        default_ttl: {
+          title: "Default TTL",
+          type: "number",
+          description: "The plugin won't send out duplicate calculation values for this time period (s) (0=no ttl check)",
+          default: 0
+        }
+      }
     }
+    
+    uiSchema =  { "ui:order": [ "default_ttl" ] }
+
+    var groups = {}
+
+    calculations.forEach(calc => {
+      var groupName
       
-    if ( !(groups[groupName]) ) {
-      groups[groupName] = []
-    }
-    groups[groupName].push(calc)
-  });
-
-  plugin.uiSchema = {
-    "ui:order": [ "default_ttl" ]
-  };
-
-  if ( groups.nogroup ) {
-    groups.nogroup.forEach(calc => {
-      plugin.uiSchema['ui:order'].push(calc.optionKey)
-      plugin.schema.properties[calc.optionKey] = {
-        title: calc.title,
-        type: "boolean",
-        default: false
+      if ( typeof calc.group !== 'undefined' ) {
+        groupName = calc.group
+      } else {
+        groupName = 'nogroup'
       }
-      if ( calc.properties ) {
-        _.extend(plugin.schema.properties, calc.properties)
+      
+      if ( !(groups[groupName]) ) {
+        groups[groupName] = []
       }
+      groups[groupName].push(calc)
     });
-  }
 
-  _.keys(groups).forEach(groupName => {
-    if ( groupName != 'nogroup' ) {
-      plugin.uiSchema['ui:order'].push(groupName)
-      plugin.uiSchema[groupName] = {
-        'ui:order': []
-      };
-      var group = {
-        title: groupName.charAt(0).toUpperCase() + groupName.slice(1),
-        type: "object",
-        properties: {}
-      }
-      groups[groupName].forEach(calc => {
-        var order = plugin.uiSchema[groupName]['ui:order']
-        order.push(calc.optionKey)
-        group.properties[calc.optionKey] = {
-        title: calc.title,
+    if ( groups.nogroup ) {
+      groups.nogroup.forEach(calc => {
+        uiSchema['ui:order'].push(calc.optionKey)
+        schema.properties[calc.optionKey] = {
+          title: calc.title,
           type: "boolean",
           default: false
         }
         if ( calc.properties ) {
-          _.extend(group.properties, calc.properties)
-          _.keys(calc.properties).forEach(key => { order.push(key) })
+          var props = typeof calc.properties === 'function' ? calc.properties() : calc.properties
+          _.extend(schema.properties, props)
         }
       });
-      plugin.schema.properties[groupName] = group;
     }
-  });
- 
-  debug("schema: " + JSON.stringify(plugin.schema))
+
+    _.keys(groups).forEach(groupName => {
+      if ( groupName != 'nogroup' ) {
+        uiSchema['ui:order'].push(groupName)
+        uiSchema[groupName] = {
+          'ui:order': []
+        };
+        var group = {
+          title: groupName.charAt(0).toUpperCase() + groupName.slice(1),
+          type: "object",
+          properties: {}
+        }
+        groups[groupName].forEach(calc => {
+          var order = uiSchema[groupName]['ui:order']
+          order.push(calc.optionKey)
+          group.properties[calc.optionKey] = {
+            title: calc.title,
+            type: "boolean",
+            default: false
+          }
+          if ( calc.properties ) {
+            var props = typeof calc.properties === 'function' ? calc.properties() : calc.properties
+            _.extend(group.properties, props)
+            _.keys(props).forEach(key => { order.push(key) })
+          }
+        });
+        schema.properties[groupName] = group;
+      }
+    });
+
+    debug("schema: " + JSON.stringify(schema, null, 2))
+    debug("uiSchema: " + JSON.stringify(uiSchema, null, 2))
+  }
 
   return plugin;
 }
