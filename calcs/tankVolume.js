@@ -59,17 +59,16 @@ module.exports = function(app, plugin) {
           }
         },
         calculator: function(level) {
-          debug(level)
 
           var calLevels = []
           var calVolumes = []
-          debug(plugin.properties.tanks)
+          debug(plugin.properties.tanks.volume_unit)
 
-          plugin.properties.tanks.calibrations.instance.forEach(function(i) {
+          plugin.properties.tanks["calibrations."+instance].forEach(function(i) {
             calLevels.push(i.level)
-            if (true){//litres
+            if (plugin.properties.tanks.volume_unit === "litres"){
               calVolumes.push(i.volume*0.001)
-            } else if (true) {//gallons
+            } else if (plugin.properties.tanks.volume_unit === "gal") {
               calVolumes.push(i.volume*0.00378541)
             } else {
               calVolumes.push(i.volume)
