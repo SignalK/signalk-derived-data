@@ -3,6 +3,7 @@ const _ = require("lodash")
 const util = require('util') //dev
 const debug = require('debug')('derived-tank')
 
+var instance
 
 //tankInstances = ["tanks.fuel.*", "tanks.fuel.1", "tanks.water.0" ]
 module.exports = function(app, plugin) {
@@ -30,9 +31,10 @@ module.exports = function(app, plugin) {
           volume_unit: {
             type: "string",
             title: "Input unit",
-            enum: ["litres", "gal", "m3"]
+            enum: ["litres", "gal", "m3"],
+            default: "litres"
           },
-          calibrations: {
+          ["calibrations."+instance]: {
             "type": "array",
             "title": "Calibration entries (pairs of level => volume)",
             "items": {
@@ -49,7 +51,7 @@ module.exports = function(app, plugin) {
                 },
                 "volume": {
                   "type": "number",
-                  "title": "corresponding volume (m^3)",
+                  "title": "corresponding volume (selected unit)",
                   "description": " "
                 }
               }
@@ -57,12 +59,13 @@ module.exports = function(app, plugin) {
           }
         },
         calculator: function(level) {
+          debug(level)
 
           var calLevels = []
           var calVolumes = []
           debug(plugin.properties.tanks)
 
-          plugin.properties.tanks.calibrations.forEach(function(i) {
+          plugin.properties.tanks.calibrations.instance.forEach(function(i) {
             calLevels.push(i.level)
             if (true){//litres
               calVolumes.push(i.volume*0.001)
