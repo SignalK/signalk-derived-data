@@ -11,7 +11,7 @@ module.exports = function(app, plugin) {
       var tempC = temp + 273.16
       const b = 18.678
       const c = 257.14
-      var magnus = ln(hum) + (b * tempC)/(c + tempC)
+      var magnus = Math.log(hum) + (b * tempC)/(c + tempC)
       var dewPoint = (c * magnus) / (b - magnus) - 273.16
       return [{ path: "environment.outside.dewPointTemperature", value: dewPoint}]
     }
