@@ -98,7 +98,7 @@ module.exports = function(app) {
               }
               
               debug("got delta: " + JSON.stringify(delta))
-              app.handleMessage(plugin.id, delta)
+              app.handleMessage(plugin.id + '-plugin', delta)
             }
           })
       );
