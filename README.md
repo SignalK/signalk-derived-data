@@ -1,4 +1,8 @@
 # signalk-derived-data
+
+[![Greenkeeper badge](https://badges.greenkeeper.io/sbender9/signalk-derived-data.svg)](https://greenkeeper.io/)
+
+
 Generates deltas for values derived from  signalk values
 
 It currently calculates:
