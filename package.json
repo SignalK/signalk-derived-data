@@ -1,6 +1,6 @@
 {
   "name": "signalk-derived-data",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "description": "Plugin that derives signalk data from other signalk data",
   "main": "index.js",
   "scripts": {
@@ -20,7 +20,8 @@
     "baconjs": "^0.7.88",
     "debug": "^3.1.0",
     "lodash": "^4.17.4",
-    "cubic-spline": "^1.0.4"
+    "cubic-spline": "^1.0.4",
+    "suncalc": "^1.8.0"
   },
   "repository": {
     "type" : "git",
