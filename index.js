@@ -77,13 +77,21 @@ module.exports = function(app) {
         skip_function = function(before, after) { return false }
       }
       
+      const selfStreams = derivedFrom.map((key, index) => {
+        let stream = app.streambundle.getSelfStream(key)
+        if (calculation.defaults && calculation.defaults[index] != undefined) {
+          stream = stream.merge(Bacon.once(calculation.defaults[index]))
+        }
+        return stream
+      }, app.streambundle)
+      
       unsubscribes.push(
         Bacon.combineWith(
           calculation.calculator,
-          derivedFrom.map(app.streambundle.getSelfStream, app.streambundle)
+          selfStreams
         )
           .changes()
-          .debounceImmediate(20)
+          .debounceImmediate(calculation.debounceDelay || 20)
           .skipDuplicates(skip_function)
           .onValue(values => {
             if ( typeof values !== 'undefined' ) {
