@@ -20,16 +20,12 @@ const _ = require('lodash')
 const path = require('path')
 const fs = require('fs')
 
-module.exports = function(app, handleMessage) {
+module.exports = function(app) {
   var plugin = {};
   var unsubscribes = []
   var schema
   var uiSchema
 
-  if ( _.isUndefined(handleMessage) ) {
-    handleMessage = app.handleMessage
-  }
-  
   plugin.start = function(props) {
     debug("starting")
 
@@ -110,7 +106,7 @@ module.exports = function(app, handleMessage) {
               }
               
               debug("got delta: " + JSON.stringify(delta))
-              handleMessage(plugin.id, delta)
+              app.handleMessage(plugin.id, delta)
             }
           })
       );
