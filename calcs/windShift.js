@@ -1,5 +1,4 @@
 const _ = require('lodash')
-const debug = require('debug')('signalk-derived-data')
 
 var windAvg
 var alarmSent = false
@@ -29,8 +28,9 @@ module.exports = function(app, plugin) {
       }
     },
     calculator: function(angleApparent) {
-      var alarm = _.get(app.signalk.self,
-                        'environment.wind.directionChangeAlarm.value')
+      var alarm = app.getSelfPath(
+        'environment.wind.directionChangeAlarm.value'
+      )
       if ( typeof alarm === 'undefined' )
       {
         console.log("signall-Derived-data: no directionChangeAlarm value")
@@ -38,16 +38,16 @@ module.exports = function(app, plugin) {
       }
 
       var values = undefined
-      debug("angleApparent: " + angleApparent)
+      app.debug("angleApparent: " + angleApparent)
       if ( angleApparent < 0 )
         angleApparent = angleApparent + Math.PI/2;
-      debug("angleApparent2: " + angleApparent)
-      debug("alarm: " + alarm)
+      app.debug("angleApparent2: " + angleApparent)
+      app.debug("alarm: " + alarm)
       if ( typeof windAvg === 'undefined' ) {
         windAvg = angleApparent;
       } else {
         var diff = Math.abs(windAvg-angleApparent)
-        debug("" + windAvg + ", " + angleApparent + ", " + diff)
+        app.debug("" + windAvg + ", " + angleApparent + ", " + diff)
         if ( diff > alarm ) {
           values = [
             {

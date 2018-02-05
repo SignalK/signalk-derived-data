@@ -13,9 +13,7 @@
  * limitations under the License.
  */
 
-const debug = require('debug')('signalk-derived-data')
 const Bacon = require('baconjs');
-const util = require('util')
 const _ = require('lodash')
 const path = require('path')
 const fs = require('fs')
@@ -27,8 +25,6 @@ module.exports = function(app) {
   var uiSchema
 
   plugin.start = function(props) {
-    debug("starting")
-
     plugin.properties = props;
 
     calculations.forEach(calculation => {
@@ -51,7 +47,7 @@ module.exports = function(app) {
       var skip_function
       if ( (typeof calculation.ttl !== 'undefined' && calculation.ttl > 0)
            || props.default_ttl > 0 ) {
-        //debug("using skip")  
+        //app.debug("using skip")  
         skip_function = function(before, after) {
           var tnow = (new Date()).getTime();
           if ( _.isEqual(before,after) ) {
@@ -67,7 +63,7 @@ module.exports = function(app) {
           }
 
           var ttl = typeof calculation.ttl === 'undefined' ? props.default_ttl : calculation.ttl;
-          //debug("ttl: " + ttl, "def: " + props.default_ttl)
+          //app.debug("ttl: " + ttl, "def: " + props.default_ttl)
           
           calculation.nextOutput = tnow + (ttl*1000);
           //console.log("New Value ----------------------------- ", before, after);
@@ -105,18 +101,15 @@ module.exports = function(app) {
                 ]
               }
               
-              debug("got delta: " + JSON.stringify(delta))
+              app.debug("got delta: " + JSON.stringify(delta))
               app.handleMessage(plugin.id, delta)
             }
           })
       );
     });
-    
-    debug("started")
   }
 
   plugin.stop = function() {
-    debug("stopping")
     unsubscribes.forEach(f => f());
     unsubscribes = [];
 
@@ -125,8 +118,6 @@ module.exports = function(app) {
         calc.stop()
       }
     });
-    
-    debug("stopped")
   }
 
   plugin.id = "derived-data"
@@ -227,8 +218,8 @@ module.exports = function(app) {
       }
     });
 
-    debug("schema: " + JSON.stringify(schema, null, 2))
-    debug("uiSchema: " + JSON.stringify(uiSchema, null, 2))
+    app.debug("schema: " + JSON.stringify(schema, null, 2))
+    app.debug("uiSchema: " + JSON.stringify(uiSchema, null, 2))
   }
 
   return plugin;

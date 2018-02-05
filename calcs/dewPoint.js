@@ -1,4 +1,3 @@
-const debug = require('debug')('signalk-derived-data')
 
 module.exports = function(app, plugin) {
   return {

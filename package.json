@@ -4,12 +4,15 @@
   "description": "Plugin that derives signalk data from other signalk data",
   "main": "index.js",
   "scripts": {
-    "test": "$NODE $npm_package_main"  
+    "test": "$NODE $npm_package_main"
   },
   "keywords": [
     "signalk-node-server-plugin"
   ],
-  "author": {"name": "Scott Bender", "email": "scott@scottbender.net"},
+  "author": {
+    "name": "Scott Bender",
+    "email": "scott@scottbender.net"
+  },
   "contributors": [
     {
       "name": "Joachim Bakke"
@@ -18,14 +21,12 @@
   "license": "ISC",
   "dependencies": {
     "baconjs": "^0.7.88",
-    "debug": "^3.1.0",
     "lodash": "^4.17.4",
     "cubic-spline": "^1.0.4",
     "suncalc": "^1.8.0"
   },
   "repository": {
-    "type" : "git",
-    "url" : "https://github.com/sbender9/signalk-derived-data"
+    "type": "git",
+    "url": "https://github.com/sbender9/signalk-derived-data"
   }
-
 }

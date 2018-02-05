@@ -1,7 +1,7 @@
 const _ = require('lodash')
 
 module.exports = function(app) {
-  var depthTransducerToKeel = _.get(app.signalk.self, 'environment.depth.transducerToKeel.value')
+  var depthTransducerToKeel = app.getSelfPath('environment.depth.transducerToKeel.value')
 
   var derivedFrom = typeof depthTransducerToKeel === 'undefined' ? [] : [ "environment.depth.belowTransducer"];
 

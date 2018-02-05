@@ -1,10 +1,9 @@
 const _ = require("lodash")
-const debug = require('debug')('signalk-derived-data')
 
 module.exports = function(app, plugin) {
   var propulsionInstances
 
-  if ( _.get(app.signalk.self, "propulsion") )
+  if ( app.getSelfPath("propulsion") )
   {
     propulsionInstances = _.keys(app.signalk.self['propulsion'])
 
@@ -15,8 +14,8 @@ module.exports = function(app, plugin) {
         title: "propulsion." + instance + ".slip (based on RPM, propulsion." + instance + ".transmission.gearRatio and propulsion." + instance + ".drive.propeller.pitch)",
         derivedFrom: function() { return [ "propulsion." + instance + ".revolutions", "navigation.speedThroughWater"] },
         calculator: function(revolutions, stw) {
-          var gearRatio = _.get(app.signalk.self, 'propulsion.' + instance + '.transmission.gearRatio.value')
-          var pitch = _.get(app.signalk.self, 'propulsion.' + instance + '.drive.propeller.pitch.value')
+          var gearRatio = app.getSelfPath('propulsion.' + instance + '.transmission.gearRatio.value')
+          var pitch = app.getSelfPath('propulsion.' + instance + '.drive.propeller.pitch.value')
           return [{ path: 'propulsion.' + instance + '.drive.propeller.slip', value: 1 - ((stw * gearRatio)/(revolutions*pitch))}]
         }
       }

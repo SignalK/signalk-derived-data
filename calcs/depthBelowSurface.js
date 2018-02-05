@@ -1,7 +1,7 @@
 const _ = require('lodash')
 
 module.exports = function(app) {
-  var draft = _.get(app.signalk.self, 'design.draft.maximum.value')
+  var draft = app.getSelfPath('design.draft.maximum.value')
 
   var derivedFrom = typeof draft === 'undefined' ? [] : [ "environment.depth.belowKeel" ];
   
