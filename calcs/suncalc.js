@@ -1,4 +1,3 @@
-var debug = require('debug')('signalk-derived-data:sun')
 const suncalc = require('suncalc');
 const _ = require('lodash')
 
@@ -49,7 +48,7 @@ module.exports = function(app, plugin) {
         }
       }
 
-      debug(`Setting sun to ${value}`)
+      app.debug(`Setting sun to ${value}`)
       
       return [{ path: "environment.sun", value: value}]
     }
