@@ -18,14 +18,36 @@ const _ = require('lodash')
 const path = require('path')
 const fs = require('fs')
 
+const defaultEngines = 'port, starboard' 
+const defaultBatteries =   '0' 
+const defaultTanks = 'fuel.0, fuel.1'
+
 module.exports = function(app) {
   var plugin = {};
   var unsubscribes = []
   var schema
   var uiSchema
-
+  var calculations
+  
   plugin.start = function(props) {
     plugin.properties = props;
+
+    if ( !plugin.properties.engine_instances ) {
+      plugin.properties.engine_instances = defaultEngines
+    }
+    if ( !plugin.properties.battery_instances ) {
+      plugin.properties.battery_instances = defaultBatteries
+    }
+    if ( !plugin.properties.tank_instances ) {
+      plugin.properties.tank_instances = defaultTanks
+    }
+
+    plugin.engines = plugin.properties.engine_instances.split(',').map(e => e.trim())
+    plugin.batteries = plugin.properties.battery_instances.split(',').map(e => e.trim())
+    plugin.tanks = plugin.properties.tank_instances.split(',').map(e => e.trim())
+
+    calculations = load_calcs(app, plugin, 'calcs')
+    calculations = [].concat.apply([], calculations)
 
     calculations.forEach(calculation => {
       
@@ -101,7 +123,7 @@ module.exports = function(app) {
                 ]
               }
               
-              app.debug("got delta: " + JSON.stringify(delta))
+              //app.debug("got delta: " + JSON.stringify(delta))
               app.handleMessage(plugin.id, delta)
             }
           })
@@ -123,10 +145,6 @@ module.exports = function(app) {
   plugin.id = "derived-data"
   plugin.name = "Derived Data"
   plugin.description = "Plugin that derives data"
-
-
-  var calculations = load_calcs(app, plugin, 'calcs')
-  calculations = [].concat.apply([], calculations)
 
   plugin.schema = function()
   {
@@ -151,11 +169,29 @@ module.exports = function(app) {
           type: "number",
           description: "The plugin won't send out duplicate calculation values for this time period (s) (0=no ttl check)",
           default: 0
+        },
+        engine_instances: {
+          title: "Engines",
+          type: "string",
+          description: "Commented list of available engines",
+          default: defaultEngines
+        },
+        battery_instances: {
+          title: "Batteries",
+          type: "string",
+          description: "Commented list of available batteries",
+          default: defaultBatteries
+        },
+        tank_instances: {
+          title: "Tanks",
+          type: "string",
+          description: "Commented list of available tanks",
+          default: defaultTanks
         }
       }
     }
     
-    uiSchema =  { "ui:order": [ "default_ttl" ] }
+    uiSchema =  { "ui:order": [ "default_ttl", "engine_instances", "battery_instances", "tank_instances" ] }
 
     var groups = {}
 
