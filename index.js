@@ -160,6 +160,15 @@ module.exports = function(app) {
 
   function updateSchema()
   {
+    if ( !calculations ) {
+      plugin.engines = defaultEngines.split(',').map(e => e.trim())
+      plugin.batteries = defaultBatteries.split(',').map(e => e.trim())
+      plugin.tanks = defaultTanks.split(',').map(e => e.trim())
+
+      calculations = load_calcs(app, plugin, 'calcs')
+      calculations = [].concat.apply([], calculations)
+    }
+    
     schema = {
       title: "Derived Data",
       type: "object",
@@ -173,19 +182,19 @@ module.exports = function(app) {
         engine_instances: {
           title: "Engines",
           type: "string",
-          description: "Commented list of available engines",
+          description: "Comma delimited list of available engines",
           default: defaultEngines
         },
         battery_instances: {
           title: "Batteries",
           type: "string",
-          description: "Commented list of available batteries",
+          description: "Comma delimited list of available batteries",
           default: defaultBatteries
         },
         tank_instances: {
           title: "Tanks",
           type: "string",
-          description: "Commented list of available tanks",
+          description: "Comma delimited list of available tanks",
           default: defaultTanks
         }
       }
