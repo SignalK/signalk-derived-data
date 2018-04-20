@@ -7,22 +7,25 @@ Generates deltas for values derived from  signalk values
 
 It currently calculates:
 
-* Outside air density (based on humidity, temperature and pressure)
-* Battery Power
-* Depth Below Keel (based on depth.belowSurface and design.draft.maximum)
-* Depth Below Keel (based on depth.belowTransducer and depth.transducerToKeel)
-* Depth Below Surface (based on depth.belowKeel and design.draft.maximum)
-* Outside air dew point (based on humidity and temperature)
-* Fuel economy (based on speed over ground, fuel rate)
-* Ground Wind Angle and Speed (based on SOG, AWA and AWS)
-* Prop slip (based on RPM, propulsion.*.transmission.gearRatio and propulsion.*.drive.propeller.pitch)
-* Sets environment.sun to dawn, sunrise, day, sunset, dusk or night (based on navigation.datetime or system time and navigation.position)
-* Tank Volume (based on currentLevel (requires calibration pairs (>2 for parallell sides, >3 for straight wedge and >4 for more complex shapes))
-* True Wind Angle, Direction and Speed (based on speed through water, AWA and AWS)
-* Velocity Made Good to Course (based on courseGreatCircle.nextPoint.bearingTrue heading true and speedOverGround)
-* Velocity Made Good to wind (based on wind.directionTrue and speedOverGround)
-* Outside air wind chill (based on wind speed and temperature)
-* Magnetic Wind Direction (based on wind.directionTrue and magneticVarition)
+ * Outside air density (based on humidity, temperature and pressure)
+ * Battery Power
+ * Depth Below Keel (based on depth.belowSurface and design.draft.maximum)
+ * Depth Below Keel (based on depth.belowTransducer and depth.transducerToKeel)
+ * Depth Below Surface (based on depth.belowKeel and design.draft.maximum)
+ * Outside air dew point (based on humidity and temperature)
+ * Fuel economy (based on speed over ground, fuel rate)
+ * Propeller Slip calculation (requires defaults.json to include propulsion.\*.drive.propeller.pitch and propulsion.\*.transmission.gearRatio)  
+ * Sets environment.sun to dawn, sunrise, day, sunset, dusk or night (based on navigation.datetime or system time and navigation.position)
+ * Tank Volume (based on currentLevel (requires calibration pairs (>2 for parallell sides, >3 for straight wedge and >4 for more complex shapes))
+ * Velocity Made Good to Course (based on courseGreatCircle.nextPoint.bearingTrue heading true and speedOverGround)
+ * Velocity Made Good to wind (based on wind.directionTrue and speedOverGround)
+ * Outside air wind chill (based on wind speed and temperature)
+ * True Wind Angle, Direction and Speed (based on speed through water, AWA and AWS)
+ * True Wind Direction (based on AWA and headingTrue)
+ * Ground Wind Angle and Speed (based on SOG, AWA and AWS)
+ * Magnetic Wind Direction (based on AWA and headingMagnetic)
+ * Magnetic Wind Direction (based on wind.directionTrue and magneticVarition)
+ * Wind Shift (experimental)
 
 To add new calculations, just create a new file under the `./calcs` directory.
 
