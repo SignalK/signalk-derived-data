@@ -9,11 +9,11 @@ module.exports = function(app, plugin) {
       calculator: function(headingTrue, awa) {
         
         let windHeading = headingTrue + awa;
-        
-        if ( windHeading > 360 )
-	  windHeading -= 360.0;
+
+        if ( windHeading > (Math.PI*2) )
+	  windHeading -= (Math.PI*2);
         else if ( windHeading < 0 )
-	  windHeading += 360;
+	  windHeading += (Math.PI*2);
         
         return [{ path: "environment.wind.directionTrue", value: windHeading}]
       }
@@ -26,10 +26,10 @@ module.exports = function(app, plugin) {
         
         let windHeading = headingMagnetic + awa;
         
-        if ( windHeading > 360 )
-	  windHeading -= 360.0;
+        if ( windHeading > (Math.PI*2) )
+	  windHeading -= (Math.PI*2);
         else if ( windHeading < 0 )
-	windHeading += 360;
+	  windHeading += (Math.PI*2);
         
         return [{ path: "environment.wind.directionMagnetic", value: windHeading}]
       }
