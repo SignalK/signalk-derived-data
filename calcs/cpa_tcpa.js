@@ -53,16 +53,17 @@ module.exports = function(app, plugin) {
       var selfPositionArray = [selfPosition.latitude, selfPosition.longitude, 0]
       var selfSpeedArray = generateSpeedVector(selfPosition, selfSpeed, selfCourse)
       var vesselList = app.getPath('vessels')
+      var deltas = []
       for(var vessel in vesselList){
         if(typeof vessel === 'undefined' || vessel == app.selfId){
-          return
+          continue
         }
         var vesselPos = app.getPath('vessels.' + vessel + '.navigation.position.value')
         if(typeof vesselPos !== 'undefined'){
 
           var distance = geolib.getDistanceSimple({latitude: selfPosition.latitude, longitude: selfPosition.longitude}, {latitude: vesselPos.latitude, longitude: vesselPos.longitude})
           if(distance >= plugin.properties.range && plugin.properties.range >= 0){
-            return
+            continue
           }//if distance outside range, don't calculate
 
           //@TODO what do we do with old data from each vessel?
@@ -85,24 +86,19 @@ module.exports = function(app, plugin) {
           app.debug('TCPA: ' + tcpa + ' CPA: '  + cpa)
 
 
-          app.handleMessage(plugin.id, {
+          deltas.push({
             "context": "vessels." + vessel,
             "updates": [
               {
-                "source": {
-                  //"src": key
-                },
                 "timestamp": (new Date()).toISOString(),
                 "values": [ CPA_TCPA(cpa, tcpa) ]
               }
             ]
-          });
-        } else {
-          return
+          })
         }
       }
 
-      return []
+      return deltas
     }
   };
 }
