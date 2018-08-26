@@ -45,6 +45,11 @@ module.exports = function(app, plugin) {
         type: "number",
         title: "calculate for all vessels within this range (m), negative to disable filter",
         default: 1852
+      },
+      timmeout: {
+        type: "number",
+        title: "Discard other vessel data if older than this (in seconds), negative to disable filter",
+        default: 30
       }
     },
     defaults: [undefined, undefined, undefined],
@@ -66,7 +71,12 @@ module.exports = function(app, plugin) {
             continue
           }//if distance outside range, don't calculate
 
-          //@TODO what do we do with old data from each vessel?
+          var vesselTimestamp = app.getPath('vessels.' + vessel + '.navigation.position.timestamp')
+          var currentTime = (new Date()).toISOString()
+          var secondsSinceVesselUpdate = Math.floor((currentTime - vesselTimestamp) / 1e3)
+          if (secondsSinceVesselUpdate > plugin.properties.timeout){
+            continue
+          }//old data from vessel, not calculating
 
           var vesselCourse = app.getPath('vessels.' + vessel + '.navigation.courseOverGroundTrue.value')
           var vesselSpeed = app.getPath('vessels.' + vessel + '.navigation.speedOverGround.value')
@@ -81,6 +91,10 @@ module.exports = function(app, plugin) {
           var cpa
           if(selfCpaPosition && vesselCpaPosition){
             cpa =  geolib.getDistanceSimple({latitude: selfCpaPosition[0], longitude: selfCpaPosition[1]}, {latitude: vesselCpaPosition[0], longitude:vesselCpaPosition[1]})
+          }
+          if(tcpa <= 0){
+            cpa = null
+            tcpa = null
           }
 
           app.debug('TCPA: ' + tcpa + ' CPA: '  + cpa)
