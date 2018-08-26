@@ -117,7 +117,7 @@ function CPA_TCPA(cpa, tcpa)
 
 
 function generateSpeedVector(position, speed, course){
-  var northSpeed = speed * Math.cos(course) / 1.94384 / 60 //to degrees per second (knots/60)
-  var eastSpeed = speed * Math.sin(course) / 1.94384 / 60 * Math.abs(Math.sin(position.latitude))//to degrees per second
+  var northSpeed = speed * Math.cos(course) / 1.94384 / 60 / 3600//to degrees per second (knots/60 angle minutes /3600 s/h)
+  var eastSpeed = speed * Math.sin(course) / 1.94384 / 60 /3600 * Math.abs(Math.sin(position.latitude))//to degrees per second
   return [northSpeed, eastSpeed, 0]
 }
