@@ -138,7 +138,10 @@ module.exports = function(app, plugin) {
 
           var mmsi = app.getPath('vessels.' + vessel + '.mmsi')
           app.debug('sending CPA alarm for ' + mmsi)
-          var tcpaMinutesRounded = (tcpa/60).toFixed(2)
+          let vesselName = app.getPath('vessels.' + vessel + '.name')
+          if ( !vesselName ) {
+            vesselName = vessel
+          }
           alarmDelta = {
             "context": "vessels." + app.selfId,
             "updates": [
@@ -148,7 +151,7 @@ module.exports = function(app, plugin) {
                   "value": {
                     "state": "alert",
                     "method": [ "visual", "sound" ],
-                    "message": "Crossing vessel " + cpa + " m away in " + tcpaMinutesRounded + " minutes",
+                    "message": `Crossing vessel ${vesselName} ${cpa} m away in ${(tcpa/60).toFixed(2)}  minutes`,
                     "timestamp": (new Date()).toISOString()
                   }
                 }]
