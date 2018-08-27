@@ -1,17 +1,22 @@
-
-module.exports = function(app) {
+module.exports = function (app) {
   return {
     group: 'vmg',
     optionKey: 'vmg_Course',
-    title: "Velocity Made Good to Course (based on courseGreatCircle.nextPoint.bearingTrue heading true and speedOverGround)",
-    derivedFrom: [ "navigation.courseGreatCircle.nextPoint.bearingTrue",
-                   "navigation.headingTrue",
-                   "navigation.speedOverGround" ],
-    calculator: function (bearingTrue, headingTrue, speedOverGround)
-    {
-      var angle = Math.abs(bearingTrue-headingTrue)
-      return [{ path: "navigation.courseGreatCircle.nextPoint.velocityMadeGood",
-                value: Math.cos(bearingTrue-headingTrue) * speedOverGround}]
+    title:
+      'Velocity Made Good to Course (based on courseGreatCircle.nextPoint.bearingTrue heading true and speedOverGround)',
+    derivedFrom: [
+      'navigation.courseGreatCircle.nextPoint.bearingTrue',
+      'navigation.headingTrue',
+      'navigation.speedOverGround'
+    ],
+    calculator: function (bearingTrue, headingTrue, speedOverGround) {
+      var angle = Math.abs(bearingTrue - headingTrue)
+      return [
+        {
+          path: 'navigation.courseGreatCircle.nextPoint.velocityMadeGood',
+          value: Math.cos(bearingTrue - headingTrue) * speedOverGround
+        }
+      ]
     }
-  };
+  }
 }
