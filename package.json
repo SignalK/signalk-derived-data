@@ -19,11 +19,31 @@
     }
   ],
   "license": "ISC",
+  "scripts": {
+    "precommit": "lint-staged",
+    "format": "prettier-standard calcs/*.js index.js"
+  },
+  "lint-staged": {
+    "linters": {
+      "calcs/*.js": [
+        "prettier-standard",
+        "git add"
+      ],
+      "index.js": [
+        "prettier-standard",
+        "git add"
+      ]
+    }
+  },
   "dependencies": {
     "baconjs": "^0.7.88",
     "lodash": "^4.17.4",
     "cubic-spline": "^1.0.4",
     "suncalc": "^1.8.0"
+  },
+  "devDependencies": {
+    "lint-staged": "^7.0.0",
+    "prettier-standard": "^8.0.0"
   },
   "repository": {
     "type": "git",
