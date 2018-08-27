@@ -37,17 +37,21 @@ const _ = require('lodash')
 module.exports = function(app, plugin) {
   return {
     group: 'traffic',
-    optionKey: 'collision',
+    optionKey: 'CPA',
     title: "Calculates closest point of approach distance and time. (based on navigation.position for vessels)",
     derivedFrom: [ "navigation.position" , "navigation.courseOverGroundTrue",  "navigation.speedOverGround"],
     properties: {
       range: {
         type: "number",
-        title: "calculate for all vessels within this range (m), negative to disable filter",
+        title: "Calculate for all vessels within this range (m), negative to disable filter",
         default: 1852
+      },
+      timelimit: {
+        type: "number",
+        title: "Discard other vessel data if older than this (in seconds), negative to disable filter",
+        default: 30
       }
     },
-    defaults: [undefined, undefined, undefined],
     debounceDelay: 60*1000,
     calculator: function(selfPosition, selfCourse, selfSpeed) {
       var selfPositionArray = [selfPosition.latitude, selfPosition.longitude, 0]
@@ -66,7 +70,12 @@ module.exports = function(app, plugin) {
             continue
           }//if distance outside range, don't calculate
 
-          //@TODO what do we do with old data from each vessel?
+          var vesselTimestamp = app.getPath('vessels.' + vessel + '.navigation.position.timestamp')
+          var currentTime = (new Date()).toISOString()
+          var secondsSinceVesselUpdate = Math.floor((currentTime - vesselTimestamp) / 1e3)
+          if (secondsSinceVesselUpdate > plugin.properties.timelimit){
+            continue
+          }//old data from vessel, not calculating
 
           var vesselCourse = app.getPath('vessels.' + vessel + '.navigation.courseOverGroundTrue.value')
           var vesselSpeed = app.getPath('vessels.' + vessel + '.navigation.speedOverGround.value')
@@ -83,7 +92,12 @@ module.exports = function(app, plugin) {
             cpa =  geolib.getDistanceSimple({latitude: selfCpaPosition[0], longitude: selfCpaPosition[1]}, {latitude: vesselCpaPosition[0], longitude:vesselCpaPosition[1]})
           }
 
-          app.debug('TCPA: ' + tcpa + ' CPA: '  + cpa)
+          if(tcpa <= 0){
+            cpa = null
+            tcpa = null
+          }
+
+          app.debug(vessel + ' TCPA: ' + tcpa + ' CPA: '  + cpa)
 
 
           deltas.push({
