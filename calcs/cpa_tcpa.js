@@ -151,7 +151,7 @@ module.exports = function(app, plugin) {
                   "value": {
                     "state": "alert",
                     "method": [ "visual", "sound" ],
-                    "message": `Crossing vessel ${cpa} m away in ${(tcpa/60).toFixed(2)}  minutes`,
+                    "message": `Crossing vessel ${vesselName} ${cpa} m away in ${(tcpa/60).toFixed(2)}  minutes`,
                     "timestamp": (new Date()).toISOString()
                   }
                 }]
