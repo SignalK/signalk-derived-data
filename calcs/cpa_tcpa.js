@@ -73,11 +73,11 @@ module.exports = function(app, plugin) {
         "context": "vessels." + app.selfId,
         "updates": [
           {
-            "source": {
-              //"src": key
-            },
-            "path": 'notifications.navigation.closestApproach',
-            "value": null
+            "values": [{
+              "path": 'notifications.navigation.closestApproach',
+              "value": null
+            }]
+
           }
         ]
       });
@@ -138,6 +138,7 @@ module.exports = function(app, plugin) {
 
           var mmsi = app.getPath('vessels.' + vessel + '.mmsi')
           app.debug('sending CPA alarm for ' + mmsi)
+          var tcpaMinutesRounded = (tcpa/60).toFixed(2)
           alarmDelta = {
             "context": "vessels." + app.selfId,
             "updates": [
@@ -147,7 +148,7 @@ module.exports = function(app, plugin) {
                   "value": {
                     "state": "alert",
                     "method": [ "visual", "sound" ],
-                    "message": "Crossing vessel " + cpa + " m away in " + tcpa/60 + " minutes",
+                    "message": "Crossing vessel " + cpa + " m away in " + tcpaMinutesRounded + " minutes",
                     "timestamp": (new Date()).toISOString()
                   }
                 }]
