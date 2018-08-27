@@ -66,7 +66,7 @@ module.exports = function(app, plugin) {
     stop: function() {
       app.debug("stopped")
       if ( alarmSent.length < 1 ) {
-        alarmSent.forEach(function(vessel) {
+        _.keys(alarmSent).forEach(function(vessel) {
           var mmsi = app.getPath('vessels.' + vessel + '.mmsi')
           app.handleMessage(plugin.id, {
             "context": "vessels." + app.selfId,
