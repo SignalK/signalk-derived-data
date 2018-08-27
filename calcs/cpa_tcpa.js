@@ -76,8 +76,8 @@ module.exports = function(app, plugin) {
             "source": {
               //"src": key
             },
-            "timestamp": (new Date()).toISOString(),
-            "values": [ normalAlarmDelta() ]
+            "path": 'notifications.navigation.closestApproach',
+            "value": null
           }
         ]
       });
@@ -135,42 +135,49 @@ module.exports = function(app, plugin) {
 
           var mmsi = app.getPath('vessels.' + vessel + '.mmsi')
           app.debug('sending CPA alarm for ' + mmsi)
-          values[vessel] =
+          values[vessel] ={
+            "context": "vessels." + app.selfId,
+            "updates":
             {
-              "path": 'notifications.navigation.closestApproach.' + mmsi,
-              "value": {
-                "state": "alert",
-                "method": [ "visual", "sound" ],
-                "message": "Crossing vessel " + cpa + " m away in " + tcpa/60 + " minutes",
-                "timestamp": (new Date()).toISOString()
+              "values": {
+                "path": 'notifications.navigation.closestApproach.' + mmsi,
+                "value": {
+                  "state": "alert",
+                  "method": [ "visual", "sound" ],
+                  "message": "Crossing vessel " + cpa + " m away in " + tcpa/60 + " minutes",
+                  "timestamp": (new Date()).toISOString()
+                }
               }
-            }
-            alarmSent[vessel] = true
-          } else {
-            if ( alarmSent[vessel] && typeof alarmSent[vessel] !== 'undefined') {
-              values[vessel] = [ normalAlarmDelta(mmsi) ]
-              alarmSent[vessel] = false
             }
           }
 
-          app.debug(vessel + ' TCPA: ' + tcpa + ' CPA: '  + cpa)
 
-
-          deltas.push({
-            "context": "vessels." + vessel,
-            "updates": [
-              {
-                "timestamp": (new Date()).toISOString(),
-                "values": [ CPA_TCPA(cpa, tcpa), values[vessel] ]
-              }
-            ]
-          })
+          alarmSent[vessel] = true
+        } else {
+          if ( alarmSent[vessel] && typeof alarmSent[vessel] !== 'undefined') {
+            values[vessel] = [ normalAlarmDelta(mmsi) ]
+            alarmSent[vessel] = false
+          }
         }
-      }
+        deltas.push(values[vessel])//send notification
 
-      return deltas
+        app.debug(vessel + ' TCPA: ' + tcpa + ' CPA: '  + cpa)
+
+
+        deltas.push({
+          "context": "vessels." + vessel,
+          "updates":
+          {
+            "values": [ CPA_TCPA(cpa, tcpa) ]
+          }
+
+        })
+      }
     }
-  };
+
+    return deltas
+  }
+};
 }
 
 function CPA_TCPA(cpa, tcpa)
@@ -195,10 +202,16 @@ function generateSpeedVector(position, speed, course){
 function normalAlarmDelta(mmsi)
 {
   return {
-    "path": 'notifications.navigation.closestApproach.' + mmsi,
-    "value": {
-      "state": "normal",
-      "timestamp": (new Date()).toISOString()
+    "context": "vessels." + vessel,
+    "updates":
+    {
+      "values": {
+        "path": 'notifications.navigation.closestApproach.' + mmsi,
+        "value": {
+          "state": "normal",
+          "timestamp": (new Date()).toISOString()
+        }
+      }
     }
-  };
+  }
 }
