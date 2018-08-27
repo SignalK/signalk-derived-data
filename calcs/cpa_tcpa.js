@@ -64,130 +64,130 @@ module.exports = function(app, plugin) {
     },
     debounceDelay: 5*1000,
     stop: function() {
+      app.debug("stopped")
       if ( alarmSent.length < 1 ) {
         alarmSent.forEach(function(vessel) {
-          alarmSent(vessel) = false;
-        }
-      )
-      app.handleMessage(plugin.id, {
-        "context": "vessels." + app.selfId,
-        "updates": [
-          {
-            "values": [{
-              "path": 'notifications.navigation.closestApproach',
-              "value": null
-            }]
-
-          }
-        ]
-      });
-    }
-  },
-  calculator: function(selfPosition, selfCourse, selfSpeed) {
-
-    var selfPositionArray = [selfPosition.latitude, selfPosition.longitude, 0]
-    var selfSpeedArray = generateSpeedVector(selfPosition, selfSpeed, selfCourse)
-    var vesselList = app.getPath('vessels')
-    var deltas = []
-    for(var vessel in vesselList){
-      if(typeof vessel === 'undefined' || vessel == app.selfId){
-        continue
-      }
-      var vesselPos = app.getPath('vessels.' + vessel + '.navigation.position.value')
-      if(typeof vesselPos !== 'undefined'){
-
-        var distance = geolib.getDistanceSimple({latitude: selfPosition.latitude, longitude: selfPosition.longitude}, {latitude: vesselPos.latitude, longitude: vesselPos.longitude})
-        if(distance >= plugin.properties.traffic.range && plugin.properties.traffic.range >= 0){
-          app.debug('distance outside range, dont calculate')
-          continue
-        }//if distance outside range, don't calculate
-
-        var vesselTimestamp = app.getPath('vessels.' + vessel + '.navigation.position.timestamp')
-        var currentTime = new Date(app.getSelfPath('navigation.datetime'))
-        if ( ! currentTime ) {
-          currentTime = (new Date()).toISOString()
-        }
-        var secondsSinceVesselUpdate = Math.floor((currentTime - vesselTimestamp) / 1e3)
-        if (secondsSinceVesselUpdate > plugin.properties.traffic.timelimit){
-          app.debug('old data from vessel, not calculating')
-          continue
-        }//old data from vessel, not calculating
-
-        var vesselCourse = app.getPath('vessels.' + vessel + '.navigation.courseOverGroundTrue.value')
-        var vesselSpeed = app.getPath('vessels.' + vessel + '.navigation.speedOverGround.value')
-
-        var vesselPositionArray = [vesselPos.latitude, vesselPos.longitude, 0]
-        var vesselSpeedArray = generateSpeedVector(vesselPos, vesselSpeed, vesselCourse)
-
-        var tcpa = motionpredict.calcCPATime(selfPositionArray, selfSpeedArray, vesselPositionArray, vesselSpeedArray)
-        var selfCpaPosition = motionpredict.getPositionByVeloAndTime(selfPositionArray, selfSpeedArray, tcpa)
-        var vesselCpaPosition = motionpredict.getPositionByVeloAndTime(vesselPositionArray, vesselSpeedArray, tcpa)
-
-        var cpa
-        if(selfCpaPosition && vesselCpaPosition){
-          cpa =  geolib.getDistanceSimple({latitude: selfCpaPosition[0], longitude: selfCpaPosition[1]}, {latitude: vesselCpaPosition[0], longitude:vesselCpaPosition[1]})
-        }
-
-        if(tcpa <= 0){
-          cpa = null
-          tcpa = null
-        }
-
-        let alarmDelta
-        if(cpa != null && tcpa != null && cpa <= plugin.properties.traffic.notificationRange && tcpa <= plugin.properties.traffic.notificationTimeLimit){
-
           var mmsi = app.getPath('vessels.' + vessel + '.mmsi')
-          app.debug('sending CPA alarm for ' + mmsi)
-          let vesselName = app.getPath('vessels.' + vessel + '.name')
-          if ( !vesselName ) {
-            vesselName = mmsi
-          }
-          alarmDelta = {
+          app.handleMessage(plugin.id, {
             "context": "vessels." + app.selfId,
-            "updates": [
-              {
-                "values": [{
-                  "path": 'notifications.navigation.closestApproach.' + mmsi,
-                  "value": {
-                    "state": "alert",
-                    "method": [ "visual", "sound" ],
-                    "message": `Crossing vessel ${vesselName} ${cpa} m away in ${(tcpa/60).toFixed(2)}  minutes`,
-                    "timestamp": (new Date()).toISOString()
-                  }
-                }]
-              }
-            ]
-          }
-
-          alarmSent[vessel] = true
-        } else {
-          if ( alarmSent[vessel] && typeof alarmSent[vessel] !== 'undefined') {
-            debug(`Clearing alarm for ${vessel}`)
-            alarmDelta = normalAlarmDelta(vessel, mmsi)
-            alarmSent[vessel] = false
-          }
-        }
-        if ( alarmDelta ) {
-          deltas.push(alarmDelta)//send notification
-        }
-
-        app.debug(vessel + ' TCPA: ' + tcpa + ' CPA: '  + cpa)
-
-
-        deltas.push({
-          "context": "vessels." + vessel,
-          "updates": [
-            {
-              "values": [ CPA_TCPA(cpa, tcpa) ]
-            }
-          ]
+            "updates": [{
+              "values": [{
+                "path": 'notifications.navigation.closestApproach.' + mmsi,
+                "value": {
+                  "state": "normal",
+                  "timestamp": (new Date()).toISOString()
+                }
+              }]
+            }]
+          })
         })
       }
-    }
+    },
+    calculator: function(selfPosition, selfCourse, selfSpeed) {
 
-    return deltas
-  }
-};
+      var selfPositionArray = [selfPosition.latitude, selfPosition.longitude, 0]
+      var selfSpeedArray = generateSpeedVector(selfPosition, selfSpeed, selfCourse)
+      var vesselList = app.getPath('vessels')
+      var deltas = []
+      for(var vessel in vesselList){
+        if(typeof vessel === 'undefined' || vessel == app.selfId){
+          continue
+        }
+        var vesselPos = app.getPath('vessels.' + vessel + '.navigation.position.value')
+        if(typeof vesselPos !== 'undefined'){
+
+          var distance = geolib.getDistanceSimple({latitude: selfPosition.latitude, longitude: selfPosition.longitude}, {latitude: vesselPos.latitude, longitude: vesselPos.longitude})
+          if(distance >= plugin.properties.traffic.range && plugin.properties.traffic.range >= 0){
+            app.debug('distance outside range, dont calculate')
+            continue
+          }//if distance outside range, don't calculate
+
+          var vesselTimestamp = app.getPath('vessels.' + vessel + '.navigation.position.timestamp')
+          var currentTime = new Date(app.getSelfPath('navigation.datetime'))
+          if ( ! currentTime ) {
+            currentTime = (new Date()).toISOString()
+          }
+          var secondsSinceVesselUpdate = Math.floor((currentTime - vesselTimestamp) / 1e3)
+          if (secondsSinceVesselUpdate > plugin.properties.traffic.timelimit){
+            app.debug('old data from vessel, not calculating')
+            continue
+          }//old data from vessel, not calculating
+
+          var vesselCourse = app.getPath('vessels.' + vessel + '.navigation.courseOverGroundTrue.value')
+          var vesselSpeed = app.getPath('vessels.' + vessel + '.navigation.speedOverGround.value')
+
+          var vesselPositionArray = [vesselPos.latitude, vesselPos.longitude, 0]
+          var vesselSpeedArray = generateSpeedVector(vesselPos, vesselSpeed, vesselCourse)
+
+          var tcpa = motionpredict.calcCPATime(selfPositionArray, selfSpeedArray, vesselPositionArray, vesselSpeedArray)
+          var selfCpaPosition = motionpredict.getPositionByVeloAndTime(selfPositionArray, selfSpeedArray, tcpa)
+          var vesselCpaPosition = motionpredict.getPositionByVeloAndTime(vesselPositionArray, vesselSpeedArray, tcpa)
+
+          var cpa
+          if(selfCpaPosition && vesselCpaPosition){
+            cpa =  geolib.getDistanceSimple({latitude: selfCpaPosition[0], longitude: selfCpaPosition[1]}, {latitude: vesselCpaPosition[0], longitude:vesselCpaPosition[1]})
+          }
+
+          if(tcpa <= 0){
+            cpa = null
+            tcpa = null
+          }
+
+          let alarmDelta
+          if(cpa != null && tcpa != null && cpa <= plugin.properties.traffic.notificationRange && tcpa <= plugin.properties.traffic.notificationTimeLimit){
+
+            var mmsi = app.getPath('vessels.' + vessel + '.mmsi')
+            app.debug('sending CPA alarm for ' + mmsi)
+            let vesselName = app.getPath('vessels.' + vessel + '.name')
+            if ( !vesselName ) {
+              vesselName = mmsi
+            }
+            alarmDelta = {
+              "context": "vessels." + app.selfId,
+              "updates": [
+                {
+                  "values": [{
+                    "path": 'notifications.navigation.closestApproach.' + mmsi,
+                    "value": {
+                      "state": "alert",
+                      "method": [ "visual", "sound" ],
+                      "message": `Crossing vessel ${vesselName} ${cpa} m away in ${(tcpa/60).toFixed(2)}  minutes`,
+                      "timestamp": (new Date()).toISOString()
+                    }
+                  }]
+                }
+              ]
+            }
+
+            alarmSent[vessel] = true
+          } else {
+            if ( alarmSent[vessel] && typeof alarmSent[vessel] !== 'undefined') {
+              debug(`Clearing alarm for ${vessel}`)
+              alarmDelta = normalAlarmDelta(vessel, mmsi)
+              alarmSent[vessel] = false
+            }
+          }
+          if ( alarmDelta ) {
+            deltas.push(alarmDelta)//send notification
+          }
+
+          app.debug(vessel + ' TCPA: ' + tcpa + ' CPA: '  + cpa)
+
+
+          deltas.push({
+            "context": "vessels." + vessel,
+            "updates": [
+              {
+                "values": [ CPA_TCPA(cpa, tcpa) ]
+              }
+            ]
+          })
+        }
+      }
+
+      return deltas
+    }
+  };
 }
 
 function CPA_TCPA(cpa, tcpa)
