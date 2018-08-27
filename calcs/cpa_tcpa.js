@@ -159,6 +159,7 @@ module.exports = function(app, plugin) {
           alarmSent[vessel] = true
         } else {
           if ( alarmSent[vessel] && typeof alarmSent[vessel] !== 'undefined') {
+            debug(`Clearing alarm for ${vessel}`)
             alarmDelta = normalAlarmDelta(mmsi)
             alarmSent[vessel] = false
           }
@@ -209,15 +210,16 @@ function normalAlarmDelta(mmsi)
 {
   return {
     "context": "vessels." + mmsi,
-    "updates":
-    {
-      "values": {
-        "path": 'notifications.navigation.closestApproach.' + mmsi,
-        "value": {
-          "state": "normal",
-          "timestamp": (new Date()).toISOString()
-        }
+    "updates": [
+      {
+        "values": [{
+          "path": 'notifications.navigation.closestApproach.' + mmsi,
+          "value": {
+            "state": "normal",
+            "timestamp": (new Date()).toISOString()
+          }
+        }]
       }
-    }
+    ]
   }
 }
