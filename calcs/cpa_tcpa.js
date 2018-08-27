@@ -140,7 +140,7 @@ module.exports = function(app, plugin) {
           app.debug('sending CPA alarm for ' + mmsi)
           let vesselName = app.getPath('vessels.' + vessel + '.name')
           if ( !vesselName ) {
-            vesselName = vessel
+            vesselName = mmsi
           }
           alarmDelta = {
             "context": "vessels." + app.selfId,
