@@ -62,7 +62,7 @@ module.exports = function(app, plugin) {
         default: 600
       }
     },
-    debounceDelay: 60*1000,
+    debounceDelay: 5*1000,
     stop: function() {
       if ( alarmSent.length < 1 ) {
         alarmSent.forEach(function(vessel) {
@@ -89,7 +89,6 @@ module.exports = function(app, plugin) {
     var selfSpeedArray = generateSpeedVector(selfPosition, selfSpeed, selfCourse)
     var vesselList = app.getPath('vessels')
     var deltas = []
-    var values = []
     for(var vessel in vesselList){
       if(typeof vessel === 'undefined' || vessel == app.selfId){
         continue
@@ -134,46 +133,49 @@ module.exports = function(app, plugin) {
           tcpa = null
         }
 
-        if(cpa <= plugin.properties.traffic.notificationRange && tcpa <= plugin.properties.traffic.notificationTimeLimit){
+        let alarmDelta
+        if(cpa != null && tcpa != null && cpa <= plugin.properties.traffic.notificationRange && tcpa <= plugin.properties.traffic.notificationTimeLimit){
 
           var mmsi = app.getPath('vessels.' + vessel + '.mmsi')
           app.debug('sending CPA alarm for ' + mmsi)
-          values[vessel] ={
+          alarmDelta = {
             "context": "vessels." + app.selfId,
-            "updates":
-            {
-              "values": {
-                "path": 'notifications.navigation.closestApproach.' + mmsi,
-                "value": {
-                  "state": "alert",
-                  "method": [ "visual", "sound" ],
-                  "message": "Crossing vessel " + cpa + " m away in " + tcpa/60 + " minutes",
-                  "timestamp": (new Date()).toISOString()
-                }
+            "updates": [
+              {
+                "values": [{
+                  "path": 'notifications.navigation.closestApproach.' + mmsi,
+                  "value": {
+                    "state": "alert",
+                    "method": [ "visual", "sound" ],
+                    "message": "Crossing vessel " + cpa + " m away in " + tcpa/60 + " minutes",
+                    "timestamp": (new Date()).toISOString()
+                  }
+                }]
               }
-            }
+            ]
           }
-
 
           alarmSent[vessel] = true
         } else {
           if ( alarmSent[vessel] && typeof alarmSent[vessel] !== 'undefined') {
-            values[vessel] = [ normalAlarmDelta(mmsi) ]
+            alarmDelta = normalAlarmDelta(mmsi)
             alarmSent[vessel] = false
           }
         }
-        deltas.push(values[vessel])//send notification
+        if ( alarmDelta ) {
+          deltas.push(alarmDelta)//send notification
+        }
 
         app.debug(vessel + ' TCPA: ' + tcpa + ' CPA: '  + cpa)
 
 
         deltas.push({
           "context": "vessels." + vessel,
-          "updates":
-          {
-            "values": [ CPA_TCPA(cpa, tcpa) ]
-          }
-
+          "updates": [
+            {
+              "values": [ CPA_TCPA(cpa, tcpa) ]
+            }
+          ]
         })
       }
     }
@@ -187,10 +189,10 @@ function CPA_TCPA(cpa, tcpa)
 {
   return {
     "path": 'navigation.closestApproach',
-    "value": {
+    "value": cpa != null ? {
       "distance": cpa,
       "timeTo": tcpa
-    },
+    } : null,
     "timestamp": (new Date()).toISOString()
   };
 }
@@ -205,7 +207,7 @@ function generateSpeedVector(position, speed, course){
 function normalAlarmDelta(mmsi)
 {
   return {
-    "context": "vessels." + vessel,
+    "context": "vessels." + mmsi,
     "updates":
     {
       "values": {
