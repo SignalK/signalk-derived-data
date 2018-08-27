@@ -32,7 +32,7 @@ var MathFunc = {
 const geolib = require('geolib')
 var motionpredict = require("lethexa-motionpredict").withMathFunc(MathFunc)
 const _ = require('lodash')
-
+var alarmSent
 
 module.exports = function(app, plugin) {
   return {
@@ -50,10 +50,39 @@ module.exports = function(app, plugin) {
         type: "number",
         title: "Discard other vessel data if older than this (in seconds), negative to disable filter",
         default: 30
+      },
+      notificationRange: {
+        type: "number",
+        title: "Dangerous targets notification CPA limit (m)",
+        default: 1852
+      },
+      notificationTimeLimit: {
+        type: "number",
+        title: "Dangerous targets notification TCPA limit (s)",
+        default: 600
       }
     },
     debounceDelay: 60*1000,
+    stop: function() {
+      windAvg = undefined;
+      if ( alarmSent ) {
+        alarmSent = false;
+        app.handleMessage(plugin.id, {
+          "context": "vessels." + app.selfId,
+          "updates": [
+            {
+              "source": {
+                //"src": key
+              },
+              "timestamp": (new Date()).toISOString(),
+              "values": [ normalAlarmDelta() ]
+            }
+          ]
+        });
+      }
+    },
     calculator: function(selfPosition, selfCourse, selfSpeed) {
+
       var selfPositionArray = [selfPosition.latitude, selfPosition.longitude, 0]
       var selfSpeedArray = generateSpeedVector(selfPosition, selfSpeed, selfCourse)
       var vesselList = app.getPath('vessels')
@@ -66,14 +95,14 @@ module.exports = function(app, plugin) {
         if(typeof vesselPos !== 'undefined'){
 
           var distance = geolib.getDistanceSimple({latitude: selfPosition.latitude, longitude: selfPosition.longitude}, {latitude: vesselPos.latitude, longitude: vesselPos.longitude})
-          if(distance >= plugin.properties.range && plugin.properties.range >= 0){
+          if(distance >= plugin.properties.traffic.range && plugin.properties.traffic.range >= 0){
             continue
           }//if distance outside range, don't calculate
 
           var vesselTimestamp = app.getPath('vessels.' + vessel + '.navigation.position.timestamp')
           var currentTime = (new Date()).toISOString()
           var secondsSinceVesselUpdate = Math.floor((currentTime - vesselTimestamp) / 1e3)
-          if (secondsSinceVesselUpdate > plugin.properties.timelimit){
+          if (secondsSinceVesselUpdate > plugin.properties.traffic.timelimit){
             continue
           }//old data from vessel, not calculating
 
@@ -95,6 +124,28 @@ module.exports = function(app, plugin) {
           if(tcpa <= 0){
             cpa = null
             tcpa = null
+          }
+
+          if(cpa <= plugin.properties.traffic.notificationRange && tcpa <= plugin.properties.traffic.notificationTimeLimit){
+            //notify(cpa, tcpa)
+            var mmsi = app.getPath('vessels.' + vessel + '.mmsi')
+            values = [
+              {
+                "path": 'notifications.navigation.closestApproach.' + mmsi,
+                "value": {
+                  "state": "alert",
+                  "method": [ "visual", "sound" ],
+                  "message": "Crossing vessel " + cpa + " m away in " + tcpa/60 + " minutes",
+                  "timestamp": (new Date()).toISOString()
+                }
+              }]
+            alarmSent[vessel] = true
+          } else {
+            if ( alarmSent[vessel] ) {
+              values = [ normalAlarmDelta(mmsi) ]
+              alarmSent[vessel] = false
+            }
+            windAvg = (windAvg + angleApparent) / 2;
           }
 
           app.debug(vessel + ' TCPA: ' + tcpa + ' CPA: '  + cpa)
@@ -134,4 +185,15 @@ function generateSpeedVector(position, speed, course){
   var northSpeed = speed * Math.cos(course) / 1.94384 / 60 / 3600//to degrees per second (knots/60 angle minutes /3600 s/h)
   var eastSpeed = speed * Math.sin(course) / 1.94384 / 60 /3600 * Math.abs(Math.sin(position.latitude))//to degrees per second
   return [northSpeed, eastSpeed, 0]
+}
+
+function normalAlarmDelta(mmsi)
+{
+  return {
+    "path": 'notifications.navigation.closestApproach.' + mmsi,
+    "value": {
+      "state": "normal",
+      "timestamp": (new Date()).toISOString()
+    }
+  };
 }
