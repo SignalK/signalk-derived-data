@@ -160,7 +160,7 @@ module.exports = function(app, plugin) {
         } else {
           if ( alarmSent[vessel] && typeof alarmSent[vessel] !== 'undefined') {
             debug(`Clearing alarm for ${vessel}`)
-            alarmDelta = normalAlarmDelta(mmsi)
+            alarmDelta = normalAlarmDelta(vessel, mmsi)
             alarmSent[vessel] = false
           }
         }
@@ -206,10 +206,10 @@ function generateSpeedVector(position, speed, course){
   return [northSpeed, eastSpeed, 0]
 }
 
-function normalAlarmDelta(mmsi)
+function normalAlarmDelta(vessel, mmsi)
 {
   return {
-    "context": "vessels." + mmsi,
+    "context": "vessels." + vessel,
     "updates": [
       {
         "values": [{
