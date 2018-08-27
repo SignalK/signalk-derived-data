@@ -104,7 +104,10 @@ module.exports = function(app, plugin) {
         }//if distance outside range, don't calculate
 
         var vesselTimestamp = app.getPath('vessels.' + vessel + '.navigation.position.timestamp')
-        var currentTime = (new Date()).toISOString()
+        var currentTime = new Date(app.getSelfPath('navigation.datetime'))
+        if ( ! currentTime ) {
+          currentTime = (new Date()).toISOString()
+        }
         var secondsSinceVesselUpdate = Math.floor((currentTime - vesselTimestamp) / 1e3)
         if (secondsSinceVesselUpdate > plugin.properties.traffic.timelimit){
           app.debug('old data from vessel, not calculating')
