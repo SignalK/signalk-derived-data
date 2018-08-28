@@ -4,7 +4,8 @@
   "description": "Plugin that derives signalk data from other signalk data",
   "main": "index.js",
   "scripts": {
-    "test": "$NODE $npm_package_main"
+    "precommit": "lint-staged",
+    "format": "prettier-standard calcs/*.js index.js"
   },
   "keywords": [
     "signalk-node-server-plugin"
@@ -19,10 +20,6 @@
     }
   ],
   "license": "ISC",
-  "scripts": {
-    "precommit": "lint-staged",
-    "format": "prettier-standard calcs/*.js index.js"
-  },
   "lint-staged": {
     "linters": {
       "calcs/*.js": [
@@ -44,6 +41,7 @@
     "suncalc": "^1.8.0"
   },
   "devDependencies": {
+    "husky": "^0.14.3",
     "lint-staged": "^7.0.0",
     "prettier-standard": "^8.0.0"
   },
