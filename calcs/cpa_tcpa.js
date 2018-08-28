@@ -225,7 +225,7 @@ module.exports = function (app, plugin) {
                 alarmSent[vessel] &&
                 typeof alarmSent[vessel] !== 'undefined'
               ) {
-                debug(`Clearing alarm for ${vessel}`)
+                app.debug(`Clearing alarm for ${vessel}`)
                 alarmDelta = normalAlarmDelta(vessel, mmsi)
                 alarmSent[vessel] = false
               }
