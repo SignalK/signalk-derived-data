@@ -37,8 +37,10 @@
   },
   "dependencies": {
     "baconjs": "^0.7.88",
-    "lodash": "^4.17.4",
     "cubic-spline": "^1.0.4",
+    "geolib": "^2.0.24",
+    "lethexa-motionpredict": "^0.4.1",
+    "lodash": "^4.17.4",
     "suncalc": "^1.8.0"
   },
   "devDependencies": {
