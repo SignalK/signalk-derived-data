@@ -1,3 +1,4 @@
+//calculation source: https://arvelgentry.jimdo.com/app/download/9157993883/Arvel+Gentry+-+Sailboat_Performance_Testing_Techniques.pdf?t=1485748085
 module.exports = function (app, plugin) {
   return {
     group: 'heading',
