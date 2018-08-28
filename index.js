@@ -148,11 +148,13 @@ module.exports = function(app) {
     unsubscribes.forEach(f => f());
     unsubscribes = [];
 
-    calculations.forEach(calc => {
-      if ( calc.stop ) {
-        calc.stop()
-      }
-    });
+    if ( calculations ) {
+      calculations.forEach(calc => {
+        if ( calc.stop ) {
+          calc.stop()
+        }
+      });
+    }
   }
 
   plugin.id = "derived-data"
