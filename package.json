@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "precommit": "lint-staged",
-    "format": "prettier-standard calcs/*.js index.js"
+    "format": "prettier-standard calcs/*.js index.js",
+    "changelog": "github-changes -o signalk -r signalk-derived-data -a --only-pulls --use-commit-body --data=pulls  --tag-name=v$npm_package_version",
+    "release": "git tag -d v$npm_package_version ; npm run changelog && git add CHANGELOG.md && git commit -m 'chore: update changelog' && git tag v$npm_package_version && git push --tags && git push"
   },
   "keywords": [
     "signalk-node-server-plugin"
@@ -41,6 +43,7 @@
     "suncalc": "^1.8.0"
   },
   "devDependencies": {
+    "github-changes": "^1.0.4",
     "husky": "^0.14.3",
     "lint-staged": "^7.0.0",
     "prettier-standard": "^8.0.0"
