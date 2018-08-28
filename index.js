@@ -272,7 +272,12 @@ module.exports = function (app) {
       if (groupName != 'nogroup') {
         uiSchema['ui:order'].push(groupName)
         uiSchema[groupName] = {
-          'ui:order': []
+          'ui:order': [],
+          'ui:field': 'collapsible',
+          collapse: {
+            field: 'ObjectField',
+            wrapClassName: 'panel-group'
+          }
         }
         var group = {
           title: groupName.charAt(0).toUpperCase() + groupName.slice(1),
