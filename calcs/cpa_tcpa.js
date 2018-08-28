@@ -45,6 +45,11 @@ module.exports = function (app, plugin) {
           'Discard other vessel data if older than this (in seconds), negative to disable filter',
         default: 30
       },
+      sendNotifications: {
+        type: 'boolean',
+        title: 'Send dangerous targets notifications',
+        default: true
+      },
       notificationRange: {
         type: 'number',
         title: 'Dangerous targets notification CPA limit (m)',
@@ -175,52 +180,60 @@ module.exports = function (app, plugin) {
             tcpa = null
           }
 
-          let alarmDelta
           if (
-            cpa != null &&
-            tcpa != null &&
-            cpa <= plugin.properties.traffic.notificationRange &&
-            tcpa <= plugin.properties.traffic.notificationTimeLimit
+            _.isUndefined(plugin.properties.traffic.sendNotifications) ||
+            plugin.properties.traffic.sendNotifications
           ) {
-            var mmsi = app.getPath('vessels.' + vessel + '.mmsi')
-            app.debug('sending CPA alarm for ' + mmsi)
-            let vesselName = app.getPath('vessels.' + vessel + '.name')
-            if (!vesselName) {
-              vesselName = mmsi
-            }
-            alarmDelta = {
-              context: 'vessels.' + app.selfId,
-              updates: [
-                {
-                  values: [
-                    {
-                      path: 'notifications.navigation.closestApproach.' + mmsi,
-                      value: {
-                        state: 'alert',
-                        method: ['visual', 'sound'],
-                        message: `Crossing vessel ${vesselName} ${cpa} m away in ${(
-                          tcpa / 60
-                        ).toFixed(2)}  minutes`,
-                        timestamp: new Date().toISOString()
+            let alarmDelta
+            if (
+              cpa != null &&
+              tcpa != null &&
+              cpa <= plugin.properties.traffic.notificationRange &&
+              tcpa <= plugin.properties.traffic.notificationTimeLimit
+            ) {
+              var mmsi = app.getPath('vessels.' + vessel + '.mmsi')
+              app.debug('sending CPA alarm for ' + mmsi)
+              let vesselName = app.getPath('vessels.' + vessel + '.name')
+              if (!vesselName) {
+                vesselName = mmsi
+              }
+              alarmDelta = {
+                context: 'vessels.' + app.selfId,
+                updates: [
+                  {
+                    values: [
+                      {
+                        path:
+                          'notifications.navigation.closestApproach.' + mmsi,
+                        value: {
+                          state: 'alert',
+                          method: ['visual', 'sound'],
+                          message: `Crossing vessel ${vesselName} ${cpa} m away in ${(
+                            tcpa / 60
+                          ).toFixed(2)}  minutes`,
+                          timestamp: new Date().toISOString()
+                        }
                       }
-                    }
-                  ]
-                }
-              ]
-            }
+                    ]
+                  }
+                ]
+              }
 
-            alarmSent[vessel] = true
-          } else {
-            if (alarmSent[vessel] && typeof alarmSent[vessel] !== 'undefined') {
-              debug(`Clearing alarm for ${vessel}`)
-              alarmDelta = normalAlarmDelta(vessel, mmsi)
-              alarmSent[vessel] = false
+              alarmSent[vessel] = true
+            } else {
+              if (
+                alarmSent[vessel] &&
+                typeof alarmSent[vessel] !== 'undefined'
+              ) {
+                debug(`Clearing alarm for ${vessel}`)
+                alarmDelta = normalAlarmDelta(vessel, mmsi)
+                alarmSent[vessel] = false
+              }
+            }
+            if (alarmDelta) {
+              deltas.push(alarmDelta) // send notification
             }
           }
-          if (alarmDelta) {
-            deltas.push(alarmDelta) // send notification
-          }
-
           app.debug(vessel + ' TCPA: ' + tcpa + ' CPA: ' + cpa)
 
           deltas.push({
