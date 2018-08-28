@@ -96,7 +96,14 @@ module.exports = function(app) {
       }
       
       const selfStreams = derivedFrom.map((key, index) => {
-        let stream = app.streambundle.getSelfStream(key)
+        let stream
+        /*
+        if ( !_.isUndefined(calculation.allContexts) && calculation.allContexts ) {
+          stream = app.streambundle.getBus(key)
+        } else {
+        */
+          stream = app.streambundle.getSelfStream(key)
+        /*}*/
         if (calculation.defaults && calculation.defaults[index] != undefined) {
           stream = stream.merge(Bacon.once(calculation.defaults[index]))
         }
@@ -112,19 +119,25 @@ module.exports = function(app) {
           .debounceImmediate(calculation.debounceDelay || 20)
           .skipDuplicates(skip_function)
           .onValue(values => {
-            if ( typeof values !== 'undefined' ) {
-              var delta = {
-                "context": "vessels." + app.selfId,
-                "updates": [
-                  {
-                    "timestamp": (new Date()).toISOString(),
-                    "values": values
-                  }
-                ]
+            if ( typeof values !== 'undefined' && values.length > 0 ) {
+              if ( values[0].context ) {
+                values.forEach(delta => {
+                  app.handleMessage(plugin.id, delta)
+                })
+              } else {
+                let delta = {
+                  "context": "vessels." + app.selfId,
+                  "updates": [
+                    {
+                      "timestamp": (new Date()).toISOString(),
+                      "values": values
+                    }
+                  ]
+                }
+                
+                //app.debug("got delta: " + JSON.stringify(delta))
+                app.handleMessage(plugin.id, delta)
               }
-              
-              //app.debug("got delta: " + JSON.stringify(delta))
-              app.handleMessage(plugin.id, delta)
             }
           })
       );
