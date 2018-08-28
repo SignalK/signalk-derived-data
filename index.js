@@ -302,8 +302,8 @@ module.exports = function (app) {
       }
     })
 
-    app.debug('schema: ' + JSON.stringify(schema, null, 2))
-    app.debug('uiSchema: ' + JSON.stringify(uiSchema, null, 2))
+    // app.debug('schema: ' + JSON.stringify(schema, null, 2))
+    // app.debug('uiSchema: ' + JSON.stringify(uiSchema, null, 2))
   }
 
   return plugin
