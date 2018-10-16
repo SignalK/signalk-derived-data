@@ -1,5 +1,8 @@
 ## Change Log
 
+### v1.20.1 (2018/10/16 03:30 +00:00)
+- [#29](https://github.com/SignalK/signalk-derived-data/pull/29) fix: exception when a vessel does not have courseOverGroundTrue (@sbender9)
+
 ### v1.20.0 (2018/09/07 14:08 +00:00)
 - [#27](https://github.com/SignalK/signalk-derived-data/pull/27) feature: make calculation groups collapsible in the config ui (@sbender9)
 - [#26](https://github.com/SignalK/signalk-derived-data/pull/26) feature: make calculation groups collapsible in the config ui (@sbender9)
