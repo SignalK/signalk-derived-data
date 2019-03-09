@@ -55,7 +55,7 @@ module.exports = function (app, plugin) {
       },
       sendNotifications: {
         type: 'boolean',
-        title: 'Send dangerous targets notifications',
+        title: 'Global send dangerous targets notifications. You must also enable "Calculates closest point of approach distance and time..."',
         default: true
       },
       ['notificationZones']: {
@@ -86,7 +86,7 @@ module.exports = function (app, plugin) {
             },
             active: {
               type: 'boolean',
-              title: 'Send notification for this zone',
+              title: 'Send notification for this zone. You must also enable "Global send dangerous targets notifications..."',
               default: true
             }
           }
