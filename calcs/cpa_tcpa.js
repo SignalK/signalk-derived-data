@@ -21,7 +21,6 @@ var motionpredict = require('lethexa-motionpredict').withMathFunc(MathFunc)
 const _ = require('lodash')
 var alarmSent = []
 var notificationLevels = [
-  'nominal',
   'normal',
   'alert',
   'warn',
