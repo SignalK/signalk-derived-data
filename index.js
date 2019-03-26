@@ -41,7 +41,10 @@ module.exports = function (app) {
     if (!plugin.properties.tank_instances) {
       plugin.properties.tank_instances = defaultTanks
     }
-
+    if (!plugin.properties.traffic.notificationZones) {
+      plugin.properties.traffic.notificationZones = []
+    }
+    updateOldTrafficConfig()
     plugin.engines = plugin.properties.engine_instances
       .split(',')
       .map(e => e.trim())
@@ -51,7 +54,6 @@ module.exports = function (app) {
     plugin.tanks = plugin.properties.tank_instances
       .split(',')
       .map(e => e.trim())
-
     calculations = load_calcs(app, plugin, 'calcs')
     calculations = [].concat.apply([], calculations)
 
@@ -309,6 +311,23 @@ module.exports = function (app) {
 
     // app.debug('schema: ' + JSON.stringify(schema, null, 2))
     // app.debug('uiSchema: ' + JSON.stringify(uiSchema, null, 2))
+  }
+
+  function updateOldTrafficConfig () {
+    if (
+      !_.isUndefined(plugin.properties.traffic.notificationRange) ||
+      !_.isUndefined(plugin.properties.traffic.notificationTimeLimit)
+    ) {
+      plugin.properties.traffic.notificationZones.push({
+        range: plugin.properties.traffic.notificationRange || 1852,
+        timeLimit: plugin.properties.traffic.notificationTimeLimit || 600,
+        level: 'alert',
+        active: plugin.properties.traffic.sendNotifications
+      })
+      delete plugin.properties.traffic.notificationRange
+      delete plugin.properties.traffic.notificationTimeLimit
+      app.savePluginOptions(plugin.properties)
+    }
   }
 
   return plugin

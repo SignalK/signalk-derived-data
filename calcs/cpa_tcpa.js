@@ -20,6 +20,13 @@ const geolib = require('geolib')
 var motionpredict = require('lethexa-motionpredict').withMathFunc(MathFunc)
 const _ = require('lodash')
 var alarmSent = []
+var notificationLevels = [
+  'normal',
+  'alert',
+  'warn',
+  'alarm',
+  'emergency'
+]
 
 module.exports = function (app, plugin) {
   return {
@@ -47,18 +54,42 @@ module.exports = function (app, plugin) {
       },
       sendNotifications: {
         type: 'boolean',
-        title: 'Send dangerous targets notifications',
+        title: 'Global send dangerous targets notifications. You must also enable "Calculates closest point of approach distance and time..."',
         default: true
       },
-      notificationRange: {
-        type: 'number',
-        title: 'Dangerous targets notification CPA limit (m)',
-        default: 1852
-      },
-      notificationTimeLimit: {
-        type: 'number',
-        title: 'Dangerous targets notification TCPA limit (s)',
-        default: 600
+      ['notificationZones']: {
+        type: 'array',
+        title:
+          'Dangerous targets notification zone (CPA limit / TCPA limit => Notification level)',
+        items: {
+          type: 'object',
+          required: ['range', 'timeLimit', 'level'],
+          properties: {
+            range: {
+              type: 'number',
+              title: 'Dangerous targets notification CPA limit (m)',
+              description: ' ',
+              default: 1852
+            },
+            timeLimit: {
+              type: 'number',
+              title: 'Dangerous targets notification TCPA limit (s)',
+              description: ' ',
+              default: 600
+            },
+            level: {
+              type: 'string',
+              title: 'Notification level of notification for this zone',
+              enum: notificationLevels,
+              default: 'alert'
+            },
+            active: {
+              type: 'boolean',
+              title: 'Send notification for this zone. You must also enable "Global send dangerous targets notifications..."',
+              default: true
+            }
+          }
+        }
       }
     },
     debounceDelay: 5 * 1000,
@@ -201,12 +232,26 @@ module.exports = function (app, plugin) {
               plugin.properties.traffic.sendNotifications
             ) {
               let alarmDelta
-              if (
-                cpa != null &&
-                tcpa != null &&
-                cpa <= plugin.properties.traffic.notificationRange &&
-                tcpa <= plugin.properties.traffic.notificationTimeLimit
-              ) {
+              let notificationLevelIndex = 0
+              if (cpa != null && tcpa != null) {
+                plugin.properties.traffic.notificationZones
+                  .filter(notificationZone => notificationZone.active === true)
+                  .forEach(notificationZone => {
+                    if (
+                      cpa <= notificationZone.range &&
+                      tcpa <= notificationZone.timeLimit
+                    ) {
+                      var newNotificationLevelIndex = notificationLevels.indexOf(
+                        notificationZone.level
+                      )
+                      notificationLevelIndex =
+                        newNotificationLevelIndex > notificationLevelIndex
+                          ? newNotificationLevelIndex
+                          : notificationLevelIndex
+                    }
+                  })
+              }
+              if (notificationLevelIndex > 0) {
                 var mmsi = app.getPath('vessels.' + vessel + '.mmsi')
                 app.debug('sending CPA alarm for ' + mmsi)
                 let vesselName = app.getPath('vessels.' + vessel + '.name')
@@ -222,7 +267,7 @@ module.exports = function (app, plugin) {
                           path:
                             'notifications.navigation.closestApproach.' + mmsi,
                           value: {
-                            state: 'alert',
+                            state: notificationLevels[notificationLevelIndex],
                             method: ['visual', 'sound'],
                             message: `Crossing vessel ${vesselName} ${cpa} m away in ${(
                               tcpa / 60
@@ -275,22 +320,18 @@ function CPA_TCPA (cpa, tcpa) {
     value:
       cpa != null
         ? {
-          distance: cpa,
-          timeTo: tcpa
-        }
+            distance: cpa,
+            timeTo: tcpa
+          }
         : null,
     timestamp: new Date().toISOString()
   }
 }
 
 function generateSpeedVector (position, speed, course) {
-  var northSpeed = speed * Math.cos(course) / 1.94384 / 60 / 3600 // to degrees per second (knots/60 angle minutes /3600 s/h)
+  var northSpeed = (speed * Math.cos(course)) / 1.94384 / 60 / 3600 // to degrees per second (knots/60 angle minutes /3600 s/h)
   var eastSpeed =
-    speed *
-    Math.sin(course) /
-    1.94384 /
-    60 /
-    3600 *
+    ((speed * Math.sin(course)) / 1.94384 / 60 / 3600) *
     Math.abs(Math.sin(position.latitude)) // to degrees per second
   return [northSpeed, eastSpeed, 0]
 }
