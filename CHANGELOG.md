@@ -1,5 +1,9 @@
 ## Change Log
 
+### v1.21.0 (2019/04/16 19:38 +00:00)
+- [#32](https://github.com/SignalK/signalk-derived-data/pull/32) feature: Adding multiple zones in traffic notifications (@cmotelet)
+- [#30](https://github.com/SignalK/signalk-derived-data/pull/30) fix: dewPoint conversions were wrong way (@joabakk)
+
 ### v1.20.1 (2018/10/16 03:30 +00:00)
 - [#29](https://github.com/SignalK/signalk-derived-data/pull/29) fix: exception when a vessel does not have courseOverGroundTrue (@sbender9)
 
