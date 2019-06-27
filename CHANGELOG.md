@@ -1,5 +1,8 @@
 ## Change Log
 
+### v1.22.0 (2019/06/27 13:14 +00:00)
+- [#35](https://github.com/SignalK/signalk-derived-data/pull/35) feature: use magneticVariation from defaults if not available (@sbender9)
+
 ### v1.21.0 (2019/04/16 19:38 +00:00)
 - [#32](https://github.com/SignalK/signalk-derived-data/pull/32) feature: Adding multiple zones in traffic notifications (@cmotelet)
 - [#30](https://github.com/SignalK/signalk-derived-data/pull/30) fix: dewPoint conversions were wrong way (@joabakk)
