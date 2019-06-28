@@ -104,7 +104,7 @@ module.exports = function (app, plugin) {
               {
                 values: [
                   {
-                    path: 'notifications.navigation.closestApproach.' + mmsi,
+                    path: 'notifications.navigation.closestApproach.' + vessel,
                     value: {
                       state: 'normal',
                       timestamp: new Date().toISOString()
@@ -253,10 +253,10 @@ module.exports = function (app, plugin) {
               }
               if (notificationLevelIndex > 0) {
                 var mmsi = app.getPath('vessels.' + vessel + '.mmsi')
-                app.debug('sending CPA alarm for ' + mmsi)
+                app.debug('sending CPA alarm for ' + vessel)
                 let vesselName = app.getPath('vessels.' + vessel + '.name')
                 if (!vesselName) {
-                  vesselName = mmsi
+                  vesselName = mmsi || '(unknown)'
                 }
                 alarmDelta = {
                   context: 'vessels.' + app.selfId,
@@ -265,7 +265,7 @@ module.exports = function (app, plugin) {
                       values: [
                         {
                           path:
-                            'notifications.navigation.closestApproach.' + mmsi,
+                            'notifications.navigation.closestApproach.' + vessel,
                           value: {
                             state: notificationLevels[notificationLevelIndex],
                             method: ['visual', 'sound'],
@@ -343,7 +343,7 @@ function normalAlarmDelta (vessel, mmsi) {
       {
         values: [
           {
-            path: 'notifications.navigation.closestApproach.' + mmsi,
+            path: 'notifications.navigation.closestApproach.' + vessel,
             value: {
               state: 'normal',
               timestamp: new Date().toISOString()
