@@ -1,5 +1,8 @@
 ## Change Log
 
+### v1.23.0 (2019/07/10 14:18 +00:00)
+- [#36](https://github.com/SignalK/signalk-derived-data/pull/36) Fix notification paths for CPA_TCPA to use vessel uuid. (@panaaj)
+
 ### v1.22.0 (2019/06/27 13:14 +00:00)
 - [#35](https://github.com/SignalK/signalk-derived-data/pull/35) feature: use magneticVariation from defaults if not available (@sbender9)
 
