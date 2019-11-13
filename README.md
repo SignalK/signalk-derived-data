@@ -26,6 +26,7 @@ It currently calculates:
  * Magnetic Wind Direction (based on AWA and headingMagnetic)
  * Magnetic Wind Direction (based on wind.directionTrue and magneticVarition)
  * Wind Shift (experimental)
+ * Sunlight Times: sunrise, sunriseEnd, goldenHourEnd, solarNoon, goldenHour, sunsetStart, sunset, dusk, nauticalDusk, night, nadir, nightEnd, nauticalDawn, dawn (based on time and navigation.position)
 
 To add new calculations, just create a new file under the `./calcs` directory.
 
