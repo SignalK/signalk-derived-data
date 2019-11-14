@@ -1,5 +1,10 @@
 ## Change Log
 
+### v1.24.0 (2019/11/14 17:18 +00:00)
+- [#43](https://github.com/SignalK/signalk-derived-data/pull/43) feature: add moon illumination and times based on suncalc library (@jncarter123)
+- [#41](https://github.com/SignalK/signalk-derived-data/pull/41) feature: add sunlight times based on suncalc library (@jncarter123)
+- [#39](https://github.com/SignalK/signalk-derived-data/pull/39) feature: add Heat Index based on NWS formula (@jncarter123)
+
 ### v1.23.0 (2019/07/10 14:18 +00:00)
 - [#36](https://github.com/SignalK/signalk-derived-data/pull/36) Fix notification paths for CPA_TCPA to use vessel uuid. (@panaaj)
 
