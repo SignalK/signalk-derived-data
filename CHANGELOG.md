@@ -1,5 +1,8 @@
 ## Change Log
 
+### v1.24.1 (2020/02/17 16:49 +00:00)
+- [#44](https://github.com/SignalK/signalk-derived-data/pull/44) fix: use design.draft.value.maximum for depthBelowSurface if available (@mkbltz)
+
 ### v1.24.0 (2019/11/14 17:18 +00:00)
 - [#43](https://github.com/SignalK/signalk-derived-data/pull/43) feature: add moon illumination and times based on suncalc library (@jncarter123)
 - [#41](https://github.com/SignalK/signalk-derived-data/pull/41) feature: add sunlight times based on suncalc library (@jncarter123)
