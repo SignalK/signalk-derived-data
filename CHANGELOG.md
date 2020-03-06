@@ -1,5 +1,8 @@
 ## Change Log
 
+### v1.24.2 (2020/03/06 15:47 +00:00)
+- [#45](https://github.com/SignalK/signalk-derived-data/pull/45) fix: incorrect path to tank level (@joabakk)
+
 ### v1.24.1 (2020/02/17 16:49 +00:00)
 - [#44](https://github.com/SignalK/signalk-derived-data/pull/44) fix: use design.draft.value.maximum for depthBelowSurface if available (@mkbltz)
 
