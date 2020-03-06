@@ -11,11 +11,11 @@ module.exports = function (app, plugin) {
       group: 'tanks',
       optionKey: 'tankVolume_' + instance,
       title:
-        "'" +
+        "'tanks." +
         instance +
         "' Tank Volume (based on currentLevel (requires calibration pairs (>2 for parallell sides, >3 for straight wedge and >4 for more complex shapes))",
       derivedFrom: function () {
-        return [instance + '.currentLevel']
+        return ['tanks.' + instance + '.currentLevel']
       },
       properties: {
         volume_unit: {
