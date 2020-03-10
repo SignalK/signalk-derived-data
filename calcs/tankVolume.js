@@ -65,7 +65,7 @@ module.exports = function (app, plugin) {
 
         return [
           {
-            path: instance + '.currentVolume',
+            path: 'tanks.' + instance + '.currentVolume',
             value: spline(level, calLevels, calVolumes)
           }
         ]
