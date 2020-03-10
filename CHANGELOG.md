@@ -1,5 +1,8 @@
 ## Change Log
 
+### v1.24.3 (2020/03/10 18:06 +00:00)
+- [#46](https://github.com/SignalK/signalk-derived-data/pull/46) fix tank level path remaining from  #45 (@joabakk)
+
 ### v1.24.2 (2020/03/06 15:47 +00:00)
 - [#45](https://github.com/SignalK/signalk-derived-data/pull/45) fix: incorrect path to tank level (@joabakk)
 
