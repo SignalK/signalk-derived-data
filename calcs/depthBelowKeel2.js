@@ -1,28 +1,28 @@
 const _ = require('lodash')
 
 module.exports = function (app) {
-  var depthTransducerToKeel = app.getSelfPath(
-    'environment.depth.transducerToKeel.value'
-  )
-
-  var derivedFrom =
-    typeof depthTransducerToKeel === 'undefined'
-      ? []
-      : ['environment.depth.belowTransducer']
-
   return {
     group: 'depth',
     optionKey: 'belowKeel_2',
-    title:
-      'Depth Below Keel (based on depth.belowTransducer and depth.transducerToKeel)',
-    derivedFrom: derivedFrom,
-    calculator: function (depthBelowTransducer) {
+    title: 'Depth Below Keel (based on depth.belowTransducer and depth.transducerToKeel)',
+    derivedFrom: ['environment.depth.belowTransducer', 'environment.depth.transducerToKeel'],
+    calculator: function (depthBelowTransducer, depthTransducerToKeel) {
+      if (!depthBelowTransducer || !depthTransducerToKeel) {
+        return undefined
+      }
+
+      const value = depthBelowTransducer + depthTransducerToKeel
+
+      if (isNaN(value)) {
+        return undefined
+      }
+
       return [
         {
           path: 'environment.depth.belowKeel',
-          value: depthBelowTransducer + depthTransducerToKeel
-        }
+          value,
+        },
       ]
-    }
+    },
   }
 }
