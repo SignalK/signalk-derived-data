@@ -1,7 +1,7 @@
 const _ = require('lodash')
 
 module.exports = function (app) {
-  let depthTransducerToKeel = app.getSelfPath('environment.depth.transducerToKeel.value')
+  let depthTransducerToKeel = app.getSelfPath('environment.depth.transducerToKeel.value') || 0
 
   return {
     group: 'depth',
@@ -11,6 +11,8 @@ module.exports = function (app) {
     calculator: function (depthBelowTransducer, transducerToKeel) {
       if (typeof transducerToKeel === 'number') {
         depthTransducerToKeel = transducerToKeel
+      } else {
+        depthTransducerToKeel = app.getSelfPath('environment.depth.transducerToKeel.value') || 0
       }
 
       // Need to check if number, because 0 is a valid value but also falsy
