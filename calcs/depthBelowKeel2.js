@@ -1,9 +1,6 @@
 const _ = require('lodash')
 
 module.exports = function (app) {
-  let depthTransducerToKeel =
-    app.getSelfPath('environment.depth.transducerToKeel.value') || 0
-
   return {
     group: 'depth',
     optionKey: 'belowKeel_2',
@@ -11,7 +8,7 @@ module.exports = function (app) {
       'Depth Below Keel (based on depth.belowTransducer and depth.transducerToKeel)',
     derivedFrom: ['environment.depth.belowTransducer'],
     calculator: function (depthBelowTransducer) {
-      depthTransducerToKeel =
+      const depthTransducerToKeel =
         app.getSelfPath('environment.depth.transducerToKeel.value') || 0
 
       // Need to check if number, because 0 is a valid value but also falsy
