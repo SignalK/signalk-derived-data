@@ -1,6 +1,6 @@
 {
   "name": "signalk-derived-data",
-  "version": "1.24.3",
+  "version": "1.24.4",
   "description": "Plugin that derives signalk data from other signalk data",
   "main": "index.js",
   "scripts": {
