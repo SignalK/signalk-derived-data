@@ -30,7 +30,7 @@ module.exports = function (app, plugin) {
     calculator: function (angleApparent) {
       var alarm = app.getSelfPath('environment.wind.directionChangeAlarm.value')
       if (typeof alarm === 'undefined') {
-        console.log('signall-Derived-data: no directionChangeAlarm value')
+        app.debug('signall-Derived-data: no directionChangeAlarm value')
         return undefined
       }
 
