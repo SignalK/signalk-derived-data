@@ -3,7 +3,7 @@ module.exports = function (app) {
     group: 'wind',
     optionKey: 'trueWind',
     title:
-      'True Wind Angle, Direction and Speed (based on speed through water, AWA and AWS)',
+      'True Wind Angle, Direction and Speed (based on speed through water, AWA, AWS, headingTrue)',
     derivedFrom: [
       'navigation.headingTrue',
       'navigation.speedThroughWater',
