@@ -12,6 +12,7 @@ It currently calculates:
  * Depth Below Keel (based on depth.belowSurface and design.draft.maximum)
  * Depth Below Keel (based on depth.belowTransducer and depth.transducerToKeel)
  * Depth Below Surface (based on depth.belowKeel and design.draft.maximum)
+ * Distance To Go (based on courseGreatCircle.nextPoint.position)
  * Outside air dew point (based on humidity and temperature)
  * Fuel economy (based on speed over ground, fuel rate)
  * Propeller Slip calculation (requires defaults.json to include propulsion.\*.drive.propeller.pitch and propulsion.\*.transmission.gearRatio)  
