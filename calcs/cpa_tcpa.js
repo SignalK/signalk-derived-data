@@ -152,12 +152,16 @@ module.exports = function (app, plugin) {
           var vesselTimestamp = app.getPath(
             'vessels.' + vessel + '.navigation.position.timestamp'
           )
-          var currentTime = new Date(
-            app.getSelfPath('navigation.datetime.value')
-          )
-          if (!currentTime) {
-            currentTime = new Date().toISOString()
+          vesselTimestamp = new Date(vesselTimestamp).getTime()
+
+          var currentTime
+          var currentTimeString = app.getSelfPath('navigation.datetime.value')
+          if ( currentTimeString ) {
+            currentTime = new Date(currentTimeString).getTime()
+          } else {
+            currentTime = Date.now()
           }
+
           var secondsSinceVesselUpdate = Math.floor(
             (currentTime - vesselTimestamp) / 1e3
           )
