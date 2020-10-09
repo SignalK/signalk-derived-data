@@ -1,6 +1,6 @@
 module.exports = function (app) {
   return {
-    group: 'vmg',
+    group: 'course data',
     optionKey: 'vmg_Course',
     title:
       'Velocity Made Good to Course (based on courseGreatCircle.nextPoint.bearingTrue heading true and speedOverGround)',

@@ -1,6 +1,6 @@
 module.exports = function (app) {
   return {
-    group: 'vmg',
+    group: 'course data',
     optionKey: 'vmg_Wind',
     title:
       'Velocity Made Good to wind (based on wind.directionTrue and speedOverGround)',
