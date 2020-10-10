@@ -50,6 +50,9 @@ module.exports = function (app) {
       // The bearing of a line between the vessel's current position and nextPoint, relative to true north
       let brg = !pos || !pathEnd ? null : pos.initialBearingTo(pathEnd)
 
+      // ** Distance from vessel to previousPoint **
+      let dtp = !pos || !pathStart ? null : pathStart.distanceTo(pos)
+
       return [
         {
           path: 'navigation.courseGreatCircle.crossTrackError',
@@ -66,6 +69,10 @@ module.exports = function (app) {
         {
           path: 'navigation.courseGreatCircle.nextPoint.bearingTrue',
           value: brg
+        },
+        {
+          path: 'navigation.courseGreatCircle.previousPoint.distance',
+          value: dtp
         }
       ]
     }
