@@ -1,32 +1,9 @@
-var MathFunc = {
-  add: function (a, b) {
-    return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]
-  },
-  sub: function (a, b) {
-    return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]
-  },
-  mulScalar: function (a, s) {
-    return [a[0] * s, a[1] * s, a[2] * s]
-  },
-  dot: function (a, b) {
-    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
-  },
-  lengthSquared: function (a) {
-    return a[0] * a[0] + a[1] * a[1] + a[2] * a[2]
-  }
-}
-
-const geolib = require('geolib')
-var motionpredict = require('lethexa-motionpredict').withMathFunc(MathFunc)
 const _ = require('lodash')
+const geolib = require('geolib')
+const geoutils = require('geolocation-utils')
+
 var alarmSent = []
-var notificationLevels = [
-  'normal',
-  'alert',
-  'warn',
-  'alarm',
-  'emergency'
-]
+var notificationLevels = ['normal', 'alert', 'warn', 'alarm', 'emergency']
 
 module.exports = function (app, plugin) {
   return {
@@ -54,10 +31,11 @@ module.exports = function (app, plugin) {
       },
       sendNotifications: {
         type: 'boolean',
-        title: 'Global send dangerous targets notifications. You must also enable "Calculates closest point of approach distance and time..."',
+        title:
+          'Global send dangerous targets notifications. You must also enable "Calculates closest point of approach distance and time..."',
         default: true
       },
-      ['notificationZones']: {
+      notificationZones: {
         type: 'array',
         title:
           'Dangerous targets notification zone (CPA limit / TCPA limit => Notification level)',
@@ -85,7 +63,8 @@ module.exports = function (app, plugin) {
             },
             active: {
               type: 'boolean',
-              title: 'Send notification for this zone. You must also enable "Global send dangerous targets notifications..."',
+              title:
+                'Send notification for this zone. You must also enable "Global send dangerous targets notifications..."',
               default: true
             }
           }
@@ -118,15 +97,16 @@ module.exports = function (app, plugin) {
       }
     },
     calculator: function (selfPosition, selfCourse, selfSpeed) {
-      var selfPositionArray = [selfPosition.latitude, selfPosition.longitude, 0]
-      var selfSpeedArray = generateSpeedVector(
-        selfPosition,
-        selfSpeed,
-        selfCourse
-      )
+      var selfCourseDeg = geoutils.radToDeg(selfCourse)
+      var selfVessel = {
+        location: { lon: selfPosition.longitude, lat: selfPosition.latitude },
+        speed: selfSpeed, // meters/second
+        heading: selfCourseDeg // degrees
+      }
       var vesselList = app.getPath('vessels')
       var deltas = []
       for (var vessel in vesselList) {
+        var cpa, tcpa
         if (typeof vessel === 'undefined' || vessel == app.selfId) {
           continue
         }
@@ -156,7 +136,7 @@ module.exports = function (app, plugin) {
 
           var currentTime
           var currentTimeString = app.getSelfPath('navigation.datetime.value')
-          if ( currentTimeString ) {
+          if (currentTimeString) {
             currentTime = new Date(currentTimeString).getTime()
           } else {
             currentTime = Date.now()
@@ -170,8 +150,6 @@ module.exports = function (app, plugin) {
             continue
           } // old data from vessel, not calculating
 
-          var cpa, tcpa
-
           var vesselCourse = app.getPath(
             'vessels.' + vessel + '.navigation.courseOverGroundTrue.value'
           )
@@ -180,56 +158,19 @@ module.exports = function (app, plugin) {
           )
 
           if (!_.isUndefined(vesselCourse) && !_.isUndefined(vesselSpeed)) {
-            var vesselPositionArray = [
-              vesselPos.latitude,
-              vesselPos.longitude,
-              0
-            ]
-            var vesselSpeedArray = generateSpeedVector(
-              vesselPos,
-              vesselSpeed,
-              vesselCourse
-            )
-
-            tcpa = motionpredict.calcCPATime(
-              selfPositionArray,
-              selfSpeedArray,
-              vesselPositionArray,
-              vesselSpeedArray
-            )
-            var selfCpaPosition = motionpredict.getPositionByVeloAndTime(
-              selfPositionArray,
-              selfSpeedArray,
-              tcpa
-            )
-            var vesselCpaPosition = motionpredict.getPositionByVeloAndTime(
-              vesselPositionArray,
-              vesselSpeedArray,
-              tcpa
-            )
-
-            if (selfCpaPosition && vesselCpaPosition) {
-              try {
-                cpa = geolib.getDistanceSimple(
-                  {
-                    latitude: selfCpaPosition[0],
-                    longitude: selfCpaPosition[1]
-                  },
-                  {
-                    latitude: vesselCpaPosition[0],
-                    longitude: vesselCpaPosition[1]
-                  }
-                )
-              } catch (err) {
-                console.error(err)
-                continue
-              }
+            var vesselCourseDeg = geoutils.radToDeg(vesselCourse)
+            var otherVessel = {
+              location: {
+                lon: vesselPos.longitude,
+                lat: vesselPos.latitude
+              },
+              speed: vesselSpeed, // meters/second
+              heading: vesselCourseDeg // degrees
             }
 
-            if (tcpa <= 0) {
-              cpa = null
-              tcpa = null
-            }
+            const obj = geoutils.cpa(selfVessel, otherVessel)
+            tcpa = obj.time
+            cpa = obj.distance
 
             if (
               _.isUndefined(plugin.properties.traffic.sendNotifications) ||
@@ -237,7 +178,7 @@ module.exports = function (app, plugin) {
             ) {
               let alarmDelta
               let notificationLevelIndex = 0
-              if (cpa != null && tcpa != null) {
+              if (cpa != null && tcpa != null && tcpa > 0) {
                 plugin.properties.traffic.notificationZones
                   .filter(notificationZone => notificationZone.active === true)
                   .forEach(notificationZone => {
@@ -269,13 +210,14 @@ module.exports = function (app, plugin) {
                       values: [
                         {
                           path:
-                            'notifications.navigation.closestApproach.' + vessel,
+                            'notifications.navigation.closestApproach.' +
+                            vessel,
                           value: {
                             state: notificationLevels[notificationLevelIndex],
                             method: ['visual', 'sound'],
-                            message: `Crossing vessel ${vesselName} ${cpa} m away in ${(
-                              tcpa / 60
-                            ).toFixed(2)}  minutes`,
+                            message: `Crossing vessel ${vesselName} ${cpa.toFixed(
+                              2
+                            )} m away in ${(tcpa / 60).toFixed(2)}  minutes`,
                             timestamp: new Date().toISOString()
                           }
                         }
@@ -324,20 +266,12 @@ function CPA_TCPA (cpa, tcpa) {
     value:
       cpa != null
         ? {
-            distance: cpa,
-            timeTo: tcpa
-          }
+          distance: cpa,
+          timeTo: tcpa
+        }
         : null,
     timestamp: new Date().toISOString()
   }
-}
-
-function generateSpeedVector (position, speed, course) {
-  var northSpeed = (speed * Math.cos(course)) / 1.94384 / 60 / 3600 // to degrees per second (knots/60 angle minutes /3600 s/h)
-  var eastSpeed =
-    ((speed * Math.sin(course)) / 1.94384 / 60 / 3600) *
-    Math.abs(Math.sin(position.latitude)) // to degrees per second
-  return [northSpeed, eastSpeed, 0]
 }
 
 function normalAlarmDelta (vessel, mmsi) {
