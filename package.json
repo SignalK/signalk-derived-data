@@ -8,7 +8,8 @@
     "format": "prettier-standard calcs/*.js index.js",
     "changelog": "github-changes -o signalk -r signalk-derived-data -a --only-pulls --use-commit-body --data=pulls  --tag-name=v$npm_package_version",
     "create-release": "github-create-release --owner signalk --repository signalk-derived-data",
-    "release": "git tag -d v$npm_package_version ; git tag v$npm_package_version && git push --tags && git push && npm run create-release"
+    "release": "git tag -d v$npm_package_version ; git tag v$npm_package_version && git push --tags && git push && npm run create-release",
+    "test": "mocha"
   },
   "keywords": [
     "signalk-node-server-plugin"
@@ -47,9 +48,12 @@
   },
   "devDependencies": {
     "@signalk/github-create-release": "^1.2.0",
+    "chai": "^4.2.0",
+    "chai-json-equal": "0.0.1",
     "github-changes": "^1.0.4",
     "husky": "^0.14.3",
     "lint-staged": "^7.0.0",
+    "mocha": "^8.2.1",
     "prettier-standard": "^8.0.0"
   },
   "repository": {
