@@ -1,6 +1,6 @@
 {
   "name": "signalk-derived-data",
-  "version": "1.28.0",
+  "version": "1.28.1",
   "description": "Plugin that derives signalk data from other signalk data",
   "main": "index.js",
   "scripts": {
@@ -40,10 +40,10 @@
     "baconjs": "^0.7.88",
     "cubic-spline": "^1.0.4",
     "geolib": "^2.0.24",
-    "lethexa-motionpredict": "^0.4.1",
+    "geolocation-utils": "^1.2.3",
     "lodash": "^4.17.4",
-    "suncalc": "^1.8.0",
-    "magvar": "^1.0.3"
+    "magvar": "^1.0.3",
+    "suncalc": "^1.8.0"
   },
   "devDependencies": {
     "@signalk/github-create-release": "^1.2.0",

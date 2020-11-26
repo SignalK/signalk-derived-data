@@ -3,9 +3,9 @@ module.exports = function (app) {
     group: 'course data',
     optionKey: 'vmg_Wind',
     title:
-      'Velocity Made Good to wind (based on wind.directionTrue and speedOverGround)',
+      'Velocity Made Good to wind (based on wind.angleTrueWater and speedOverGround)',
     derivedFrom: [
-      'environment.wind.directionTrue',
+      'environment.wind.angleTrueWater',
       'navigation.speedOverGround'
     ],
     calculator: function (trueWindAngle, speedOverGround) {
