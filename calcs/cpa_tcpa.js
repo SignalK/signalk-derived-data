@@ -114,7 +114,7 @@ module.exports = function (app, plugin) {
           'vessels.' + vessel + '.navigation.position.value'
         )
         if (typeof vesselPos !== 'undefined') {
-          var distance = geolib.getDistanceSimple(
+          var distance = geolib.getDistance(
             {
               latitude: selfPosition.latitude,
               longitude: selfPosition.longitude
