@@ -21,6 +21,7 @@ const fs = require('fs')
 const defaultEngines = 'port, starboard'
 const defaultBatteries = '0'
 const defaultTanks = 'fuel.0, fuel.1'
+const defaultAir = 'outside'
 
 module.exports = function (app) {
   var plugin = {}
@@ -41,6 +42,9 @@ module.exports = function (app) {
     if (!plugin.properties.tank_instances) {
       plugin.properties.tank_instances = defaultTanks
     }
+    if (!plugin.properties.air_instances) {
+      plugin.properties.air_instances = defaultAir
+    }
     if (!plugin.properties.traffic.notificationZones) {
       plugin.properties.traffic.notificationZones = []
     }
@@ -54,6 +58,7 @@ module.exports = function (app) {
     plugin.tanks = plugin.properties.tank_instances
       .split(',')
       .map(e => e.trim())
+    plugin.air = plugin.properties.air_instances.split(',').map(e => e.trim())
     calculations = load_calcs(app, plugin, 'calcs')
     calculations = [].concat.apply([], calculations)
 
@@ -189,6 +194,7 @@ module.exports = function (app) {
       plugin.engines = defaultEngines.split(',').map(e => e.trim())
       plugin.batteries = defaultBatteries.split(',').map(e => e.trim())
       plugin.tanks = defaultTanks.split(',').map(e => e.trim())
+      plugin.air = defaultAir.split(',').map(e => e.trim())
 
       calculations = load_calcs(app, plugin, 'calcs')
       calculations = [].concat.apply([], calculations)
@@ -222,6 +228,12 @@ module.exports = function (app) {
           type: 'string',
           description: 'Comma delimited list of available tanks',
           default: defaultTanks
+        },
+        air_instances: {
+          title: 'Air',
+          type: 'string',
+          description: 'Comma delimited list of available air areas',
+          default: defaultAir
         }
       }
     }
@@ -231,7 +243,8 @@ module.exports = function (app) {
         'default_ttl',
         'engine_instances',
         'battery_instances',
-        'tank_instances'
+        'tank_instances',
+        'air_instances'
       ]
     }
 
