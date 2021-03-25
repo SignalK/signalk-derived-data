@@ -10,12 +10,14 @@ module.exports = function (app) {
     derivedFrom: [
       'navigation.courseGreatCircle.nextPoint.position',
       'navigation.courseGreatCircle.previousPoint.position',
-      'navigation.position'
+      'navigation.position',
+      'navigation.magneticVariation'
     ],
     calculator: function (
       nextPointPosition,
       previousPointPosition,
-      vesselPosition
+      vesselPosition,
+      magneticVariation
     ) {
       let pos = vesselPosition
         ? new LatLon(vesselPosition.latitude, vesselPosition.longitude)
@@ -44,11 +46,24 @@ module.exports = function (app) {
           ? null
           : pathStart.initialBearingTo(pathEnd)
 
+      // Same as above, but magnetic
+      let trkBearingMagnetic =
+          !trkBearingTrue || !magneticVariation
+          ? null
+          : trkBearingTrue - magneticVariation
+
       // ** Distance from vessel to nextPoint **
       let dtg = !pos || !pathEnd ? null : pos.distanceTo(pathEnd)
 
       // The bearing of a line between the vessel's current position and nextPoint, relative to true north
       let brg = !pos || !pathEnd ? null : pos.initialBearingTo(pathEnd)
+
+      // Same as above, but magnetic
+      let brgMag =
+          !brg || !magneticVariation
+              ? null
+              : brg - magneticVariation
+
 
       // ** Distance from vessel to previousPoint **
       let dtp = !pos || !pathStart ? null : pathStart.distanceTo(pos)
@@ -63,12 +78,20 @@ module.exports = function (app) {
           value: trkBearingTrue
         },
         {
+          path: 'navigation.courseGreatCircle.bearingTrackMagnetic',
+          value: trkBearingMagnetic
+        },
+        {
           path: 'navigation.courseGreatCircle.nextPoint.distance',
           value: dtg
         },
         {
           path: 'navigation.courseGreatCircle.nextPoint.bearingTrue',
           value: brg
+        },
+        {
+          path: 'navigation.courseGreatCircle.nextPoint.bearingMagnetic',
+          value: brgMag
         },
         {
           path: 'navigation.courseGreatCircle.previousPoint.distance',
