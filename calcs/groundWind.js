@@ -16,6 +16,9 @@ module.exports = function (app, plugin) {
         var speed = Math.sqrt(
           Math.pow(apparentY, 2) + Math.pow(-sog + apparentX, 2)
         )
+ 
+        if (aws < 1e-9) {angle = awa} 
+
         return [
           { path: 'environment.wind.angleTrueGround', value: angle },
           { path: 'environment.wind.speedOverGround', value: speed }
