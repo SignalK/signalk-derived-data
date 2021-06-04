@@ -1,4 +1,3 @@
-// calculation source: https://arvelgentry.jimdo.com/app/download/9157993883/Arvel+Gentry+-+Sailboat_Performance_Testing_Techniques.pdf?t=1485748085
 module.exports = function (app, plugin) {
   return {
     group: 'heading',
@@ -9,9 +8,35 @@ module.exports = function (app, plugin) {
       'navigation.courseOverGroundTrue'
     ],
     calculator: function (hdg, cog) {
-      var leewayAngle = Math.abs(hdg - cog)
-      // app.debug("leeway angle: " + leewayAngle);
-      return [{ path: 'performance.leeway', value: leewayAngle }]
+      var leewayAngle = Math.abs(hdg - cog) + Math.PI / 2
+
+      const meta = [
+        {
+          path: 'performance.leeway',
+          value: {
+            units: 'rad',
+            description:
+              'Leeway angle, based on heading and COG. Always positive',
+            displayName: 'Leeway angle',
+            shortName: 'Leeway angle'
+          }
+        }
+      ]
+
+      const values = [
+        {
+          path: 'performance.leeway',
+          value: leewayAngle
+        }
+      ]
+
+      toreturn = {
+        values: values,
+        meta: meta
+      }
+
+      // app.debug('result of leeway calc + meta: ', JSON.stringify(toreturn))
+      return toreturn
     }
   }
 }
