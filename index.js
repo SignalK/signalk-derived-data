@@ -160,13 +160,12 @@ module.exports = function (app) {
               }
             } else if (values.values || values.meta) {
               app.debug('values: ' + values)
-              let delta = {
+              const delta = {
                 context: 'vessels.' + app.selfId,
                 updates: [
                   {
                     timestamp: new Date().toISOString(),
-                    values: values.values,
-                    meta: values.meta
+                    ...values
                   }
                 ]
               }
