@@ -5,19 +5,21 @@ const chai = require('chai')
 chai.Should()
 chai.use(require('chai-json-equal'));
 
+let selfData = {}
+
 const app = {
-  debug: () => {},
-  getSelfPath: (path) => {}
+  debug: () => { },
+  getSelfPath: (path) => _.get(selfData, path)
 }
 
 const plugin = {
-  batteries: [ '0', '1' ],
-  engines: [ 'port' ],
+  batteries: ['0', '1'],
+  engines: ['port'],
   tanks: ['fuel'],
   air: ['outside']
 }
 
-function load_calcs () {
+function load_calcs() {
   fpath = path.join(__dirname, '../calcs')
   files = fs.readdirSync(fpath)
   return files
@@ -37,11 +39,16 @@ describe('derived data converts', function () {
 
   calcs.forEach(calci => {
     (_.isArray(calci) ? calci : [calci]).forEach(calc => {
-      if ( calc.tests ) {
+      if (calc.tests) {
         calc.tests.forEach((test, idx) => {
           it(`${calc.title}[${idx}] works`, (done) => {
+            selfData = test.selfData || {}
             let res = calc.calculator.apply(null, test.input)
-            res.should.jsonEqual(test.expected)
+            if (test.expected) {
+              res.should.jsonEqual(test.expected)
+            } else {
+              (typeof res).should.equal('undefined')
+            }
             done()
           })
         })
