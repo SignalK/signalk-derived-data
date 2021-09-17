@@ -13,7 +13,8 @@ const app = {
 const plugin = {
   batteries: [ '0', '1' ],
   engines: [ 'port' ],
-  tanks: ['fuel']
+  tanks: ['fuel'],
+  air: ['outside']
 }
 
 function load_calcs () {
