@@ -11,7 +11,7 @@ module.exports = function (app, plugin) {
     calculator: function (hdg, cog) {
       var leewayAngle = Math.abs(hdg - cog)
       // app.debug("leeway angle: " + leewayAngle);
-      return [{ path: 'performance.leeway', value: leewayAngle }]
+      return [{ path: 'navigation.leewayAngle', value: leewayAngle }]
     }
   }
 }
