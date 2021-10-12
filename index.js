@@ -137,11 +137,9 @@ module.exports = function (app) {
           .debounceImmediate(calculation.debounceDelay || 20)
           .skipDuplicates(skip_function)
           .onValue(values => {
-            app.debug('got values: ' + JSON.stringify(values))
             if (typeof values !== 'undefined' && values.length > 0) {
               if (values[0].context) {
                 values.forEach(delta => {
-                  app.debug('delta_' + delta)
                   app.handleMessage(plugin.id, delta)
                 })
               } else {
@@ -155,11 +153,10 @@ module.exports = function (app) {
                   ]
                 }
 
-                app.debug('got delta: ' + JSON.stringify(delta))
+                app.debug('got delta: %j', delta)
                 app.handleMessage(plugin.id, delta)
               }
             } else if (values.values || values.meta) {
-              app.debug('values: ' + values)
               const delta = {
                 context: 'vessels.' + app.selfId,
                 updates: [
@@ -170,9 +167,6 @@ module.exports = function (app) {
                 ]
               }
 
-              app.debug(
-                'got delta with values and/or meta: ' + JSON.stringify(delta)
-              )
               app.handleMessage(plugin.id, delta)
             }
           })
