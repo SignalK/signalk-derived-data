@@ -31,7 +31,7 @@ module.exports = function (app) {
 
       return [
       {
-      path: 'navigation.courseGreatCircle.nextPoint.eta', value: eta
+      path: 'navigation.courseGreatCircle.nextPoint.estimatedTimeOfArrival', value: eta
          }]
   }}
 }
