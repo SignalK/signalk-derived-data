@@ -4,7 +4,7 @@ module.exports = function (app, plugin) {
   return {
     group: 'heading',
     optionKey: 'cog_true',
-    title: 'True Course Over Ground (based on magnetic course over ground  and magneticVarition)',
+    title: 'True Course Over Ground (based on magnetic course over ground and magneticVariation)',
     derivedFrom: ['navigation.courseOverGroundMagnetic', 'navigation.magneticVariation'],
     defaults: [undefined, 9999],
     calculator: function (courseOverGroundMagnetic, magneticVariation) {

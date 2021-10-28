@@ -3,7 +3,7 @@ module.exports = function (app, plugin) {
     group: 'wind',
     optionKey: 'directionMagnetic',
     title:
-      'Magnetic Wind Direction (based on wind.directionTrue and magneticVarition)',
+      'Magnetic Wind Direction (based on wind.directionTrue and magneticVariation)',
     derivedFrom: [
       'environment.wind.directionTrue',
       'navigation.magneticVariation'
