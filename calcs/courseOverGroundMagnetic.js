@@ -23,6 +23,14 @@ module.exports = function (app, plugin) {
         courseOverGroundMagnetic = courseOverGroundMagnetic - Math.PI * 2
       }
       return [{ path: 'navigation.courseOverGroundMagnetic', value: courseOverGroundMagnetic }]
-    }
+    },
+    tests: [
+      {
+        input: [ 1.0, 0.1 ],
+        expected: [
+          { path: 'navigation.courseOverGroundMagnetic', value: 0.9 }
+        ]
+      }
+    ]    
   }
 }
