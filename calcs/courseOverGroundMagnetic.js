@@ -2,7 +2,7 @@ const _ = require('lodash')
 
 module.exports = function (app, plugin) {
   return {
-    group: 'heading',
+    group: 'course data',
     optionKey: 'cog_magnetic',
     title: 'Magnetic Course Over Ground (based on true course over ground and magneticVariation)',
     derivedFrom: ['navigation.courseOverGroundTrue', 'navigation.magneticVariation'],
