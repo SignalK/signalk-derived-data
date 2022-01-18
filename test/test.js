@@ -46,6 +46,8 @@ describe('derived data converts', function () {
             let res = calc.calculator.apply(null, test.input)
             if (test.expected) {
               res.should.jsonEqual(test.expected)
+            } else if (test.expectedRange) {
+              res[0].value.should.closeTo(test.expectedRange[0].value, test.expectedRange[0].delta)
             } else {
               (typeof res).should.equal('undefined')
             }

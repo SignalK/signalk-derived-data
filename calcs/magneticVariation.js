@@ -16,8 +16,8 @@ module.exports = function (app, plugin) {
     tests: [
       {
         input: [{ latitude: 39.0631232, longitude: -76.4872768 }],
-        expected: [
-          { path: 'navigation.magneticVariation', value: -0.19355701404617112 }
+        expectedRange: [
+          { path: 'navigation.magneticVariation', value: -0.19338248112097173, delta: .05 }
         ]
       }
     ]
