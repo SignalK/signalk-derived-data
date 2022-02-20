@@ -7,13 +7,13 @@ module.exports = function (app, plugin) {
         instance +
         ' air dew point temperature (based on environment.' +
         instance +
-        '.humidity and environment.' +
+        '.relativeHumidity and environment.' +
         instance +
         '.temperature)',
       derivedFrom: function () {
         return [
           'environment.' + instance + '.temperature',
-          'environment.' + instance + '.humidity'
+          'environment.' + instance + '.relativeHumidity'
         ]
       },
       calculator: function (temp, hum) {
