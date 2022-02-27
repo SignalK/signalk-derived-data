@@ -20,6 +20,7 @@ It currently calculates:
  * Tank Volume (based on currentLevel (requires calibration pairs (>2 for parallell sides, >3 for straight wedge and >4 for more complex shapes))
  * Velocity Made Good to Course (based on courseGreatCircle.nextPoint.bearingTrue heading true and speedOverGround)
  * Velocity Made Good to wind (based on wind.directionTrue and speedOverGround)
+ * Set and Drift (based on headingMagnetic, courseOverGroundTrue, speedThroughWater, speedOverGround, magneticVariation)
  * Outside air wind chill (based on wind speed and temperature)
  * True Wind Angle, Direction and Speed (based on speed through water, AWA and AWS)
  * True Wind Direction (based on AWA and headingTrue)
@@ -31,6 +32,7 @@ It currently calculates:
  * Sunlight Times: sunrise, sunriseEnd, goldenHourEnd, solarNoon, goldenHour, sunsetStart, sunset, dusk, nauticalDusk, night, nadir, nightEnd, nauticalDawn, dawn (based on time and navigation.position)
  * Outside Heat Index (based on temperature and humidity)
  * True Course Over Goround (based on courseOverGroundMagnetic and magneticVariation)
+ * Magnetic Course Over Ground (based on courseOverGroundTrue and magneticVariation)
 
 To add new calculations, just create a new file under the `./calcs` directory.
 

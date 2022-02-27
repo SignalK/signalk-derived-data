@@ -12,13 +12,11 @@ module.exports = function (app) {
       var vmg_wind = Math.cos(trueWindAngle) * speedOverGround
       if (vmg_wind < 0) {
         return [
-          { path: 'performance.velocityMadeGood', value: vmg_wind },
-          { path: 'performance.gybeAngleVelocityMadeGood', value: vmg_wind }
+          { path: 'performance.velocityMadeGood', value: vmg_wind }
         ]
       } else {
         return [
-          { path: 'performance.velocityMadeGood', value: vmg_wind },
-          { path: 'performance.beatAngleVelocityMadeGood', value: vmg_wind }
+          { path: 'performance.velocityMadeGood', value: vmg_wind }
         ]
       }
     }
