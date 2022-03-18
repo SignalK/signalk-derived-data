@@ -5,7 +5,7 @@ module.exports = function (app, plugin) {
     optionKey: 'leeway',
     title: 'Leeway (based on heel angle and STW)',
     derivedFrom: [
-      'navigation.attitude.roll',
+      'navigation.attitude',
       'navigation.speedThroughWater'
     ],
     properties: {
@@ -16,7 +16,9 @@ module.exports = function (app, plugin) {
         default: 12
       }
     },
-    calculator: function (roll, stw) {
+    calculator: function (attitude, stw) {
+      if (stw == 0) return  // devision by zero
+      var roll = attitude.roll
       var kFactor = plugin.properties.heading.kFactor
       var rollDegrees = roll / Math.PI * 360
       var stwKnots = stw * 1.94384
