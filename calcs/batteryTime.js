@@ -9,7 +9,7 @@ module.exports = function (app, plugin) {
       properties: {
         ['capacity.' + instance]: {
           type: 'number',
-          title: 'Capacity of battery bank in kWh',
+          title: 'Capacity of battery bank in Wh',
           default: 5120
         },
         ['socHigh.' + instance]: {
