@@ -30,12 +30,12 @@ module.exports = function (app, plugin) {
         ]
       },
       calculator: function (p, soc) {
-        var capacity = parseFloat(
+        let capacity = parseFloat(
           plugin.properties.electrical['capacity.' + instance]
         )
-        var socLow =
+        let socLow =
           parseFloat(plugin.properties.electrical['socLow.' + instance]) / 100
-        var socHigh =
+        let socHigh =
           parseFloat(plugin.properties.electrical['socHigh.' + instance]) / 100
 
         // app.debug('Capacity: ' + capacity)
@@ -45,16 +45,18 @@ module.exports = function (app, plugin) {
         output = []
 
         // how long til full?
-        var time_to_full = 0
-        if (p > 0) { time_to_full = Math.round(capacity * 60 * 60 * (socHigh - soc) / p) }
+        let time_to_full = 0
+        if (p > 0) {
+          time_to_full = Math.round(capacity * 60 * 60 * (socHigh - soc) / p)
+        }
         output.push({
           path: 'electrical.batteries.' + instance + '.capacity.timeToFull',
           value: time_to_full
         })
 
         // how long til empty?
-        var soc_remaining = soc - socLow
-        var time_to_empty = 0
+        let soc_remaining = soc - socLow
+        let time_to_empty = 0
         if (soc_remaining > 0 && p < 0) {
           p = Math.abs(p)
           time_to_empty = Math.round(capacity * 60 * 60 * soc_remaining / p)
@@ -64,7 +66,7 @@ module.exports = function (app, plugin) {
           value: time_to_empty
         })
 
-        app.debug(output)
+        // app.debug(output)
 
         return output
       }
