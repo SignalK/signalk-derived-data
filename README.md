@@ -3,12 +3,12 @@
 [![Greenkeeper badge](https://badges.greenkeeper.io/sbender9/signalk-derived-data.svg)](https://greenkeeper.io/)
 
 
-Generates deltas for values derived from  signalk values
+Generates deltas for values derived from SignalK values
 
 It currently calculates:
 
  * Outside air density (based on humidity, temperature and pressure)
- * Battery Power
+ * Battery Power and Time to Full / Time to Empty
  * Depth Below Keel (based on depth.belowSurface and design.draft.maximum)
  * Depth Below Keel (based on depth.belowTransducer and depth.transducerToKeel)
  * Depth Below Surface (based on depth.belowKeel and design.draft.maximum)
@@ -31,7 +31,7 @@ It currently calculates:
  * Moon illumination and times (based on time and navigation.position)
  * Sunlight Times: sunrise, sunriseEnd, goldenHourEnd, solarNoon, goldenHour, sunsetStart, sunset, dusk, nauticalDusk, night, nadir, nightEnd, nauticalDawn, dawn (based on time and navigation.position)
  * Outside Heat Index (based on temperature and humidity)
- * True Course Over Goround (based on courseOverGroundMagnetic and magneticVariation)
+ * True Course Over Ground (based on courseOverGroundMagnetic and magneticVariation)
  * Magnetic Course Over Ground (based on courseOverGroundTrue and magneticVariation)
 
 To add new calculations, just create a new file under the `./calcs` directory.
