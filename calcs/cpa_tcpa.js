@@ -142,6 +142,17 @@ module.exports = function (app, plugin) {
                       path: 'vessels.' + vessel + '.distanceToSelf',
                       value: distance
                     }
+                  ],
+                  meta: [
+                    {
+                      path: 'vessels.' + vessel + '.distanceToSelf',
+                      value: {
+                        units: "m",
+                        description: "distance to own vessel",
+                        displayName: "Distance to self",
+                        shortName: "Distance"
+                      }
+                    }
                   ]
                 }
               ]
