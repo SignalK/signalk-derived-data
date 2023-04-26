@@ -23,6 +23,12 @@ module.exports = function (app, plugin) {
           'Calculate for all vessels within this range (m), negative to disable filter',
         default: 1852
       },
+      distanceToSelf: {
+        type: 'boolean',
+        title:
+          'Calculate distance to self for all vessels',
+        default: true
+      },
       timelimit: {
         type: 'number',
         title:
@@ -121,6 +127,27 @@ module.exports = function (app, plugin) {
             },
             { latitude: vesselPos.latitude, longitude: vesselPos.longitude }
           )
+          
+          if (
+            typeof plugin.properties.traffic.distanceToSelf === 'undefined' ||
+            plugin.properties.traffic.distanceToSelf
+         ) {
+            app.debug('distance of ' + vessel + ' to self: ' + distance)
+            app.handleMessage(plugin.id, {
+              context: 'vessels.' + app.selfId,
+              updates: [
+                {
+                  values: [
+                    {
+                      path: 'vessels.' + vessel + '.distanceToSelf',
+                      value: distance
+                    }
+                  ]
+                }
+              ]
+            })
+          }
+          
           if (
             distance >= plugin.properties.traffic.range &&
             plugin.properties.traffic.range >= 0
