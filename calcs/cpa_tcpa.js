@@ -134,18 +134,18 @@ module.exports = function (app, plugin) {
          ) {
             app.debug('distance of ' + vessel + ' to self: ' + distance)
             app.handleMessage(plugin.id, {
-              context: 'vessels.' + app.selfId,
+              context: 'vessels.' + vessel,
               updates: [
                 {
                   values: [
                     {
-                      path: 'vessels.' + vessel + '.distanceToSelf',
+                      path: 'distanceToSelf',
                       value: distance
                     }
                   ],
                   meta: [
                     {
-                      path: 'vessels.' + vessel + '.distanceToSelf',
+                      path: 'distanceToSelf',
                       value: {
                         units: "m",
                         description: "distance to own vessel",
