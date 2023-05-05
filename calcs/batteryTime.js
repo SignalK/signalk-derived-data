@@ -46,7 +46,7 @@ module.exports = function (app, plugin) {
 
         // how long til full?
         let time_to_full = 0
-        if (p > 0) {
+        if (p > 0 && soc < 0.99) {
           time_to_full = Math.round(capacity * 60 * 60 * (socHigh - soc) / p)
         }
         output.push({
