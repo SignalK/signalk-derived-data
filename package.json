@@ -14,10 +14,14 @@
   "keywords": [
     "signalk-node-server-plugin"
   ],
-  "author": "Scott Bender <scott@scottbender.net>",
+  "author": {
+    "name": "Scott Bender",
+    "email": "scott@scottbender.net"
+  },
   "contributors": [
-    "Joachim Bakke",
-    "Zach Hoeken"
+    {
+      "name": "Joachim Bakke"
+    }
   ],
   "license": "ISC",
   "lint-staged": {
@@ -54,13 +58,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sbender9/signalk-derived-data.git"
-  },
-  "bugs": {
-    "url": "https://github.com/sbender9/signalk-derived-data/issues"
-  },
-  "homepage": "https://github.com/sbender9/signalk-derived-data#readme",
-  "directories": {
-    "test": "test"
+    "url": "https://github.com/sbender9/signalk-derived-data"
   }
 }
