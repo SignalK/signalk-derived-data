@@ -27,9 +27,9 @@ module.exports = function (app, plugin) {
       title:
         'propulsion.' +
         instance +
-        '.slip (based on RPM, propulsion.' +
+        '.slip (propulsion.' +
         instance +
-        '.transmission.gearRatio and propulsion.' +
+        '.transmission.gearRatio, propulsion.' +
         instance +
         '.drive.propeller.pitch)',
       derivedFrom: function () {

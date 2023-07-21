@@ -2,8 +2,7 @@ module.exports = function (app) {
   return {
     group: 'wind',
     optionKey: 'trueWind',
-    title:
-      'True Wind Angle, Direction and Speed (based on speed through water, AWA, AWS, headingTrue)',
+    title: 'True Wind Angle, Direction and Speed',
     derivedFrom: [
       'navigation.headingTrue',
       'navigation.speedThroughWater',
@@ -18,7 +17,9 @@ module.exports = function (app) {
         Math.pow(apparentY, 2) + Math.pow(-speed + apparentX, 2)
       )
 
-      if (aws < 1e-9) {angle = awa}
+      if (aws < 1e-9) {
+        angle = awa
+      }
 
       var dir = headTrue + angle
 

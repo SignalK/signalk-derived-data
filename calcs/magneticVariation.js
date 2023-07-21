@@ -5,7 +5,7 @@ module.exports = function (app, plugin) {
   return {
     group: 'heading',
     optionKey: 'magneticVariation',
-    title: 'Magnetic Variation (based on navigation.position)',
+    title: 'Magnetic Variation',
     derivedFrom: ['navigation.position'],
     defaults: [undefined, 9999],
     calculator: function (position) {

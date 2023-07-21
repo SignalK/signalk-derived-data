@@ -6,7 +6,7 @@ module.exports = function (app, plugin) {
     group: 'sun',
     optionKey: 'Sun',
     title:
-      'Sets environment.sun to dawn, sunrise, day, sunset, dusk or night. Sets environment.mode to day or night. (based on navigation.datetime or system time and navigation.position)',
+      'Sets environment.sun to dawn, sunrise, day, sunset, dusk or night. Sets environment.mode to day or night.',
     derivedFrom: ['navigation.datetime', 'navigation.position'],
     defaults: ['', undefined],
     debounceDelay: 60 * 1000,

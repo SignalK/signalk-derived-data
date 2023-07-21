@@ -5,8 +5,7 @@ module.exports = function (app, plugin) {
     return {
       group: 'tanks',
       optionKey: 'tankVolume2_' + instance,
-      title:
-        'Tank ' + instance + ' Volume (based on currentLevel and capacity)',
+      title: 'Tank ' + instance + ' Volume',
       derivedFrom: function () {
         return [
           'tanks.' + instance + '.currentLevel',

@@ -9,7 +9,7 @@ module.exports = function (app, plugin) {
     return {
       group: 'propulsion',
       optionKey: 'economy' + instance,
-      title: `${instance} fuel economy (based on speed over ground, fuel rate)`,
+      title: `${instance} fuel economy`,
       derivedFrom: function () {
         return [
           'propulsion.' + instance + '.fuel.rate',

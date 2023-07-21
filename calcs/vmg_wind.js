@@ -2,8 +2,7 @@ module.exports = function (app) {
   return {
     group: 'course data',
     optionKey: 'vmg_Wind',
-    title:
-      'Velocity Made Good to wind (based on wind.angleTrueWater and speedOverGround)',
+    title: 'Velocity Made Good to wind',
     derivedFrom: [
       'environment.wind.angleTrueWater',
       'navigation.speedOverGround'
@@ -11,13 +10,9 @@ module.exports = function (app) {
     calculator: function (trueWindAngle, speedOverGround) {
       var vmg_wind = Math.cos(trueWindAngle) * speedOverGround
       if (vmg_wind < 0) {
-        return [
-          { path: 'performance.velocityMadeGood', value: vmg_wind }
-        ]
+        return [{ path: 'performance.velocityMadeGood', value: vmg_wind }]
       } else {
-        return [
-          { path: 'performance.velocityMadeGood', value: vmg_wind }
-        ]
+        return [{ path: 'performance.velocityMadeGood', value: vmg_wind }]
       }
     }
   }
