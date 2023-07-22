@@ -2,7 +2,7 @@ module.exports = function (app, plugin) {
   return {
     group: 'air',
     optionKey: 'Wind Chill',
-    title: 'Outside air wind chill (based on wind speed and temperature)',
+    title: 'Outside air wind chill',
     derivedFrom: [
       'environment.outside.temperature',
       'environment.wind.speedApparent'

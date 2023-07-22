@@ -261,7 +261,17 @@ module.exports = function (app) {
       if (!groups[groupName]) {
         groups[groupName] = []
       }
-      groups[groupName].push(calc)
+      let title = calc.title
+      title += ' ['
+      const derivedFrom =
+        typeof calc.derivedFrom === 'function'
+          ? calc.derivedFrom()
+          : calc.derivedFrom
+      title += derivedFrom
+        .map(path => `${path}${app.getSelfPath(path) ? '(👍)' : '(-)'}`)
+        .join(', ')
+      title += ']'
+      groups[groupName].push({ ...calc, title })
     })
 
     if (groups.nogroup) {

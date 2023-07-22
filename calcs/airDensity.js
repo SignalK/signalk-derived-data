@@ -2,7 +2,7 @@ module.exports = function (app, plugin) {
   return {
     group: 'air',
     optionKey: 'Air density',
-    title: 'Outside air density (based on humidity, temperature and pressure)',
+    title: 'Outside air density',
     derivedFrom: [
       'environment.outside.temperature',
       'environment.outside.humidity',

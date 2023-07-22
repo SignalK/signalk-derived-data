@@ -3,7 +3,7 @@ module.exports = function (app, plugin) {
     {
       group: 'wind',
       optionKey: 'directionTrue',
-      title: 'True Wind Direction (based on AWA and headingTrue)',
+      title: 'True Wind Direction',
       derivedFrom: ['navigation.headingTrue', 'environment.wind.angleApparent'],
       calculator: function (headingTrue, awa) {
         let windHeading = headingTrue + awa
@@ -17,7 +17,7 @@ module.exports = function (app, plugin) {
     {
       group: 'wind',
       optionKey: 'directionMagnetic2',
-      title: 'Magnetic Wind Direction (based on AWA and headingMagnetic)',
+      title: 'Magnetic Wind Direction',
       derivedFrom: [
         'navigation.headingMagnetic',
         'environment.wind.angleApparent'

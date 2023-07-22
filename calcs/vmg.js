@@ -2,8 +2,7 @@ module.exports = function (app) {
   return {
     group: 'course data',
     optionKey: 'vmg_Course',
-    title:
-      'Velocity Made Good towards next waypoint (based on courseGreatCircle.nextPoint.bearingTrue courseOverGroundTrue and speedOverGround)',
+    title: 'Velocity Made Good towards next waypoint',
     derivedFrom: [
       'navigation.courseGreatCircle.nextPoint.bearingTrue',
       'navigation.courseOverGroundTrue',

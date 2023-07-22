@@ -4,8 +4,7 @@ module.exports = function (app) {
   return {
     group: 'depth',
     optionKey: 'belowSurface',
-    title:
-      'Depth Below Surface (based on depth.belowKeel and design.draft.maximum)',
+    title: 'Depth Below Surface (design.draft.maximum)',
     derivedFrom: ['environment.depth.belowKeel'],
     calculator: function (depthBelowKeel) {
       var draft = (draft = app.getSelfPath('design.draft.value.maximum'))

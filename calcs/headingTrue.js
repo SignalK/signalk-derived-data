@@ -4,7 +4,7 @@ module.exports = function (app, plugin) {
   return {
     group: 'heading',
     optionKey: 'heading',
-    title: 'True Heading (based on magnetic heading  and magneticVarition)',
+    title: 'True Heading',
     derivedFrom: ['navigation.headingMagnetic', 'navigation.magneticVariation'],
     defaults: [undefined, 9999],
     calculator: function (heading, magneticVariation) {
