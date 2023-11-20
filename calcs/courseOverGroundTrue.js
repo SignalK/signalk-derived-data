@@ -19,6 +19,12 @@ module.exports = function (app, plugin) {
           return
         }
       }
+      if (
+        _.isUndefined(courseOverGroundMagnetic) ||
+        courseOverGroundMagnetic === null
+      ) {
+        return [{ path: 'navigation.courseOverGroundTrue', value: null }]
+      }
       var courseOverGroundTrue = courseOverGroundMagnetic + magneticVariation
       if (courseOverGroundTrue < 0) {
         courseOverGroundTrue = Math.PI * 2 + courseOverGroundTrue
@@ -28,6 +34,12 @@ module.exports = function (app, plugin) {
       return [
         { path: 'navigation.courseOverGroundTrue', value: courseOverGroundTrue }
       ]
-    }
+    },
+    tests: [
+      {
+        input: [null, 0.01],
+        expected: [{ path: 'navigation.courseOverGroundTrue', value: null }]
+      }
+    ]
   }
 }
