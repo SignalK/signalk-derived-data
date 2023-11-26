@@ -65,21 +65,66 @@ module.exports = function (app, plugin) {
       app.debug('moon times:' + JSON.stringify(times, null, 2))
 
       return [
-        { path: 'environment.moon.fraction', value: illumination.fraction },
-        { path: 'environment.moon.phase', value: illumination.phase },
+        {
+          path: 'environment.moon.fraction',
+          value: Number(illumination.fraction)
+        },
+        { path: 'environment.moon.phase', value: Number(illumination.phase) },
         { path: 'environment.moon.phaseName', value: phaseName },
-        { path: 'environment.moon.angle', value: illumination.angle },
+        { path: 'environment.moon.angle', value: Number(illumination.angle) },
         { path: 'environment.moon.times.rise', value: times.rise || null },
         { path: 'environment.moon.times.set', value: times.set || null },
         {
           path: 'environment.moon.times.alwaysUp',
-          value: times.alwaysUp ? 'true' : 'false'
+          value: Boolean(times.alwaysUp ? 'true' : 'false')
         },
         {
           path: 'environment.moon.times.alwaysDown',
-          value: times.alwaysDown ? 'true' : 'false'
+          value: Boolean(times.alwaysDown ? 'true' : 'false')
         }
       ]
-    }
+    },
+    tests: [
+      {
+        input: [
+          '2017-04-15T17:18:33Z',
+          { longitude: -76.2966773, latitude: 39.0589637 }
+        ],
+        expected: [
+          {
+            path: 'environment.moon.fraction',
+            value: 0.82
+          },
+          {
+            path: 'environment.moon.phase',
+            value: 0.64
+          },
+          {
+            path: 'environment.moon.phaseName',
+            value: 'Waning Gibbous'
+          },
+          {
+            path: 'environment.moon.angle',
+            value: 1.6
+          },
+          {
+            path: 'environment.moon.times.rise',
+            value: '2017-04-15T02:59:40.105Z'
+          },
+          {
+            path: 'environment.moon.times.set',
+            value: '2017-04-15T13:25:54.314Z'
+          },
+          {
+            path: 'environment.moon.times.alwaysUp',
+            value: true
+          },
+          {
+            path: 'environment.moon.times.alwaysDown',
+            value: true
+          }
+        ]
+      }
+    ]
   }
 }
