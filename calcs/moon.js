@@ -24,7 +24,7 @@ module.exports = function (app, plugin) {
 
       var illumination = suncalc.getMoonIllumination(date)
       _.keys(illumination).forEach(key => {
-        illumination[key] = illumination[key].toFixed(2)
+        illumination[key] = _.round(illumination[key], 2)
       })
       app.debug('moon illumination:' + JSON.stringify(illumination, null, 2))
 
@@ -67,20 +67,20 @@ module.exports = function (app, plugin) {
       return [
         {
           path: 'environment.moon.fraction',
-          value: Number(illumination.fraction)
+          value: illumination.fraction
         },
-        { path: 'environment.moon.phase', value: Number(illumination.phase) },
+        { path: 'environment.moon.phase', value: illumination.phase },
         { path: 'environment.moon.phaseName', value: phaseName },
-        { path: 'environment.moon.angle', value: Number(illumination.angle) },
+        { path: 'environment.moon.angle', value: illumination.angle },
         { path: 'environment.moon.times.rise', value: times.rise || null },
         { path: 'environment.moon.times.set', value: times.set || null },
         {
           path: 'environment.moon.times.alwaysUp',
-          value: Boolean(times.alwaysUp ? 'true' : 'false')
+          value: !!times.alwaysUp
         },
         {
           path: 'environment.moon.times.alwaysDown',
-          value: Boolean(times.alwaysDown ? 'true' : 'false')
+          value: !!times.alwaysDown
         }
       ]
     },
@@ -109,7 +109,7 @@ module.exports = function (app, plugin) {
           },
           {
             path: 'environment.moon.times.rise',
-            value: '2017-04-15T02:59:40.105Z'
+            value: '2017-04-16T03:52:46.109Z'
           },
           {
             path: 'environment.moon.times.set',
@@ -117,11 +117,11 @@ module.exports = function (app, plugin) {
           },
           {
             path: 'environment.moon.times.alwaysUp',
-            value: true
+            value: false
           },
           {
             path: 'environment.moon.times.alwaysDown',
-            value: true
+            value: false
           }
         ]
       }
