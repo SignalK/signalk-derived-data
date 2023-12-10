@@ -29,8 +29,18 @@ module.exports = function (app) {
       if (velocityMadeGood > 0) {
         var etad = new Date(parseInt(etams))
         var eta = etad.toISOString()
+        seconds = Math.floor((timetopoint / 1000) % 60),
+        minutes = Math.floor((timetopoint / (1000 * 60)) % 60),
+        hours = Math.floor((timetopoint / (1000 * 60 * 60)) % 24);
+
+                hours = (hours < 10) ? "0" + hours : hours;
+                minutes = (minutes < 10) ? "0" + minutes : minutes;
+                seconds = (seconds < 10) ? "0" + seconds : seconds;
+
+                var hms = hours + ":" + minutes + ":" + seconds;
       } else {
-        var eta = '--'
+        var eta = null
+        var hms = '--'
       }
       app.debug(`what is eta: ${eta} etams: ${etams} etad: ${etad}`)
 
@@ -38,6 +48,10 @@ module.exports = function (app) {
         {
           path: 'navigation.courseGreatCircle.nextPoint.estimatedTimeOfArrival',
           value: eta
+        },
+        {
+          path: 'navigation.courseGreatCircle.nextPoint.TimeToArrival',
+          value: hms
         },
         {
           path: 'navigation.courseGreatCircle.nextPoint.eta',
