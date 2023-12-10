@@ -29,19 +29,24 @@ module.exports = function (app) {
       if (velocityMadeGood > 0) {
         var etad = new Date(parseInt(etams))
         var eta = etad.toISOString()
+        seconds = Math.floor((timetopoint / 1000));
+
+                var hms = seconds;
       } else {
-        var eta = '--'
+        var eta = null
+        var hms = null
       }
       app.debug(`what is eta: ${eta} etams: ${etams} etad: ${etad}`)
 
       return [
         {
-          path: 'navigation.courseGreatCircle.nextPoint.estimatedTimeOfArrival',
-          value: eta
+          path: 'navigation.courseGreatCircle.nextPoint.estimatedTimeOfArrival', value: eta
         },
         {
-          path: 'navigation.courseGreatCircle.nextPoint.eta',
-          value: eta
+          path: 'navigation.courseGreatCircle.nextPoint.timeToGo', value: hms
+        },
+                {
+          path: 'navigation.courseGreatCircle.nextPoint.eta', value: eta
         }
       ]
     }
