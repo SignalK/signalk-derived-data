@@ -7,19 +7,17 @@ module.exports = function (app, plugin) {
     optionKey: 'Moon',
     title: 'Sets environment.moon.* information such as phase, rise, and set',
     derivedFrom: ['navigation.datetime', 'navigation.position'],
-    defaults: ['', undefined],
+    defaults: [undefined, undefined],
     debounceDelay: 60 * 1000,
     calculator: function (datetime, position) {
-      var value
-      var mode
-      var date
-
-      if (datetime && datetime.length > 0) {
-        date = new Date(datetime)
-      } else {
-        date = new Date()
+      if (_.isUndefined(datetime) || _.isUndefined(position)) {
+        app.debug(
+          `Undefined value for navigation.datetime or navigation.position. Aborting moon calc`
+        )
+        return
       }
 
+      var date = new Date(datetime)
       app.debug(`Using datetime: ${date} position: ${JSON.stringify(position)}`)
 
       var illumination = suncalc.getMoonIllumination(date)
