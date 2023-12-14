@@ -10,17 +10,17 @@ module.exports = function (app, plugin) {
     defaults: [undefined, undefined],
     debounceDelay: 60 * 1000,
     calculator: function (datetime, position) {
-      if (_.isUndefined(datetime) || _.isUndefined(position)) {
-        app.debug(
-          `Undefined value for navigation.datetime or navigation.position. Aborting moon calc`
-        )
-        return
+      var date
+
+      if (!_.isUndefined(datetime) && datetime.length > 0) {
+        date = new Date(datetime)
+      } else {
+        date = new Date()
       }
 
-      var date = new Date(datetime)
       app.debug(`Using datetime: ${date} position: ${JSON.stringify(position)}`)
 
-      var illumination = suncalc.getMoonIllumination(date)
+      const illumination = suncalc.getMoonIllumination(date)
       _.keys(illumination).forEach(key => {
         illumination[key] = _.round(illumination[key], 2)
       })
@@ -55,7 +55,7 @@ module.exports = function (app, plugin) {
       }
       app.debug('Phase Name:' + phaseName)
 
-      var times = suncalc.getMoonTimes(
+      const times = suncalc.getMoonTimes(
         date,
         position.latitude,
         position.longitude
