@@ -8,17 +8,8 @@ module.exports = function (app) {
       'environment.wind.angleTrueWater',
       'navigation.speedThroughWater'
     ],
-    calculator: function (trueWindAngle, speedThroughWater) {
-      var vmg_wind = Math.cos(trueWindAngle) * speedThroughWater
-      if (vmg_wind < 0) {
-        return [
-          { path: 'performance.velocityMadeGood', value: vmg_wind }
-        ]
-      } else {
-        return [
-          { path: 'performance.velocityMadeGood', value: vmg_wind }
-        ]
-      }
+    calculator: function (angleTrueWater, speedThroughWater) {
+      return [ { path: 'performance.velocityMadeGood', value: Math.cos(angleTrueWater) * speedThroughWater } ]
     }
   }
 }
