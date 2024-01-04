@@ -9,7 +9,12 @@ module.exports = function (app) {
       'navigation.speedThroughWater'
     ],
     calculator: function (angleTrueWater, speedThroughWater) {
-      return [ { path: 'performance.velocityMadeGood', value: Math.cos(angleTrueWater) * speedThroughWater } ]
+      return [
+        {
+          path: 'performance.velocityMadeGood',
+          value: Math.cos(angleTrueWater) * speedThroughWater
+        }
+      ]
     }
   }
 }
