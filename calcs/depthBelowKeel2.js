@@ -4,8 +4,7 @@ module.exports = function (app) {
   return {
     group: 'depth',
     optionKey: 'belowKeel_2',
-    title:
-      'Depth Below Keel (based on depth.belowTransducer and depth.transducerToKeel)',
+    title: 'Depth Below Keel (depth.transducerToKeel)',
     derivedFrom: ['environment.depth.belowTransducer'],
     calculator: function (depthBelowTransducer) {
       const depthTransducerToKeel =

@@ -4,7 +4,7 @@ module.exports = function (app, plugin) {
   return {
     group: 'heading',
     optionKey: 'heading',
-    title: 'True Heading (based on magnetic heading  and magneticVarition)',
+    title: 'True Heading',
     derivedFrom: ['navigation.headingMagnetic', 'navigation.magneticVariation'],
     defaults: [undefined, 9999],
     calculator: function (heading, magneticVariation) {
@@ -16,6 +16,9 @@ module.exports = function (app, plugin) {
           return
         }
       }
+      if (_.isUndefined(heading) || heading === null) {
+        return [{ path: 'navigation.headingTrue', value: null }]
+      }
       var headingTrue = heading + magneticVariation
       if (headingTrue < 0) {
         headingTrue = Math.PI * 2 + headingTrue
@@ -23,6 +26,12 @@ module.exports = function (app, plugin) {
         headingTrue = headingTrue - Math.PI * 2
       }
       return [{ path: 'navigation.headingTrue', value: headingTrue }]
-    }
+    },
+    tests: [
+      {
+        input: [null, 0.01],
+        expected: [{ path: 'navigation.headingTrue', value: null }]
+      }
+    ]
   }
 }

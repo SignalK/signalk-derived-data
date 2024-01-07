@@ -3,13 +3,7 @@ module.exports = function (app, plugin) {
     return {
       group: 'air',
       optionKey: instance + 'dewPoint',
-      title:
-        instance +
-        ' air dew point temperature (based on environment.' +
-        instance +
-        '.humidity and environment.' +
-        instance +
-        '.temperature)',
+      title: instance + 'Air dewpoint temperature',
       derivedFrom: function () {
         return [
           'environment.' + instance + '.temperature',

@@ -13,7 +13,7 @@ module.exports = function (app, plugin) {
       title:
         "'tanks." +
         instance +
-        "' Tank Volume (based on currentLevel (requires calibration pairs (>2 for parallell sides, >3 for straight wedge and >4 for more complex shapes))",
+        "' Tank Volume (requires calibration pairs (>2 for parallell sides, >3 for straight wedge and >4 for more complex shapes)",
       derivedFrom: function () {
         return ['tanks.' + instance + '.currentLevel']
       },

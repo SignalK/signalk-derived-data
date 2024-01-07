@@ -1,7 +1,5 @@
 # signalk-derived-data
 
-[![Greenkeeper badge](https://badges.greenkeeper.io/sbender9/signalk-derived-data.svg)](https://greenkeeper.io/)
-
 
 Generates deltas for values derived from  signalk values
 
@@ -26,7 +24,7 @@ It currently calculates:
  * True Wind Direction (based on AWA and headingTrue)
  * Ground Wind Angle and Speed (based on SOG, AWA and AWS)
  * Magnetic Wind Direction (based on AWA and headingMagnetic)
- * Magnetic Wind Direction (based on wind.directionTrue and magneticVarition)
+ * Magnetic Wind Direction (based on wind.directionTrue and magneticVariation)
  * Wind Shift (experimental)
  * Moon illumination and times (based on time and navigation.position)
  * Sunlight Times: sunrise, sunriseEnd, goldenHourEnd, solarNoon, goldenHour, sunsetStart, sunset, dusk, nauticalDusk, night, nadir, nightEnd, nauticalDawn, dawn (based on time and navigation.position)

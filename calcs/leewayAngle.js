@@ -3,7 +3,7 @@ module.exports = function (app, plugin) {
   return {
     group: 'heading',
     optionKey: 'leewayAngle',
-    title: 'Leeway (based on heading and COG)',
+    title: 'Leeway',
     derivedFrom: [
       'navigation.headingMagnetic',
       'navigation.courseOverGroundTrue'

@@ -2,13 +2,15 @@ module.exports = function (app, plugin) {
   return {
     group: 'wind',
     optionKey: 'directionMagnetic',
-    title:
-      'Magnetic Wind Direction (based on wind.directionTrue and magneticVarition)',
+    title: 'Magnetic Wind Direction',
     derivedFrom: [
       'environment.wind.directionTrue',
       'navigation.magneticVariation'
     ],
     calculator: function (directionTrue, magneticVariation) {
+      if (directionTrue === null) {
+        return [{ path: 'environment.wind.directionMagnetic', value: null }]
+      }
       var directionMagnetic = directionTrue - magneticVariation
       if (directionMagnetic < 0) {
         directionMagnetic = Math.PI * 2 + directionMagnetic
@@ -18,6 +20,12 @@ module.exports = function (app, plugin) {
       return [
         { path: 'environment.wind.directionMagnetic', value: directionMagnetic }
       ]
-    }
+    },
+    tests: [
+      {
+        input: [null, -0.01],
+        expected: [{ path: 'environment.wind.directionMagnetic', value: null }]
+      }
+    ]
   }
 }
