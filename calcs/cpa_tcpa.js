@@ -129,7 +129,6 @@ module.exports = function (app, plugin) {
           )
           
           if (
-            typeof plugin.properties.traffic.distanceToSelf === 'undefined' ||
             plugin.properties.traffic.distanceToSelf
          ) {
             app.debug('distance of ' + vessel + ' to self: ' + distance)
@@ -139,19 +138,8 @@ module.exports = function (app, plugin) {
                 {
                   values: [
                     {
-                      path: 'distanceToSelf',
+                      path: 'navigation.distanceToSelf',
                       value: distance
-                    }
-                  ],
-                  meta: [
-                    {
-                      path: 'distanceToSelf',
-                      value: {
-                        units: "m",
-                        description: "distance to own vessel",
-                        displayName: "Distance to self",
-                        shortName: "Distance"
-                      }
                     }
                   ]
                 }
