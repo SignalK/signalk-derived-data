@@ -106,14 +106,6 @@ module.exports = function (app, plugin) {
             value: 1.6
           },
           {
-            path: 'environment.moon.times.rise',
-            value: '2017-04-16T03:52:46.109Z'
-          },
-          {
-            path: 'environment.moon.times.set',
-            value: '2017-04-15T13:25:54.314Z'
-          },
-          {
             path: 'environment.moon.times.alwaysUp',
             value: false
           },
