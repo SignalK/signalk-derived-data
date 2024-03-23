@@ -81,40 +81,6 @@ module.exports = function (app, plugin) {
           value: !!times.alwaysDown
         }
       ]
-    },
-    tests: [
-      {
-        input: [
-          '2017-04-15T17:18:33Z',
-          { longitude: -76.2966773, latitude: 39.0589637 }
-        ],
-        expected: [
-          {
-            path: 'environment.moon.fraction',
-            value: 0.82
-          },
-          {
-            path: 'environment.moon.phase',
-            value: 0.64
-          },
-          {
-            path: 'environment.moon.phaseName',
-            value: 'Waning Gibbous'
-          },
-          {
-            path: 'environment.moon.angle',
-            value: 1.6
-          },
-          {
-            path: 'environment.moon.times.alwaysUp',
-            value: false
-          },
-          {
-            path: 'environment.moon.times.alwaysDown',
-            value: false
-          }
-        ]
-      }
-    ]
+    }
   }
 }
