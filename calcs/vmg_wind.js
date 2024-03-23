@@ -9,11 +9,7 @@ module.exports = function (app) {
     ],
     calculator: function (trueWindAngle, speedOverGround) {
       var vmg_wind = Math.cos(trueWindAngle) * speedOverGround
-      if (vmg_wind < 0) {
-        return [{ path: 'performance.velocityMadeGood', value: vmg_wind }]
-      } else {
-        return [{ path: 'performance.velocityMadeGood', value: vmg_wind }]
-      }
+      return [{ path: 'performance.velocityMadeGood', value: vmg_wind }]
     }
   }
 }

@@ -19,6 +19,12 @@ module.exports = function (app, plugin) {
           return
         }
       }
+      if (
+        _.isUndefined(courseOverGroundTrue) ||
+        courseOverGroundTrue === null
+      ) {
+        return [{ path: 'navigation.courseOverGroundMagnetic', value: null }]
+      }
       var courseOverGroundMagnetic = courseOverGroundTrue - magneticVariation
       if (courseOverGroundMagnetic < 0) {
         courseOverGroundMagnetic = Math.PI * 2 + courseOverGroundMagnetic
@@ -36,6 +42,10 @@ module.exports = function (app, plugin) {
       {
         input: [1.0, 0.1],
         expected: [{ path: 'navigation.courseOverGroundMagnetic', value: 0.9 }]
+      },
+      {
+        input: [null, -0.01],
+        expected: [{ path: 'navigation.courseOverGroundMagnetic', value: null }]
       }
     ]
   }
