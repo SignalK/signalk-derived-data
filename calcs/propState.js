@@ -16,14 +16,17 @@ module.exports = function (app, plugin) {
         ]
       },
       calculator: function (revol) {
-        if (revol > 0) {
+        const currentState =
+          app.getSelfPath('propulsion.' + instance + '.state.value') || 'none'
+
+        if ((revol > 0) && (currentState !== "started")) {
           return [
             {
               path: 'propulsion.' + instance + '.state',
               value: "started"
             }
           ]
-        } else {
+        } else if ((revol == 0) && (currentState !== "stopped")) {
           return [
             {
               path: 'propulsion.' + instance + '.state',
