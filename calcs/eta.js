@@ -29,15 +29,21 @@ module.exports = function (app) {
       if (velocityMadeGood > 0) {
         var etad = new Date(parseInt(etams))
         var eta = etad.toISOString()
+        var ttg = Math.floor(timetopoint / 1000)
       } else {
-        var eta = '--'
+        var eta = null
+        var ttg = null
       }
-      app.debug(`what is eta: ${eta} etams: ${etams} etad: ${etad}`)
+      //      app.debug(`what is eta: ${eta} etams: ${etams} etad: ${etad}`)
 
       return [
         {
           path: 'navigation.courseGreatCircle.nextPoint.estimatedTimeOfArrival',
           value: eta
+        },
+        {
+          path: 'navigation.courseGreatCircle.nextPoint.timeToGo',
+          value: ttg
         },
         {
           path: 'navigation.courseGreatCircle.nextPoint.eta',

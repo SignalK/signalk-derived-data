@@ -1,14 +1,11 @@
 {
   "name": "signalk-derived-data",
-  "version": "1.31.0",
+  "version": "1.33.0",
   "description": "Plugin that derives signalk data from other signalk data",
   "main": "index.js",
   "scripts": {
     "precommit": "lint-staged",
     "format": "prettier-standard calcs/*.js index.js",
-    "changelog": "github-changes -o signalk -r signalk-derived-data -a --only-pulls --use-commit-body --data=pulls  --tag-name=v$npm_package_version",
-    "create-release": "github-create-release --owner signalk --repository signalk-derived-data",
-    "release": "git tag -d v$npm_package_version ; git tag v$npm_package_version && git push --tags && git push && npm run create-release",
     "test": "mocha"
   },
   "keywords": [
@@ -47,10 +44,8 @@
     "suncalc": "^1.8.0"
   },
   "devDependencies": {
-    "@signalk/github-create-release": "^1.2.0",
     "chai": "^4.2.0",
     "chai-json-equal": "0.0.1",
-    "github-changes": "^1.0.4",
     "husky": "^0.14.3",
     "lint-staged": "^7.0.0",
     "mocha": "^8.2.1",
