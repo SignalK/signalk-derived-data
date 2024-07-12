@@ -19,7 +19,7 @@ module.exports = function (app) {
 
       var datems = date.getTime()
       var timetopoint = Math.floor(
-        distance / (velocityMadeGood * 0.514444) * 1000
+        distance / velocityMadeGood * 1000
       )
 
       //      app.debug(`Using datetime: ${date} ms to point : ${timetopoint} currentms: ${datems}`)
