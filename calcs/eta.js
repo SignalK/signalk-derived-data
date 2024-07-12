@@ -18,9 +18,7 @@ module.exports = function (app) {
       }
 
       var datems = date.getTime()
-      var timetopoint = Math.floor(
-        distance / velocityMadeGood * 1000
-      )
+      var timetopoint = Math.floor(distance / velocityMadeGood * 1000)
 
       //      app.debug(`Using datetime: ${date} ms to point : ${timetopoint} currentms: ${datems}`)
       var etams = datems + timetopoint
@@ -50,6 +48,26 @@ module.exports = function (app) {
           value: eta
         }
       ]
-    }
+    },
+    tests: [
+      {
+        input: ['2024-07-12T18:00:00Z', 1000, 2],
+        expected: [
+          {
+            path:
+              'navigation.courseGreatCircle.nextPoint.estimatedTimeOfArrival',
+            value: '2024-07-12T18:08:20.000Z'
+          },
+          {
+            path: 'navigation.courseGreatCircle.nextPoint.timeToGo',
+            value: 500
+          },
+          {
+            path: 'navigation.courseGreatCircle.nextPoint.eta',
+            value: '2024-07-12T18:08:20.000Z'
+          }
+        ]
+      }
+    ]
   }
 }
