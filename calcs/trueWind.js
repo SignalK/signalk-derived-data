@@ -10,23 +10,33 @@ module.exports = function (app) {
       'environment.wind.angleApparent'
     ],
     calculator: function (headTrue, speed, aws, awa) {
-      var apparentX = Math.cos(awa) * aws
-      var apparentY = Math.sin(awa) * aws
-      var angle = Math.atan2(apparentY, -speed + apparentX)
-      var speed = Math.sqrt(
-        Math.pow(apparentY, 2) + Math.pow(-speed + apparentX, 2)
-      )
+      var angle
+      var speed
+      var dir
 
-      if (aws < 1e-9) {
-        angle = awa
-      }
+      if (headTrue == null || speed == null || aws == null || awa == null) {
+        angle = null
+        speed = null
+        dir   = null
+      } else {
+        var apparentX = Math.cos(awa) * aws
+        var apparentY = Math.sin(awa) * aws
+        angle = Math.atan2(apparentY, -speed + apparentX)
+        speed = Math.sqrt(
+          Math.pow(apparentY, 2) + Math.pow(-speed + apparentX, 2)
+        )
 
-      var dir = headTrue + angle
+        if (aws < 1e-9) {
+          angle = awa
+        }
 
-      if (dir > Math.PI * 2) {
-        dir = dir - Math.PI * 2
-      } else if (dir < 0) {
-        dir = dir + Math.PI * 2
+        dir = headTrue + angle
+
+        if (dir > Math.PI * 2) {
+          dir = dir - Math.PI * 2
+        } else if (dir < 0) {
+          dir = dir + Math.PI * 2
+        }
       }
 
       return [
