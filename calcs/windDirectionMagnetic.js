@@ -8,7 +8,7 @@ module.exports = function (app, plugin) {
       'navigation.magneticVariation'
     ],
     calculator: function (directionTrue, magneticVariation) {
-      if (directionTrue === null) {
+      if (directionTrue === null || magneticVariation === null) {
         return [{ path: 'environment.wind.directionMagnetic', value: null }]
       }
       var directionMagnetic = directionTrue - magneticVariation
@@ -24,6 +24,10 @@ module.exports = function (app, plugin) {
     tests: [
       {
         input: [null, -0.01],
+        expected: [{ path: 'environment.wind.directionMagnetic', value: null }]
+      },
+      {
+        input: [0.2, null],
         expected: [{ path: 'environment.wind.directionMagnetic', value: null }]
       }
     ]

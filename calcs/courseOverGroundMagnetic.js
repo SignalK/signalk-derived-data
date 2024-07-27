@@ -15,9 +15,9 @@ module.exports = function (app, plugin) {
         magneticVariation = app.getSelfPath(
           'navigation.magneticVariation.value'
         )
-        if (_.isUndefined(magneticVariation)) {
-          return
-        }
+      }
+      if (_.isUndefined(magneticVariation) || magneticVariation === null) {
+        return
       }
       if (
         _.isUndefined(courseOverGroundTrue) ||
@@ -46,6 +46,9 @@ module.exports = function (app, plugin) {
       {
         input: [null, -0.01],
         expected: [{ path: 'navigation.courseOverGroundMagnetic', value: null }]
+      },
+      {
+        input: [0.2, null]
       }
     ]
   }

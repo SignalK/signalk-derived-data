@@ -52,7 +52,7 @@ module.exports = function (app, plugin) {
       }
 
       var setTrue = setMagnetic + magneticVariation
-      if (_.isUndefined(magneticVariation)) {
+      if (_.isUndefined(magneticVariation) || magneticVariation === null) {
         setTrue = null
       } else if (setTrue >= 2 * Math.Pi) {
         setTrue = setTrue - Math.PI * 2
@@ -65,6 +65,22 @@ module.exports = function (app, plugin) {
         { path: 'environment.current.setTrue', value: setTrue },
         { path: 'environment.current.setMagnetic', value: setMagnetic }
       ]
-    }
+    },
+    tests: [
+      {
+        input: [0.1, 0.2, 5, 4.5, null],
+        expected: [
+          { path: 'environment.current.drift', value: 0.6890664427243886 },
+          {
+            path: 'environment.current.setTrue',
+            value: null
+          },
+          {
+            path: 'environment.current.setMagnetic',
+            value: 3.0482899952302343
+          }
+        ]
+      }
+    ]
   }
 }
