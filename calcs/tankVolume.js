@@ -13,7 +13,7 @@ module.exports = function (app, plugin) {
       title:
         "'tanks." +
         instance +
-        "' Tank Volume (requires calibration pairs (>2 for parallell sides, >3 for straight wedge and >4 for more complex shapes)",
+        "' Tank Volume and Capacity (requires calibration pairs (>2 for parallell sides, >3 for straight wedge and >4 for more complex shapes)",
       derivedFrom: function () {
         return ['tanks.' + instance + '.currentLevel']
       },
@@ -64,6 +64,10 @@ module.exports = function (app, plugin) {
         })
 
         return [
+          {
+            path: 'tanks.' + instance + '.capacity',
+            value: spline(1, calLevels, calVolumes)
+          },
           {
             path: 'tanks.' + instance + '.currentVolume',
             value: spline(level, calLevels, calVolumes)
