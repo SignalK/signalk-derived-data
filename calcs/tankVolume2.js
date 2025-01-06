@@ -5,7 +5,7 @@ module.exports = function (app, plugin) {
     return {
       group: 'tanks',
       optionKey: 'tankVolume2_' + instance,
-      title: 'Tank ' + instance + ' Volume',
+      title: 'Tank ' + instance + ' Volume (alternate currentVolume calculation than one above, select only one calculation per tank.) Uses ',
       derivedFrom: function () {
         return [
           'tanks.' + instance + '.currentLevel',
