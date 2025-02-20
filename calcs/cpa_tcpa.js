@@ -6,6 +6,29 @@ var alarmSent = []
 var notificationLevels = ['normal', 'alert', 'warn', 'alarm', 'emergency']
 
 module.exports = function (app, plugin) {
+
+  const secondsSinceVesselUpdate = (vessel) => {
+    const _vesselTimestamp = app.getPath(
+      'vessels.' + vessel + '.navigation.position.timestamp'
+    )
+    if (!_vesselTimestamp) {
+      return Date.now() / 1000
+    }
+    const vesselTimestamp = new Date(_vesselTimestamp).getTime()
+
+    let currentTime
+    const currentTimeString = app.getSelfPath('navigation.datetime.value')
+    if (currentTimeString) {
+      currentTime = new Date(currentTimeString).getTime()
+    } else {
+      currentTime = Date.now()
+    }
+
+    return Math.floor(
+      (currentTime - vesselTimestamp) / 1e3
+    )
+  }
+
   return {
     group: 'traffic',
     optionKey: 'CPA',
@@ -155,23 +178,7 @@ module.exports = function (app, plugin) {
             continue
           } // if distance outside range, don't calculate
 
-          var vesselTimestamp = app.getPath(
-            'vessels.' + vessel + '.navigation.position.timestamp'
-          )
-          vesselTimestamp = new Date(vesselTimestamp).getTime()
-
-          var currentTime
-          var currentTimeString = app.getSelfPath('navigation.datetime.value')
-          if (currentTimeString) {
-            currentTime = new Date(currentTimeString).getTime()
-          } else {
-            currentTime = Date.now()
-          }
-
-          var secondsSinceVesselUpdate = Math.floor(
-            (currentTime - vesselTimestamp) / 1e3
-          )
-          if (secondsSinceVesselUpdate > plugin.properties.traffic.timelimit) {
+          if (secondsSinceVesselUpdate(vessel) > plugin.properties.traffic.timelimit) {
             app.debug('old data from vessel, not calculating')
             continue
           } // old data from vessel, not calculating
