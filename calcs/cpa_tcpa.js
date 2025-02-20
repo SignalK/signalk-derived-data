@@ -139,6 +139,12 @@ module.exports = function (app, plugin) {
         if (typeof vessel === 'undefined' || vessel == app.selfId) {
           continue
         }
+
+        if (secondsSinceVesselUpdate(vessel) > plugin.properties.traffic.timelimit) {
+          app.debug('old data from vessel, not calculating')
+          continue
+        } // old data from vessel, not calculating
+
         var vesselPos = app.getPath(
           'vessels.' + vessel + '.navigation.position.value'
         )
@@ -177,11 +183,6 @@ module.exports = function (app, plugin) {
             app.debug('distance outside range, dont calculate')
             continue
           } // if distance outside range, don't calculate
-
-          if (secondsSinceVesselUpdate(vessel) > plugin.properties.traffic.timelimit) {
-            app.debug('old data from vessel, not calculating')
-            continue
-          } // old data from vessel, not calculating
 
           var vesselCourse = app.getPath(
             'vessels.' + vessel + '.navigation.courseOverGroundTrue.value'
