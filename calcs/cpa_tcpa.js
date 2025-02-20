@@ -267,6 +267,7 @@ module.exports = function (app, plugin) {
                 if (!vesselName) {
                   vesselName = mmsi || '(unknown)'
                 }
+                const cpaPositions = getCpaPositions(selfVessel, otherVessel, tcpa)
                 alarmDelta = {
                   context: 'vessels.' + app.selfId,
                   updates: [
@@ -282,6 +283,7 @@ module.exports = function (app, plugin) {
                             message: `Crossing vessel ${vesselName} ${cpa.toFixed(
                               2
                             )} m away in ${(tcpa / 60).toFixed(2)}  minutes`,
+                            cpaPositions,
                             timestamp: new Date().toISOString()
                           }
                         }
@@ -354,5 +356,12 @@ function normalAlarmDelta (vessel, mmsi) {
         ]
       }
     ]
+  }
+}
+
+function getCpaPositions(selfVessel, otherVessel, seconds) {
+  return {
+    self: geoutils.moveTo(selfVessel.location, {distance: selfVessel.speed * seconds, heading: selfVessel.heading}),
+    other: geoutils.moveTo(otherVessel.location, {distance: otherVessel.speed * seconds, heading: otherVessel.heading})
   }
 }
