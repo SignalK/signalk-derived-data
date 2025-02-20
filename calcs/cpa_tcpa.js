@@ -7,9 +7,9 @@ var notificationLevels = ['normal', 'alert', 'warn', 'alarm', 'emergency']
 
 module.exports = function (app, plugin) {
 
-  const secondsSinceVesselUpdate = (vessel) => {
+  const secondsSinceVesselUpdate = (vessel, path) => {
     const _vesselTimestamp = app.getPath(
-      'vessels.' + vessel + '.navigation.position.timestamp'
+      'vessels.' + vessel + '.' + path
     )
     if (!_vesselTimestamp) {
       return Date.now() / 1000
@@ -140,8 +140,23 @@ module.exports = function (app, plugin) {
           continue
         }
 
-        if (secondsSinceVesselUpdate(vessel) > plugin.properties.traffic.timelimit) {
-          app.debug('old data from vessel, not calculating')
+        if (secondsSinceVesselUpdate(vessel, 'navigation.position.timestamp') > plugin.properties.traffic.timelimit) {
+          app.debug('old position of vessel, not calculating')
+          if (app.getPath(
+            'vessels.' + vessel + '.navigation.distanceToSelf.value'
+          ) !== null) {
+            deltas.push({
+              context: 'vessels.' + vessel,
+              updates: [
+                {
+                  values: [CPA_TCPA(null, null), {
+                    path: 'navigation.distanceToSelf',
+                    value: null
+                  }]
+                }
+              ]
+            })
+          }
           continue
         } // old data from vessel, not calculating
 
@@ -191,6 +206,21 @@ module.exports = function (app, plugin) {
             'vessels.' + vessel + '.navigation.speedOverGround.value'
           )
 
+          if (secondsSinceVesselUpdate(vessel, 'navigation.courseOverGroundTrue') > plugin.properties.traffic.timelimit || 
+              secondsSinceVesselUpdate(vessel, 'navigation.speedOverGround') > plugin.properties.traffic.timelimit) {
+            app.debug('old course data from vessel, not calculating CPA')
+            if (vesselCourse !== null || vesselSpeed !== null) {
+              deltas.push({
+                context: 'vessels.' + vessel,
+                updates: [
+                  {
+                    values: [CPA_TCPA(null, null)]
+                  }
+                ]
+              })
+            }
+            continue
+          }
           if (!_.isUndefined(vesselCourse) && !_.isUndefined(vesselSpeed)) {
             var vesselCourseDeg = geoutils.radToDeg(vesselCourse)
             var otherVessel = {
