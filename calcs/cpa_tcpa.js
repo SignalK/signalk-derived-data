@@ -300,7 +300,7 @@ module.exports = function (app, plugin) {
                 ) {
                   app.debug(`Clearing alarm for ${vessel}`)
                   alarmDelta = normalAlarmDelta(vessel, mmsi)
-                  alarmSent[vessel] = false
+                  delete alarmSent[vessel]
                 }
               }
               if (alarmDelta) {
