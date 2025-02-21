@@ -6,11 +6,8 @@ var alarmSent = {}
 var notificationLevels = ['normal', 'alert', 'warn', 'alarm', 'emergency']
 
 module.exports = function (app, plugin) {
-
   const secondsSinceVesselUpdate = (vessel, path) => {
-    const _vesselTimestamp = app.getPath(
-      'vessels.' + vessel + '.' + path
-    )
+    const _vesselTimestamp = app.getPath('vessels.' + vessel + '.' + path)
     if (!_vesselTimestamp) {
       return Date.now() / 1000
     }
@@ -24,9 +21,7 @@ module.exports = function (app, plugin) {
       currentTime = Date.now()
     }
 
-    return Math.floor(
-      (currentTime - vesselTimestamp) / 1e3
-    )
+    return Math.floor((currentTime - vesselTimestamp) / 1e3)
   }
 
   return {
@@ -48,8 +43,7 @@ module.exports = function (app, plugin) {
       },
       distanceToSelf: {
         type: 'boolean',
-        title:
-          'Calculate distance to self for all vessels',
+        title: 'Calculate distance to self for all vessels',
         default: true
       },
       timelimit: {
@@ -139,19 +133,27 @@ module.exports = function (app, plugin) {
           continue
         }
 
-        if (secondsSinceVesselUpdate(vessel, 'navigation.position.timestamp') > plugin.properties.traffic.timelimit) {
+        if (
+          secondsSinceVesselUpdate(vessel, 'navigation.position.timestamp') >
+          plugin.properties.traffic.timelimit
+        ) {
           app.debug('old position of vessel, not calculating')
-          if (app.getPath(
-            'vessels.' + vessel + '.navigation.distanceToSelf.value'
-          ) !== null) {
+          if (
+            app.getPath(
+              'vessels.' + vessel + '.navigation.distanceToSelf.value'
+            ) !== null
+          ) {
             deltas.push({
               context: 'vessels.' + vessel,
               updates: [
                 {
-                  values: [CPA_TCPA(null, null), {
-                    path: 'navigation.distanceToSelf',
-                    value: null
-                  }]
+                  values: [
+                    CPA_TCPA(null, null),
+                    {
+                      path: 'navigation.distanceToSelf',
+                      value: null
+                    }
+                  ]
                 }
               ]
             })
@@ -170,10 +172,8 @@ module.exports = function (app, plugin) {
             },
             { latitude: vesselPos.latitude, longitude: vesselPos.longitude }
           )
-          
-          if (
-            plugin.properties.traffic.distanceToSelf
-         ) {
+
+          if (plugin.properties.traffic.distanceToSelf) {
             app.debug('distance of ' + vessel + ' to self: ' + distance)
             app.handleMessage(plugin.id, {
               context: 'vessels.' + vessel,
@@ -189,7 +189,7 @@ module.exports = function (app, plugin) {
               ]
             })
           }
-          
+
           if (
             distance >= plugin.properties.traffic.range &&
             plugin.properties.traffic.range >= 0
@@ -205,8 +205,14 @@ module.exports = function (app, plugin) {
             'vessels.' + vessel + '.navigation.speedOverGround.value'
           )
 
-          if (secondsSinceVesselUpdate(vessel, 'navigation.courseOverGroundTrue') > plugin.properties.traffic.timelimit || 
-              secondsSinceVesselUpdate(vessel, 'navigation.speedOverGround') > plugin.properties.traffic.timelimit) {
+          if (
+            secondsSinceVesselUpdate(
+              vessel,
+              'navigation.courseOverGroundTrue'
+            ) > plugin.properties.traffic.timelimit ||
+            secondsSinceVesselUpdate(vessel, 'navigation.speedOverGround') >
+              plugin.properties.traffic.timelimit
+          ) {
             app.debug('old course data from vessel, not calculating CPA')
             if (vesselCourse !== null || vesselSpeed !== null) {
               deltas.push({
@@ -266,7 +272,11 @@ module.exports = function (app, plugin) {
                 if (!vesselName) {
                   vesselName = mmsi || '(unknown)'
                 }
-                const cpaPositions = getCpaPositions(selfVessel, otherVessel, tcpa)
+                const cpaPositions = getCpaPositions(
+                  selfVessel,
+                  otherVessel,
+                  tcpa
+                )
                 alarmDelta = {
                   context: 'vessels.' + app.selfId,
                   updates: [
@@ -294,9 +304,7 @@ module.exports = function (app, plugin) {
                 alarmSent[vessel] = true
                 currentlyActiveNotifications[vessel] = true
               } else {
-                if (
-                  alarmSent[vessel]
-                ) {
+                if (alarmSent[vessel]) {
                   app.debug(`Clearing alarm for ${vessel}`)
                   alarmDelta = normalAlarmDelta(app.selfId, vessel)
                   delete alarmSent[vessel]
@@ -321,12 +329,12 @@ module.exports = function (app, plugin) {
       }
 
       Object.keys(alarmSent)
-            .filter((vessel) => !currentlyActiveNotifications[vessel])
-            .forEach((vessel) => {
-              app.debug(`Clearing alarm for ${vessel}`)
-              deltas.push(normalAlarmDelta(app.selfId, vessel))
-              delete alarmSent[vessel]
-            })
+        .filter(vessel => !currentlyActiveNotifications[vessel])
+        .forEach(vessel => {
+          app.debug(`Clearing alarm for ${vessel}`)
+          deltas.push(normalAlarmDelta(app.selfId, vessel))
+          delete alarmSent[vessel]
+        })
 
       return deltas
     }
@@ -366,9 +374,15 @@ function normalAlarmDelta (selfId, vessel) {
   }
 }
 
-function getCpaPositions(selfVessel, otherVessel, seconds) {
+function getCpaPositions (selfVessel, otherVessel, seconds) {
   return {
-    self: geoutils.moveTo(selfVessel.location, {distance: selfVessel.speed * seconds, heading: selfVessel.heading}),
-    other: geoutils.moveTo(otherVessel.location, {distance: otherVessel.speed * seconds, heading: otherVessel.heading})
+    self: geoutils.moveTo(selfVessel.location, {
+      distance: selfVessel.speed * seconds,
+      heading: selfVessel.heading
+    }),
+    other: geoutils.moveTo(otherVessel.location, {
+      distance: otherVessel.speed * seconds,
+      heading: otherVessel.heading
+    })
   }
 }
