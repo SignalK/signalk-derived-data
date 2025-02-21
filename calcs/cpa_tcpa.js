@@ -2,7 +2,7 @@ const _ = require('lodash')
 const geolib = require('geolib')
 const geoutils = require('geolocation-utils')
 
-var alarmSent = []
+var alarmSent = {}
 var notificationLevels = ['normal', 'alert', 'warn', 'alarm', 'emergency']
 
 module.exports = function (app, plugin) {
@@ -102,28 +102,26 @@ module.exports = function (app, plugin) {
     },
     debounceDelay: 5 * 1000,
     stop: function () {
-      app.debug('stopped')
-      if (alarmSent.length < 1) {
-        _.keys(alarmSent).forEach(function (vessel) {
-          var mmsi = app.getPath('vessels.' + vessel + '.mmsi')
-          app.handleMessage(plugin.id, {
-            context: 'vessels.' + app.selfId,
-            updates: [
-              {
-                values: [
-                  {
-                    path: 'notifications.navigation.closestApproach.' + vessel,
-                    value: {
-                      state: 'normal',
-                      timestamp: new Date().toISOString()
-                    }
+      _.keys(alarmSent).forEach(function (vessel) {
+        var mmsi = app.getPath('vessels.' + vessel + '.mmsi')
+        app.handleMessage(plugin.id, {
+          context: 'vessels.' + app.selfId,
+          updates: [
+            {
+              values: [
+                {
+                  path: 'notifications.navigation.closestApproach.' + vessel,
+                  value: {
+                    state: 'normal',
+                    timestamp: new Date().toISOString()
                   }
-                ]
-              }
-            ]
-          })
+                }
+              ]
+            }
+          ]
         })
-      }
+      })
+      app.debug('stopped')
     },
     calculator: function (selfPosition, selfCourse, selfSpeed) {
       var selfCourseDeg = geoutils.radToDeg(selfCourse)
@@ -295,11 +293,10 @@ module.exports = function (app, plugin) {
                 alarmSent[vessel] = true
               } else {
                 if (
-                  alarmSent[vessel] &&
-                  typeof alarmSent[vessel] !== 'undefined'
+                  alarmSent[vessel]
                 ) {
                   app.debug(`Clearing alarm for ${vessel}`)
-                  alarmDelta = normalAlarmDelta(vessel, mmsi)
+                  alarmDelta = normalAlarmDelta(app.selfId, vessel)
                   delete alarmSent[vessel]
                 }
               }
@@ -340,9 +337,9 @@ function CPA_TCPA (cpa, tcpa) {
   }
 }
 
-function normalAlarmDelta (vessel, mmsi) {
+function normalAlarmDelta (selfId, vessel) {
   return {
-    context: 'vessels.' + vessel,
+    context: 'vessels.' + selfId,
     updates: [
       {
         values: [
