@@ -132,6 +132,7 @@ module.exports = function (app, plugin) {
       }
       var vesselList = app.getPath('vessels')
       var deltas = []
+      const currentlyActiveNotifications = {}
       for (var vessel in vesselList) {
         var cpa, tcpa
         if (typeof vessel === 'undefined' || vessel == app.selfId) {
@@ -291,6 +292,7 @@ module.exports = function (app, plugin) {
                 }
 
                 alarmSent[vessel] = true
+                currentlyActiveNotifications[vessel] = true
               } else {
                 if (
                   alarmSent[vessel]
@@ -317,6 +319,14 @@ module.exports = function (app, plugin) {
           })
         }
       }
+
+      Object.keys(alarmSent)
+            .filter((vessel) => !currentlyActiveNotifications[vessel])
+            .forEach((vessel) => {
+              app.debug(`Clearing alarm for ${vessel}`)
+              deltas.push(normalAlarmDelta(app.selfId, vessel))
+              delete alarmSent[vessel]
+            })
 
       return deltas
     }
