@@ -292,6 +292,7 @@ module.exports = function (app, plugin) {
                             message: `Crossing vessel ${vesselName} ${cpa.toFixed(
                               2
                             )} m away in ${(tcpa / 60).toFixed(2)}  minutes`,
+                            other: `vessels.${vessel}`,
                             cpaPositions,
                             timestamp: new Date().toISOString()
                           }
@@ -365,7 +366,8 @@ function normalAlarmDelta (selfId, vessel) {
             path: 'notifications.navigation.closestApproach.' + vessel,
             value: {
               state: 'normal',
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
+              other: `vessels.${vessel}`
             }
           }
         ]
