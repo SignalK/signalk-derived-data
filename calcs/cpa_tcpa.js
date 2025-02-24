@@ -2,15 +2,12 @@ const _ = require('lodash')
 const geolib = require('geolib')
 const geoutils = require('geolocation-utils')
 
-var alarmSent = []
+var alarmSent = {}
 var notificationLevels = ['normal', 'alert', 'warn', 'alarm', 'emergency']
 
 module.exports = function (app, plugin) {
-
   const secondsSinceVesselUpdate = (vessel, path) => {
-    const _vesselTimestamp = app.getPath(
-      'vessels.' + vessel + '.' + path
-    )
+    const _vesselTimestamp = app.getPath('vessels.' + vessel + '.' + path)
     if (!_vesselTimestamp) {
       return Date.now() / 1000
     }
@@ -24,9 +21,7 @@ module.exports = function (app, plugin) {
       currentTime = Date.now()
     }
 
-    return Math.floor(
-      (currentTime - vesselTimestamp) / 1e3
-    )
+    return Math.floor((currentTime - vesselTimestamp) / 1e3)
   }
 
   return {
@@ -48,8 +43,7 @@ module.exports = function (app, plugin) {
       },
       distanceToSelf: {
         type: 'boolean',
-        title:
-          'Calculate distance to self for all vessels',
+        title: 'Calculate distance to self for all vessels',
         default: true
       },
       timelimit: {
@@ -102,28 +96,26 @@ module.exports = function (app, plugin) {
     },
     debounceDelay: 5 * 1000,
     stop: function () {
-      app.debug('stopped')
-      if (alarmSent.length < 1) {
-        _.keys(alarmSent).forEach(function (vessel) {
-          var mmsi = app.getPath('vessels.' + vessel + '.mmsi')
-          app.handleMessage(plugin.id, {
-            context: 'vessels.' + app.selfId,
-            updates: [
-              {
-                values: [
-                  {
-                    path: 'notifications.navigation.closestApproach.' + vessel,
-                    value: {
-                      state: 'normal',
-                      timestamp: new Date().toISOString()
-                    }
+      _.keys(alarmSent).forEach(function (vessel) {
+        var mmsi = app.getPath('vessels.' + vessel + '.mmsi')
+        app.handleMessage(plugin.id, {
+          context: 'vessels.' + app.selfId,
+          updates: [
+            {
+              values: [
+                {
+                  path: 'notifications.navigation.closestApproach.' + vessel,
+                  value: {
+                    state: 'normal',
+                    timestamp: new Date().toISOString()
                   }
-                ]
-              }
-            ]
-          })
+                }
+              ]
+            }
+          ]
         })
-      }
+      })
+      app.debug('stopped')
     },
     calculator: function (selfPosition, selfCourse, selfSpeed) {
       var selfCourseDeg = geoutils.radToDeg(selfCourse)
@@ -134,25 +126,34 @@ module.exports = function (app, plugin) {
       }
       var vesselList = app.getPath('vessels')
       var deltas = []
+      const currentlyActiveNotifications = {}
       for (var vessel in vesselList) {
         var cpa, tcpa
         if (typeof vessel === 'undefined' || vessel == app.selfId) {
           continue
         }
 
-        if (secondsSinceVesselUpdate(vessel, 'navigation.position.timestamp') > plugin.properties.traffic.timelimit) {
+        if (
+          secondsSinceVesselUpdate(vessel, 'navigation.position.timestamp') >
+          plugin.properties.traffic.timelimit
+        ) {
           app.debug('old position of vessel, not calculating')
-          if (app.getPath(
-            'vessels.' + vessel + '.navigation.distanceToSelf.value'
-          ) !== null) {
+          if (
+            app.getPath(
+              'vessels.' + vessel + '.navigation.distanceToSelf.value'
+            ) !== null
+          ) {
             deltas.push({
               context: 'vessels.' + vessel,
               updates: [
                 {
-                  values: [CPA_TCPA(null, null), {
-                    path: 'navigation.distanceToSelf',
-                    value: null
-                  }]
+                  values: [
+                    CPA_TCPA(null, null),
+                    {
+                      path: 'navigation.distanceToSelf',
+                      value: null
+                    }
+                  ]
                 }
               ]
             })
@@ -171,10 +172,8 @@ module.exports = function (app, plugin) {
             },
             { latitude: vesselPos.latitude, longitude: vesselPos.longitude }
           )
-          
-          if (
-            plugin.properties.traffic.distanceToSelf
-         ) {
+
+          if (plugin.properties.traffic.distanceToSelf) {
             app.debug('distance of ' + vessel + ' to self: ' + distance)
             app.handleMessage(plugin.id, {
               context: 'vessels.' + vessel,
@@ -190,7 +189,7 @@ module.exports = function (app, plugin) {
               ]
             })
           }
-          
+
           if (
             distance >= plugin.properties.traffic.range &&
             plugin.properties.traffic.range >= 0
@@ -206,8 +205,14 @@ module.exports = function (app, plugin) {
             'vessels.' + vessel + '.navigation.speedOverGround.value'
           )
 
-          if (secondsSinceVesselUpdate(vessel, 'navigation.courseOverGroundTrue') > plugin.properties.traffic.timelimit || 
-              secondsSinceVesselUpdate(vessel, 'navigation.speedOverGround') > plugin.properties.traffic.timelimit) {
+          if (
+            secondsSinceVesselUpdate(
+              vessel,
+              'navigation.courseOverGroundTrue'
+            ) > plugin.properties.traffic.timelimit ||
+            secondsSinceVesselUpdate(vessel, 'navigation.speedOverGround') >
+              plugin.properties.traffic.timelimit
+          ) {
             app.debug('old course data from vessel, not calculating CPA')
             if (vesselCourse !== null || vesselSpeed !== null) {
               deltas.push({
@@ -267,7 +272,11 @@ module.exports = function (app, plugin) {
                 if (!vesselName) {
                   vesselName = mmsi || '(unknown)'
                 }
-                const cpaPositions = getCpaPositions(selfVessel, otherVessel, tcpa)
+                const cpaPositions = getCpaPositions(
+                  selfVessel,
+                  otherVessel,
+                  tcpa
+                )
                 alarmDelta = {
                   context: 'vessels.' + app.selfId,
                   updates: [
@@ -283,6 +292,7 @@ module.exports = function (app, plugin) {
                             message: `Crossing vessel ${vesselName} ${cpa.toFixed(
                               2
                             )} m away in ${(tcpa / 60).toFixed(2)}  minutes`,
+                            other: `vessels.${vessel}`,
                             cpaPositions,
                             timestamp: new Date().toISOString()
                           }
@@ -293,14 +303,12 @@ module.exports = function (app, plugin) {
                 }
 
                 alarmSent[vessel] = true
+                currentlyActiveNotifications[vessel] = true
               } else {
-                if (
-                  alarmSent[vessel] &&
-                  typeof alarmSent[vessel] !== 'undefined'
-                ) {
+                if (alarmSent[vessel]) {
                   app.debug(`Clearing alarm for ${vessel}`)
-                  alarmDelta = normalAlarmDelta(vessel, mmsi)
-                  alarmSent[vessel] = false
+                  alarmDelta = normalAlarmDelta(app.selfId, vessel)
+                  delete alarmSent[vessel]
                 }
               }
               if (alarmDelta) {
@@ -321,6 +329,14 @@ module.exports = function (app, plugin) {
         }
       }
 
+      Object.keys(alarmSent)
+        .filter(vessel => !currentlyActiveNotifications[vessel])
+        .forEach(vessel => {
+          app.debug(`Clearing alarm for ${vessel}`)
+          deltas.push(normalAlarmDelta(app.selfId, vessel))
+          delete alarmSent[vessel]
+        })
+
       return deltas
     }
   }
@@ -340,9 +356,9 @@ function CPA_TCPA (cpa, tcpa) {
   }
 }
 
-function normalAlarmDelta (vessel, mmsi) {
+function normalAlarmDelta (selfId, vessel) {
   return {
-    context: 'vessels.' + vessel,
+    context: 'vessels.' + selfId,
     updates: [
       {
         values: [
@@ -350,7 +366,8 @@ function normalAlarmDelta (vessel, mmsi) {
             path: 'notifications.navigation.closestApproach.' + vessel,
             value: {
               state: 'normal',
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
+              other: `vessels.${vessel}`
             }
           }
         ]
@@ -359,9 +376,15 @@ function normalAlarmDelta (vessel, mmsi) {
   }
 }
 
-function getCpaPositions(selfVessel, otherVessel, seconds) {
+function getCpaPositions (selfVessel, otherVessel, seconds) {
   return {
-    self: geoutils.moveTo(selfVessel.location, {distance: selfVessel.speed * seconds, heading: selfVessel.heading}),
-    other: geoutils.moveTo(otherVessel.location, {distance: otherVessel.speed * seconds, heading: otherVessel.heading})
+    self: geoutils.moveTo(selfVessel.location, {
+      distance: selfVessel.speed * seconds,
+      heading: selfVessel.heading
+    }),
+    other: geoutils.moveTo(otherVessel.location, {
+      distance: otherVessel.speed * seconds,
+      heading: otherVessel.heading
+    })
   }
 }
