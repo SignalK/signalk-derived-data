@@ -25,36 +25,33 @@ module.exports = function (app, plugin) {
           'navigation.magneticVariation.value'
         )
       }
-      if (speedOverGround == 0 && speedThroughWater == 0) {
-        var drift = 0
-        var setMagnetic = 0
-      } else {
-        var drift = Math.sqrt(
+
+      let drift = 0
+      let setMagnetic = 0
+
+      if (speedOverGround !== 0 || speedThroughWater !== 0) {
+        const delta = courseOverGroundTrue - headingMagnetic
+        drift = Math.sqrt(
           speedOverGround ** 2 +
             speedThroughWater ** 2 -
-            2 *
-              speedThroughWater *
-              speedOverGround *
-              Math.cos(courseOverGroundTrue - headingMagnetic)
+            2 * speedThroughWater * speedOverGround * Math.cos(delta)
         )
-        var setMagnetic =
+        setMagnetic =
           Math.PI -
           Math.atan2(
-            speedOverGround * Math.sin(courseOverGroundTrue - headingMagnetic),
-            speedThroughWater -
-              courseOverGroundTrue *
-                Math.cos(courseOverGroundTrue - headingMagnetic)
+            speedOverGround * Math.sin(delta),
+            speedThroughWater - speedOverGround * Math.cos(delta)
           )
 
         if (setMagnetic < 0) {
-          setMagnetic = setMagnetic + Math.PI * 2
+          setMagnetic += 2 * Math.PI
         }
       }
 
       var setTrue = setMagnetic + magneticVariation
       if (_.isUndefined(magneticVariation) || magneticVariation === null) {
         setTrue = null
-      } else if (setTrue >= 2 * Math.Pi) {
+      } else if (setTrue >= 2 * Math.PI) {
         setTrue = setTrue - Math.PI * 2
       } else if (setTrue < 0) {
         setTrue = setTrue + Math.PI * 2

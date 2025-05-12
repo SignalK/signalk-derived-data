@@ -1,7 +1,7 @@
 # signalk-derived-data
 
 
-Generates deltas for values derived from  signalk values
+Generates deltas for values derived from Signal K values
 
 It currently calculates:
 
@@ -29,7 +29,7 @@ It currently calculates:
  * Moon illumination and times (based on time and navigation.position)
  * Sunlight Times: sunrise, sunriseEnd, goldenHourEnd, solarNoon, goldenHour, sunsetStart, sunset, dusk, nauticalDusk, night, nadir, nightEnd, nauticalDawn, dawn (based on time and navigation.position)
  * Outside Heat Index (based on temperature and humidity)
- * True Course Over Goround (based on courseOverGroundMagnetic and magneticVariation)
+ * True Course Over Ground (based on courseOverGroundMagnetic and magneticVariation)
  * Magnetic Course Over Ground (based on courseOverGroundTrue and magneticVariation)
 
 To add new calculations, just create a new file under the `./calcs` directory.
