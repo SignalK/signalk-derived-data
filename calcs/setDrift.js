@@ -14,13 +14,6 @@ function normalizeAngle (angle) {
   return angle < 0 ? angle + 2 * Math.PI : angle
 }
 
-/**
- * Round a number to a fixed precision to avoid floating-point noise
- */
-function round (value, precision = PRECISION) {
-  return Math.round(value * Math.pow(10, precision)) / Math.pow(10, precision)
-}
-
 module.exports = function (app, plugin) {
   return {
     group: 'course data',
@@ -144,7 +137,7 @@ module.exports = function (app, plugin) {
             path: 'environment.current.setMagnetic',
             value: 4.2034819656475255
           },
-          { path: 'environment.current.driftImpact', value: -0.38039946704745 }
+          { path: 'environment.current.driftImpact', value: -0.38039946704745 } // negative drift
         ]
       },
       {
@@ -196,8 +189,8 @@ module.exports = function (app, plugin) {
         ],
         expected: [
           { path: 'environment.current.drift', value: 1.28611 },
-          { path: 'environment.current.setTrue', value: 0 }, // come from 180°
-          { path: 'environment.current.setMagnetic', value: 0 }, // same as setTrue
+          { path: 'environment.current.setTrue', value: 0 }, // pushing current
+          { path: 'environment.current.setMagnetic', value: 0 },
           { path: 'environment.current.driftImpact', value: 1.28611 }
         ]
       },
@@ -211,8 +204,8 @@ module.exports = function (app, plugin) {
         ],
         expected: [
           { path: 'environment.current.drift', value: 1.28611 },
-          { path: 'environment.current.setTrue', value: 3.141592653589793 }, // opposite of heading
-          { path: 'environment.current.setMagnetic', value: 3.141592653589793 }, // same as setTrue
+          { path: 'environment.current.setTrue', value: 3.141592653589793 }, // opposite current
+          { path: 'environment.current.setMagnetic', value: 3.141592653589793 },
           { path: 'environment.current.driftImpact', value: -1.28611 }
         ]
       }
