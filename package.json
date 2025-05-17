@@ -34,7 +34,6 @@
     }
   },
   "dependencies": {
-    "@panaaj/sk-geodesy": "^1.0.2",
     "baconjs": "^0.7.88",
     "cubic-spline": "^1.0.4",
     "geolib": "^3.3.1",
