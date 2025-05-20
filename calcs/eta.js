@@ -36,14 +36,6 @@ module.exports = function (app) {
 
       return [
         {
-          path: 'navigation.courseGreatCircle.nextPoint.estimatedTimeOfArrival',
-          value: eta
-        },
-        {
-          path: 'navigation.courseGreatCircle.nextPoint.timeToGo',
-          value: ttg
-        },
-        {
           path: 'navigation.courseGreatCircle.nextPoint.eta',
           value: eta
         }
@@ -53,15 +45,6 @@ module.exports = function (app) {
       {
         input: ['2024-07-12T18:00:00Z', 1000, 2],
         expected: [
-          {
-            path:
-              'navigation.courseGreatCircle.nextPoint.estimatedTimeOfArrival',
-            value: '2024-07-12T18:08:20.000Z'
-          },
-          {
-            path: 'navigation.courseGreatCircle.nextPoint.timeToGo',
-            value: 500
-          },
           {
             path: 'navigation.courseGreatCircle.nextPoint.eta',
             value: '2024-07-12T18:08:20.000Z'
