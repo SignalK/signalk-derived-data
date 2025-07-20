@@ -15,7 +15,6 @@ module.exports = function (app) {
       if (speed == null || aws == null || awa == null) {
         angle = null
         speed = null
-        dir   = null
       } else {
         var apparentX = Math.cos(awa) * aws
         var apparentY = Math.sin(awa) * aws
