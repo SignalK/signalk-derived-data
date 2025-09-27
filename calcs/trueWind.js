@@ -2,22 +2,19 @@ module.exports = function (app) {
   return {
     group: 'wind',
     optionKey: 'trueWind',
-    title: 'True Wind Angle, Direction and Speed',
+    title: 'True Wind Angle and Speed',
     derivedFrom: [
-      'navigation.headingTrue',
       'navigation.speedThroughWater',
       'environment.wind.speedApparent',
       'environment.wind.angleApparent'
     ],
-    calculator: function (headTrue, speed, aws, awa) {
+    calculator: function (speed, aws, awa) {
       var angle
       var speed
-      var dir
 
-      if (headTrue == null || speed == null || aws == null || awa == null) {
+      if (speed == null || aws == null || awa == null) {
         angle = null
         speed = null
-        dir   = null
       } else {
         var apparentX = Math.cos(awa) * aws
         var apparentY = Math.sin(awa) * aws
@@ -29,18 +26,9 @@ module.exports = function (app) {
         if (aws < 1e-9) {
           angle = awa
         }
-
-        dir = headTrue + angle
-
-        if (dir > Math.PI * 2) {
-          dir = dir - Math.PI * 2
-        } else if (dir < 0) {
-          dir = dir + Math.PI * 2
-        }
       }
 
       return [
-        { path: 'environment.wind.directionTrue', value: dir },
         { path: 'environment.wind.angleTrueWater', value: angle },
         { path: 'environment.wind.speedTrue', value: speed }
       ]
