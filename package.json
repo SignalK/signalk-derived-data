@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "precommit": "lint-staged",
-    "format": "prettier-standard calcs/*.js index.js",
+    "format": "prettier-standard calcs/*.js index.js utils.js test/*.js",
     "test": "mocha"
   },
   "keywords": [
