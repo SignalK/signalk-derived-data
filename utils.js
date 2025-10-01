@@ -3,8 +3,9 @@
  * @param value Value to test
  * @returns true if value is a number
  */
-const isNumeric = value =>
-  typeof value === 'number' && !isNaN(value) && value !== Infinity
+function isNumeric (value) {
+  return typeof value === 'number' && !isNaN(value) && value !== Infinity
+}
 
 /**
  * @description Tests that supplied value is between 0 & 2*Pi
