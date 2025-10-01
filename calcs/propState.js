@@ -11,26 +11,24 @@ module.exports = function (app, plugin) {
       optionKey: instance + 'state',
       title: `${instance} propulsion state (based on revolutions)`,
       derivedFrom: function () {
-        return [
-          'propulsion.' + instance + '.revolutions'
-        ]
+        return ['propulsion.' + instance + '.revolutions']
       },
       calculator: function (revol) {
         const currentState =
           app.getSelfPath('propulsion.' + instance + '.state.value') || 'none'
 
-        if ((revol > 0) && (currentState !== "started")) {
+        if (revol > 0 && currentState !== 'started') {
           return [
             {
               path: 'propulsion.' + instance + '.state',
-              value: "started"
+              value: 'started'
             }
           ]
-        } else if ((revol == 0) && (currentState !== "stopped")) {
+        } else if (revol == 0 && currentState !== 'stopped') {
           return [
             {
               path: 'propulsion.' + instance + '.state',
-              value: "stopped"
+              value: 'stopped'
             }
           ]
         }
