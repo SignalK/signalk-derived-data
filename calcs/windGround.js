@@ -51,7 +51,7 @@ module.exports = function (app, plugin) {
     },
     {
       group: 'wind',
-      optionKey: 'groundWindDirection',
+      optionKey: 'groundWindDirection2',
       title: 'Ground Wind Direction (directionTrue)',
       derivedFrom: [
         'navigation.headingTrue',
@@ -76,8 +76,8 @@ module.exports = function (app, plugin) {
     },
     {
       group: 'wind',
-      optionKey: 'groundWindDirectionDeprecated',
-      title: 'DEPRECATED (environment.wind.directionGround)',
+      optionKey: 'groundWindDirection',
+      title: 'DEPRECATED (use Ground Wind Direction)',
       derivedFrom: [
         'navigation.headingTrue',
         'environment.wind.angleTrueGround'

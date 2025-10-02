@@ -47,7 +47,7 @@ module.exports = function (app, plugin) {
     },
     {
       group: 'wind',
-      optionKey: 'angleTrueWater',
+      optionKey: 'trueWind',
       title: 'True Wind Angle and Speed (angleTrueWater)',
       derivedFrom: [
         'navigation.speedThroughWater',
@@ -91,8 +91,8 @@ module.exports = function (app, plugin) {
     },
     {
       group: 'wind',
-      optionKey: 'directionMagnetic',
-      title: 'Magnetic Wind Direction (directionMagnetic)',
+      optionKey: 'directionMagnetic2',
+      title: 'Magnetic Wind Direction (A) =>',
       derivedFrom: [
         'navigation.headingMagnetic',
         'environment.wind.angleApparent'
@@ -131,8 +131,8 @@ module.exports = function (app, plugin) {
     },
     {
       group: 'wind',
-      optionKey: 'directionMagnetic2',
-      title: 'Magnetic Wind Direction 2 (directionMagnetic)',
+      optionKey: 'directionMagnetic',
+      title: 'Magnetic Wind Direction (B) =>',
       derivedFrom: [
         'environment.wind.directionTrue',
         'navigation.magneticVariation'
