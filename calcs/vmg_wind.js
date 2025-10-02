@@ -2,7 +2,7 @@ module.exports = function (app) {
   return {
     group: 'course data',
     optionKey: 'vmg_Wind',
-    title: 'Velocity Made Good to wind',
+    title: 'Velocity Made Good to wind (A) =>',
     derivedFrom: [
       'environment.wind.angleTrueWater',
       'navigation.speedOverGround'
