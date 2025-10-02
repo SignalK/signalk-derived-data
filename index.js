@@ -268,7 +268,7 @@ module.exports = function (app) {
           ? calc.derivedFrom()
           : calc.derivedFrom
       title += derivedFrom
-        .map(path => `${path}${app.getSelfPath(path) ? '(👍)' : '(-)'}`)
+        .map(path => `${path}${app.getSelfPath(path) ? '(✅)' : '(⛔)'}`)
         .join(', ')
       title += ']'
       groups[groupName].push({ ...calc, title })
