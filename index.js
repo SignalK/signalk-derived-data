@@ -261,14 +261,16 @@ module.exports = function (app) {
       if (!groups[groupName]) {
         groups[groupName] = []
       }
-      let title = calc.title
+      let title = `${calc.title.includes('DEPRECATED') ? '❗' : ''}${
+        calc.title
+      }`
       title += ' ['
       const derivedFrom =
         typeof calc.derivedFrom === 'function'
           ? calc.derivedFrom()
           : calc.derivedFrom
       title += derivedFrom
-        .map(path => `${path}${app.getSelfPath(path) ? '(✅)' : '(⛔)'}`)
+        .map(path => `${path}${app.getSelfPath(path) ? '(👍)' : '(-)'}`)
         .join(', ')
       title += ']'
       groups[groupName].push({ ...calc, title })

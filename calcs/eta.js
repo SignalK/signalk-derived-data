@@ -2,7 +2,8 @@ module.exports = function (app) {
   return {
     group: 'course data',
     optionKey: 'eta_waypoint',
-    title: 'Estimated time of arrival at the next waypoint',
+    title:
+      'DEPRECATED (use course-provider) Estimated time of arrival at the next waypoint',
     derivedFrom: [
       'navigation.datetime',
       'navigation.courseRhumbline.nextPoint.distance',
