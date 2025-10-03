@@ -51,9 +51,10 @@ module.exports = function (app, plugin) {
       },
       tests: [
         {
-          input: [2, null, null],
+          input: [3, 2, null, null],
           selfData,
           expected: [
+            { path: 'environment.wind.directionTrue', value: null },
             { path: 'environment.wind.angleTrueGround', value: null },
             { path: 'environment.wind.speedOverGround', value: null }
           ]
