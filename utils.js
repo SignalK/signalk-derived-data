@@ -12,7 +12,7 @@ function isNumeric (value) {
  * @param value Value in radians
  * @returns true if value is between 0 & 2*Pi
  */
-export function isCompassAngle (value) {
+exports.isCompassAngle = (value) => {
   if (isNumeric(value)) {
     const twoPi = Math.PI * 2
     return value >= 0 && value < twoPi
@@ -26,7 +26,7 @@ export function isCompassAngle (value) {
  * @param value Value in radians
  * @returns Value between 0 & 2*Pi
  */
-export function formatCompassAngle (value) {
+exports.formatCompassAngle = (value) => {
   if (isNumeric(value)) {
     const twoPi = Math.PI * 2
     if (value >= twoPi) return value - twoPi
@@ -42,7 +42,7 @@ export function formatCompassAngle (value) {
  * @param value Value to test
  * @returns true if value is a valid Signal K position
  */
-export function isPosition (value) {
+exports.isPosition = (value) => {
   if (value && isNumeric(value.latitude) && isNumeric(value.longitude)) {
     return (
       value.latitude >= -90 &&
@@ -54,5 +54,5 @@ export function isPosition (value) {
   }
 }
 
-export const degreesToRadians = value => Math.PI / 180 * value
-export const radiansToDegrees = value => 180 / Math.PI * value
+exports.degreesToRadians = value => Math.PI / 180 * value
+exports.radiansToDegrees = value => 180 / Math.PI * value
