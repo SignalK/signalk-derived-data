@@ -201,6 +201,8 @@ module.exports = function (app) {
 
     schema = {
       title: 'Derived Data',
+      description:
+        'Legend: 👍 Path is present, ❎ Path value = `null`, ❌ Path not present',
       type: 'object',
       properties: {
         default_ttl: {
@@ -268,7 +270,10 @@ module.exports = function (app) {
           ? calc.derivedFrom()
           : calc.derivedFrom
       title += derivedFrom
-        .map(path => `${path}${app.getSelfPath(path) ? '(👍)' : '(-)'}`)
+        .map(path => {
+          const p = app.getSelfPath(path)
+          return `${path}${p ? (p.value === null ? '(❎)' : '(👍)') : '(❌)'}`
+        })
         .join(', ')
       title += ']'
       groups[groupName].push({ ...calc, title })
