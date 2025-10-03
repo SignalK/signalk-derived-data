@@ -8,19 +8,27 @@ module.exports = function (app, plugin) {
     {
       group: 'wind',
       optionKey: 'groundWind',
-      title: 'Ground Wind Angle and Speed',
+      title: 'Ground Wind Direction Angle and Speed =>',
       derivedFrom: [
+        'navigation.headingTrue',
         'navigation.speedOverGround',
         'environment.wind.speedApparent',
         'environment.wind.angleApparent'
       ],
-      calculator: function (sog, aws, awa) {
+      calculator: function (headTrue, sog, aws, awa) {
         let angle
         let speed
+        let dir
 
-        if (!_.isFinite(sog) || !_.isFinite(aws) || !_.isFinite(awa)) {
+        if (
+          !_.isFinite(headTrue) ||
+          !_.isFinite(sog) ||
+          !_.isFinite(aws) ||
+          !_.isFinite(awa)
+        ) {
           angle = null
           speed = null
+          dir = null
         } else {
           const apparentX = Math.cos(awa) * aws
           const apparentY = Math.sin(awa) * aws
@@ -31,9 +39,12 @@ module.exports = function (app, plugin) {
           if (aws < 1e-9) {
             angle = awa
           }
+
+          dir = formatCompassAngle(headingTrue + angle)
         }
 
         return [
+          { path: 'environment.wind.directionTrue', value: dir },
           { path: 'environment.wind.angleTrueGround', value: angle },
           { path: 'environment.wind.speedOverGround', value: speed }
         ]
@@ -46,31 +57,6 @@ module.exports = function (app, plugin) {
             { path: 'environment.wind.angleTrueGround', value: null },
             { path: 'environment.wind.speedOverGround', value: null }
           ]
-        }
-      ]
-    },
-    {
-      group: 'wind',
-      optionKey: 'groundWindDirection2',
-      title: 'Ground Wind Direction (directionTrue)',
-      derivedFrom: [
-        'navigation.headingTrue',
-        'environment.wind.angleTrueGround'
-      ],
-      calculator: function (headingTrue, gwa) {
-        if (!_.isFinite(headingTrue) || !_.isFinite(gwa)) {
-          return [{ path: 'environment.wind.directionTrue', value: null }]
-        }
-
-        const wdg = formatCompassAngle(headingTrue + gwa)
-
-        return [{ path: 'environment.wind.directionTrue', value: wdg }]
-      },
-      tests: [
-        {
-          input: [2, null],
-          selfData,
-          expected: [{ path: 'environment.wind.directionTrue', value: null }]
         }
       ]
     },

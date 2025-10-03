@@ -7,63 +7,6 @@ module.exports = function (app, plugin) {
   return [
     {
       group: 'wind',
-      optionKey: 'trueWind',
-      title: 'True Wind Angle, Direction and Speed',
-      derivedFrom: [
-        'navigation.headingTrue',
-        'navigation.speedThroughWater',
-        'environment.wind.speedApparent',
-        'environment.wind.angleApparent'
-      ],
-      calculator: function (headTrue, stw, aws, awa) {
-        let angle
-        let speed
-        let dir
-
-        if (
-          !_.isFinite(headTrue) ||
-          !_.isFinite(stw) ||
-          !_.isFinite(aws) ||
-          !_.isFinite(awa)
-        ) {
-          angle = null
-          speed = null
-          dir = null
-        } else {
-          const apparentX = Math.cos(awa) * aws
-          const apparentY = Math.sin(awa) * aws
-          angle = Math.atan2(apparentY, -stw + apparentX)
-          speed = Math.sqrt(
-            Math.pow(apparentY, 2) + Math.pow(-stw + apparentX, 2)
-          )
-          if (aws < 1e-9) {
-            angle = awa
-          }
-
-          dir = headTrue + angle
-          dir = formatCompassAngle(headTrue + angle)
-        }
-
-        return [
-          { path: 'environment.wind.directionTrue', value: dir },
-          { path: 'environment.wind.angleTrueWater', value: angle },
-          { path: 'environment.wind.speedTrue', value: speed }
-        ]
-      },
-      tests: [
-        {
-          input: [2, null, null],
-          selfData,
-          expected: [
-            { path: 'environment.wind.directionTrue', value: null },
-            { path: 'environment.wind.angleTrueWater', value: null },
-            { path: 'environment.wind.speedTrue', value: null }
-          ]
-        }
-      ]
-    },
-    {
-      group: 'wind',
       optionKey: 'directionMagnetic2',
       title: 'Magnetic Wind Direction (A) =>',
       derivedFrom: [
@@ -152,6 +95,62 @@ module.exports = function (app, plugin) {
               path: 'environment.wind.directionMagnetic',
               value: 5.493185307179586
             }
+          ]
+        }
+      ]
+    },
+    {
+      group: 'wind',
+      optionKey: 'trueWind',
+      title: 'True Wind Direction, Angle and Speed =>',
+      derivedFrom: [
+        'navigation.headingTrue',
+        'navigation.speedThroughWater',
+        'environment.wind.speedApparent',
+        'environment.wind.angleApparent'
+      ],
+      calculator: function (headTrue, stw, aws, awa) {
+        let angle
+        let speed
+        let dir
+
+        if (
+          !_.isFinite(headTrue) ||
+          !_.isFinite(stw) ||
+          !_.isFinite(aws) ||
+          !_.isFinite(awa)
+        ) {
+          angle = null
+          speed = null
+          dir = null
+        } else {
+          const apparentX = Math.cos(awa) * aws
+          const apparentY = Math.sin(awa) * aws
+          angle = Math.atan2(apparentY, -stw + apparentX)
+          speed = Math.sqrt(
+            Math.pow(apparentY, 2) + Math.pow(-stw + apparentX, 2)
+          )
+          if (aws < 1e-9) {
+            angle = awa
+          }
+
+          dir = formatCompassAngle(headTrue + angle)
+        }
+
+        return [
+          { path: 'environment.wind.directionTrue', value: dir },
+          { path: 'environment.wind.angleTrueWater', value: angle },
+          { path: 'environment.wind.speedTrue', value: speed }
+        ]
+      },
+      tests: [
+        {
+          input: [2, null, null],
+          selfData,
+          expected: [
+            { path: 'environment.wind.directionTrue', value: null },
+            { path: 'environment.wind.angleTrueWater', value: null },
+            { path: 'environment.wind.speedTrue', value: null }
           ]
         }
       ]
