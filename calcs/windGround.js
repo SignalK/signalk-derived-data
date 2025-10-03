@@ -40,7 +40,7 @@ module.exports = function (app, plugin) {
             angle = awa
           }
 
-          dir = formatCompassAngle(headingTrue + angle)
+          dir = formatCompassAngle(headTrue + angle)
         }
 
         return [
