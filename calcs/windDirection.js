@@ -7,60 +7,28 @@ module.exports = function (app, plugin) {
   return [
     {
       group: 'wind',
-      optionKey: 'directionTrue',
-      title: 'True Wind Direction (directionTrue)',
+      optionKey: 'trueWind',
+      title: 'True Wind Angle, Direction and Speed',
       derivedFrom: [
         'navigation.headingTrue',
-        'environment.wind.angleTrueWater'
-      ],
-      calculator: function (headingTrue, twa) {
-        if (!_.isFinite(headingTrue) || !_.isFinite(twa)) {
-          return [{ path: 'environment.wind.directionTrue', value: null }]
-        }
-
-        const twd = formatCompassAngle(headingTrue + twa)
-
-        return [{ path: 'environment.wind.directionTrue', value: twd }]
-      },
-      tests: [
-        {
-          input: [null, 2],
-          selfData,
-          expected: [
-            {
-              path: 'environment.wind.directionTrue',
-              value: null
-            }
-          ]
-        },
-        {
-          input: [2.17, 0.13],
-          selfData,
-          expected: [
-            {
-              path: 'environment.wind.directionTrue',
-              value: 2.3
-            }
-          ]
-        }
-      ]
-    },
-    {
-      group: 'wind',
-      optionKey: 'trueWind',
-      title: 'True Wind Angle and Speed (angleTrueWater)',
-      derivedFrom: [
         'navigation.speedThroughWater',
         'environment.wind.speedApparent',
         'environment.wind.angleApparent'
       ],
-      calculator: function (stw, aws, awa) {
+      calculator: function (headTrue, stw, aws, awa) {
         let angle
         let speed
+        let dir
 
-        if (!_.isFinite(stw) || !_.isFinite(aws) || !_.isFinite(awa)) {
+        if (
+          !_.isFinite(headTrue) ||
+          !_.isFinite(stw) ||
+          !_.isFinite(aws) ||
+          !_.isFinite(awa)
+        ) {
           angle = null
           speed = null
+          dir = null
         } else {
           const apparentX = Math.cos(awa) * aws
           const apparentY = Math.sin(awa) * aws
@@ -71,9 +39,13 @@ module.exports = function (app, plugin) {
           if (aws < 1e-9) {
             angle = awa
           }
+
+          dir = headTrue + angle
+          dir = formatCompassAngle(headTrue + angle)
         }
 
         return [
+          { path: 'environment.wind.directionTrue', value: dir },
           { path: 'environment.wind.angleTrueWater', value: angle },
           { path: 'environment.wind.speedTrue', value: speed }
         ]
@@ -83,6 +55,7 @@ module.exports = function (app, plugin) {
           input: [2, null, null],
           selfData,
           expected: [
+            { path: 'environment.wind.directionTrue', value: null },
             { path: 'environment.wind.angleTrueWater', value: null },
             { path: 'environment.wind.speedTrue', value: null }
           ]
