@@ -1,31 +1,38 @@
+const _ = require('lodash')
+
 module.exports = function (app) {
   return {
     group: 'course data',
     optionKey: 'steer_error',
-    title: 'Estimated steer error and direction',
+    title: 'Estimated steer error and direction =>',
     derivedFrom: [
       'navigation.courseOverGroundTrue',
-      'navigation.courseRhumbline.bearingToDestinationTrue'
+      'navigation.course.calcValues.bearingTrue'
     ],
     calculator: function (courseOverGroundTrue, bearingToDestinationTrue) {
-      var steererr
-      var steer
-      var leftSteer
-      var rightSteer
+      let steererr
+      let steer = null
+      let leftSteer = null
+      let rightSteer = null
 
-      steererr = courseOverGroundTrue - bearingToDestinationTrue
-      if (steererr > 3.14159265359) {
-        steer = (steererr - 3.14159265359) * -1
-      } else if (steererr < -3.14159265359) {
-        steer = (steererr + 3.14159265359) * -1
-      } else {
-        steer = steererr
-      }
+      if (
+        _.isFinite(courseOverGroundTrue) &&
+        _.isFinite(bearingToDestinationTrue)
+      ) {
+        steererr = courseOverGroundTrue - bearingToDestinationTrue
+        if (steererr > Math.PI) {
+          steer = (steererr - Math.PI) * -1
+        } else if (steererr < -Math.PI) {
+          steer = (steererr + Math.PI) * -1
+        } else {
+          steer = steererr
+        }
 
-      if (steer > 0) {
-        ;(leftSteer = steer), (rightSteer = 0)
-      } else {
-        ;(leftSteer = 0), (rightSteer = steer * -1)
+        if (steer > 0) {
+          ;(leftSteer = steer), (rightSteer = 0)
+        } else {
+          ;(leftSteer = 0), (rightSteer = steer * -1)
+        }
       }
 
       app.debug(
