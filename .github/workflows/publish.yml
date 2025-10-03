@@ -11,6 +11,12 @@ jobs:
       with:
         node-version: '16.x'
         registry-url: 'https://registry.npmjs.org'
-    - run: npm publish --access public
+    - run: |
+        if [[ "${{ steps.vars.outputs.tag }}" == *beta* ]];
+          then
+            npm publish --access public --tag beta 
+          else
+            npm publish --access public
+        fi
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
