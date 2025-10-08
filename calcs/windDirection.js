@@ -1,7 +1,16 @@
-const { formatCompassAngle } = require('../utils')
+const { formatCompassAngle, okToSend } = require('../utils')
 const _ = require('lodash')
 
-const selfData = {}
+const selfData = {
+  environment: {
+    wind: {
+      directionTrue: 0.123,
+      directionMagnetic: 0.234,
+      angleTrueWater: 0.1,
+      speedTrue: 0.2
+    }
+  }
+}
 
 module.exports = function (app, plugin) {
   return [
@@ -18,9 +27,14 @@ module.exports = function (app, plugin) {
           return [{ path: 'environment.wind.directionMagnetic', value: null }]
         }
 
-        const twd = formatCompassAngle(headingMagnetic + awa)
+        const mwd = formatCompassAngle(headingMagnetic + awa)
 
-        return [{ path: 'environment.wind.directionMagnetic', value: twd }]
+        const r = []
+        const path = 'environment.wind.directionMagnetic'
+        if (okToSend(app, mwd, path)) {
+          r.push({ path: path, value: mwd })
+        }
+        return r
       },
       tests: [
         {
@@ -58,16 +72,14 @@ module.exports = function (app, plugin) {
           return [{ path: 'environment.wind.directionMagnetic', value: null }]
         }
 
-        const directionMagnetic = formatCompassAngle(
-          directionTrue - magneticVariation
-        )
+        const mwd = formatCompassAngle(directionTrue - magneticVariation)
 
-        return [
-          {
-            path: 'environment.wind.directionMagnetic',
-            value: directionMagnetic
-          }
-        ]
+        const r = []
+        const path = 'environment.wind.directionMagnetic'
+        if (okToSend(app, mwd, path)) {
+          r.push({ path: path, value: mwd })
+        }
+        return r
       },
       tests: [
         {
@@ -137,20 +149,44 @@ module.exports = function (app, plugin) {
           dir = formatCompassAngle(headTrue + angle)
         }
 
-        return [
-          { path: 'environment.wind.directionTrue', value: dir },
-          { path: 'environment.wind.angleTrueWater', value: angle },
-          { path: 'environment.wind.speedTrue', value: speed }
-        ]
+        const r = []
+        let path = 'environment.wind.directionTrue'
+        if (okToSend(app, dir, path)) {
+          r.push({ path: path, value: dir })
+        }
+        path = 'environment.wind.angleTrueWater'
+        if (okToSend(app, angle, path)) {
+          r.push({ path: path, value: angle })
+        }
+        path = 'environment.wind.speedTrue'
+        if (okToSend(app, speed, path)) {
+          r.push({ path: path, value: speed })
+        }
+        return r
       },
       tests: [
         {
-          input: [2, null, null],
+          input: [2, null, null, 1],
           selfData,
           expected: [
             { path: 'environment.wind.directionTrue', value: null },
             { path: 'environment.wind.angleTrueWater', value: null },
             { path: 'environment.wind.speedTrue', value: null }
+          ]
+        },
+        {
+          input: [1.1, 0.6, 0.5, 0.2],
+          selfData,
+          expected: [
+            {
+              path: 'environment.wind.directionTrue',
+              value: 3.5069486465413533
+            },
+            {
+              path: 'environment.wind.angleTrueWater',
+              value: 2.406948646541353
+            },
+            { path: 'environment.wind.speedTrue', value: 0.1481892482444493 }
           ]
         }
       ]

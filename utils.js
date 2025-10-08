@@ -56,3 +56,18 @@ exports.isPosition = value => {
 
 exports.degreesToRadians = value => Math.PI / 180 * value
 exports.radiansToDegrees = value => 180 / Math.PI * value
+
+/**
+ * @description Tests new value against current path value to determine if the
+ * path new value should be emitted
+ * @param app Signal K server app
+ * @param newValue New path value
+ * @param path Path to test for the current value
+ * @returns true if new path value should be emitted
+ */
+exports.okToSend = (app, newValue, path) => {
+  const pv = app.getSelfPath(path)
+  if (!pv && newValue === null) return false
+  if (pv?.value === null && newValue === null) return false
+  return true
+}
