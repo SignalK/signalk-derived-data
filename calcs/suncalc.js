@@ -6,7 +6,7 @@ module.exports = function (app, plugin) {
     group: 'sun',
     optionKey: 'Sun',
     title:
-      'Sets environment.sun to dawn, sunrise, day, sunset, dusk or night. Sets environment.mode to day or night.',
+      'Sets environment.sun to nauticalDawn, dawn, sunrise, day, sunset, dusk, nauticalDusk or night. Sets environment.mode to day or night.',
     derivedFrom: ['navigation.datetime', 'navigation.position'],
     defaults: ['', undefined],
     debounceDelay: 60 * 1000,
@@ -40,8 +40,11 @@ module.exports = function (app, plugin) {
         } else if (now >= times.sunsetStart && now < times.dusk) {
           value = 'sunset'
           mode = 'night'
-        } else if (now < times.night) {
+        } else if (now < times.nauticalDusk) {
           value = 'dusk'
+          mode = 'night'
+        } else if (now < times.night {
+          value = 'nauticalDusk'
           mode = 'night'
         } else {
           value = 'night'
@@ -49,7 +52,9 @@ module.exports = function (app, plugin) {
         }
       } else {
         mode = 'night'
-        if (now >= times.dawn) {
+        if (now >= times.nauticalDawn) {
+          value = 'nauticalDawn'
+        } else if (now >= times.dawn) {
           value = 'dawn'
         } else {
           value = 'night'
