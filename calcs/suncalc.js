@@ -43,7 +43,7 @@ module.exports = function (app, plugin) {
         } else if (now < times.nauticalDusk) {
           value = 'dusk'
           mode = 'night'
-        } else if (now < times.night {
+        } else if (now < times.night) {
           value = 'nauticalDusk'
           mode = 'night'
         } else {
