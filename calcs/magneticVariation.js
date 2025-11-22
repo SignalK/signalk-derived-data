@@ -15,13 +15,13 @@ module.exports = function (app, plugin) {
       const info = model.point([position.latitude, position.longitude])
       const magVar = info.decl * Math.PI / 180
 
-      const today = new Date()
+      const startDate = model.start_date
       const ageOfService =
-        today.getFullYear() +
+        startDate.getFullYear() +
         '.' +
-        String(today.getMonth() + 1).padStart(2, '0') +
+        String(startDate.getMonth() + 1).padStart(2, '0') +
         '.' +
-        String(today.getDate()).padStart(2, '0')
+        String(startDate.getDate()).padStart(2, '0')
 
       return [
         { path: 'navigation.magneticVariation', value: magVar },
