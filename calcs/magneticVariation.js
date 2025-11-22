@@ -24,7 +24,7 @@ module.exports = function (app, plugin) {
         String(today.getDate()).padStart(2, '0')
 
       return [
-        { path: 'navigation.magneticVariation.value', value: magVar },
+        { path: 'navigation.magneticVariation', value: magVar },
         {
           path: 'navigation.magneticVariation.source',
           value: model.name || 'WMM-2025'
@@ -40,7 +40,7 @@ module.exports = function (app, plugin) {
         input: [{ latitude: 39.0631232, longitude: -76.4872768 }],
         expectedRange: [
           {
-            path: 'navigation.magneticVariation.value',
+            path: 'navigation.magneticVariation',
             value: -0.1923,
             delta: 0.01
           }
