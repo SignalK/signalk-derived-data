@@ -1,5 +1,5 @@
 const _ = require('lodash')
-const MagVar = require('magvar')
+const geomagnetism = require('geomagnetism')
 
 module.exports = function (app, plugin) {
   return {
@@ -11,9 +11,17 @@ module.exports = function (app, plugin) {
     calculator: function (position) {
       if (!position || !position.latitude || !position.longitude) return
 
-      let degreesVar = MagVar.get([position.latitude], [position.longitude])
-      let magVar = degreesVar * Math.PI / 180
-      return [{ path: 'navigation.magneticVariation', value: magVar }]
+      const model = geomagnetism.model()
+      const info = model.point([position.latitude, position.longitude])
+      const magVar = info.decl * Math.PI / 180
+
+      return [
+        { path: 'navigation.magneticVariation', value: magVar },
+        {
+          path: 'navigation.magneticVariation.source',
+          value: (model.name || 'WMM-2025').replace('-', ' ')
+        }
+      ]
     },
     tests: [
       {
@@ -21,8 +29,8 @@ module.exports = function (app, plugin) {
         expectedRange: [
           {
             path: 'navigation.magneticVariation',
-            value: -0.19338248112097173,
-            delta: 0.05
+            value: -0.1923,
+            delta: 0.01
           }
         ]
       },
