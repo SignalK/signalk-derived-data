@@ -62,6 +62,15 @@ module.exports = function (app, plugin) {
       )
       app.debug('moon times:' + JSON.stringify(times, null, 2))
 
+      const tomorrow = new Date(date)
+      tomorrow.setDate(tomorrow.getDate() + 1)
+      const tomorrowTimes = suncalc.getMoonTimes(
+        tomorrow,
+        position.latitude,
+        position.longitude
+      )
+      app.debug('moon tomorrow times:' + JSON.stringify(tomorrowTimes, null, 2))
+
       return [
         {
           path: 'environment.moon.fraction',
@@ -79,6 +88,16 @@ module.exports = function (app, plugin) {
         {
           path: 'environment.moon.times.alwaysDown',
           value: !!times.alwaysDown
+        },
+        { path: 'environment.moon.times.tomorrow.rise', value: tomorrowTimes.rise || null },
+        { path: 'environment.moon.times.tomorrow.set', value: tomorrowTimes.set || null },
+        {
+          path: 'environment.moon.times.tomorrow.alwaysUp',
+          value: !!tomorrowTimes.alwaysUp
+        },
+        {
+          path: 'environment.moon.times.tomorrow.alwaysDown',
+          value: !!tomorrowTimes.alwaysDown
         }
       ]
     }
