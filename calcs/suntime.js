@@ -8,10 +8,16 @@ module.exports = function (app, plugin) {
     title: 'Sets environment.sunlight.times.* to sunrise, sunset, etc',
     derivedFrom: ['navigation.datetime', 'navigation.position'],
     defaults: ['', undefined],
+    properties: {
+      forecastDays: {
+        type: 'number',
+        title: 'Number of days to forecast (0-10)',
+        default: 1,
+        enum: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+      }
+    },
     debounceDelay: 60 * 1000,
     calculator: function (datetime, position) {
-      var value
-      var mode
       var date
 
       if (datetime && datetime.length > 0) {
@@ -22,63 +28,42 @@ module.exports = function (app, plugin) {
 
       app.debug(`Using datetime: ${date} position: ${JSON.stringify(position)}`)
 
-      var times = suncalc.getTimes(date, position.latitude, position.longitude)
+      var results = []
+      const forecastDays = plugin.properties.sun.forecastDays || 1
 
-      const tomorrow = new Date(date)
-      tomorrow.setDate(tomorrow.getDate() + 1)
-      var tomorrowTimes = suncalc.getTimes(tomorrow, position.latitude, position.longitude)
+      for (let day = 0; day <= forecastDays; day++) {
+        const targetDate = new Date(date)
+        targetDate.setDate(targetDate.getDate() + day)
+        const times = suncalc.getTimes(
+          targetDate,
+          position.latitude,
+          position.longitude
+        )
 
-      return [
-        { path: 'environment.sunlight.times.sunrise', value: times.sunrise },
-        {
-          path: 'environment.sunlight.times.sunriseEnd',
-          value: times.sunriseEnd
-        },
-        {
-          path: 'environment.sunlight.times.goldenHourEnd',
-          value: times.goldenHourEnd
-        },
-        {
-          path: 'environment.sunlight.times.solarNoon',
-          value: times.solarNoon
-        },
-        {
-          path: 'environment.sunlight.times.goldenHour',
-          value: times.goldenHour
-        },
-        {
-          path: 'environment.sunlight.times.sunsetStart',
-          value: times.sunsetStart
-        },
-        { path: 'environment.sunlight.times.sunset', value: times.sunset },
-        { path: 'environment.sunlight.times.dusk', value: times.dusk },
-        {
-          path: 'environment.sunlight.times.nauticalDusk',
-          value: times.nauticalDusk
-        },
-        { path: 'environment.sunlight.times.night', value: times.night },
-        { path: 'environment.sunlight.times.nadir', value: times.nadir },
-        { path: 'environment.sunlight.times.nightEnd', value: times.nightEnd },
-        {
-          path: 'environment.sunlight.times.nauticalDawn',
-          value: times.nauticalDawn
-        },
-        { path: 'environment.sunlight.times.dawn', value: times.dawn },
-        { path: 'environment.sunlight.times.tomorrow.sunrise', value: tomorrowTimes.sunrise },
-        { path: 'environment.sunlight.times.tomorrow.sunriseEnd', value: tomorrowTimes.sunriseEnd },
-        { path: 'environment.sunlight.times.tomorrow.goldenHourEnd', value: tomorrowTimes.goldenHourEnd },
-        { path: 'environment.sunlight.times.tomorrow.solarNoon', value: tomorrowTimes.solarNoon },
-        { path: 'environment.sunlight.times.tomorrow.goldenHour', value: tomorrowTimes.goldenHour },
-        { path: 'environment.sunlight.times.tomorrow.sunsetStart', value: tomorrowTimes.sunsetStart },
-        { path: 'environment.sunlight.times.tomorrow.sunset', value: tomorrowTimes.sunset },
-        { path: 'environment.sunlight.times.tomorrow.dusk', value: tomorrowTimes.dusk },
-        { path: 'environment.sunlight.times.tomorrow.nauticalDusk', value: tomorrowTimes.nauticalDusk },
-        { path: 'environment.sunlight.times.tomorrow.night', value: tomorrowTimes.night },
-        { path: 'environment.sunlight.times.tomorrow.nadir', value: tomorrowTimes.nadir },
-        { path: 'environment.sunlight.times.tomorrow.nightEnd', value: tomorrowTimes.nightEnd },
-        { path: 'environment.sunlight.times.tomorrow.nauticalDawn', value: tomorrowTimes.nauticalDawn },
-        { path: 'environment.sunlight.times.tomorrow.dawn', value: tomorrowTimes.dawn }
-      ]
+        const prefix =
+          day === 0
+            ? 'environment.sunlight.times'
+            : `environment.sunlight.times.${day}`
+
+        results.push(
+          { path: `${prefix}.sunrise`, value: times.sunrise },
+          { path: `${prefix}.sunriseEnd`, value: times.sunriseEnd },
+          { path: `${prefix}.goldenHourEnd`, value: times.goldenHourEnd },
+          { path: `${prefix}.solarNoon`, value: times.solarNoon },
+          { path: `${prefix}.goldenHour`, value: times.goldenHour },
+          { path: `${prefix}.sunsetStart`, value: times.sunsetStart },
+          { path: `${prefix}.sunset`, value: times.sunset },
+          { path: `${prefix}.dusk`, value: times.dusk },
+          { path: `${prefix}.nauticalDusk`, value: times.nauticalDusk },
+          { path: `${prefix}.night`, value: times.night },
+          { path: `${prefix}.nadir`, value: times.nadir },
+          { path: `${prefix}.nightEnd`, value: times.nightEnd },
+          { path: `${prefix}.nauticalDawn`, value: times.nauticalDawn },
+          { path: `${prefix}.dawn`, value: times.dawn }
+        )
+      }
+
+      return results
     }
   }
 }
