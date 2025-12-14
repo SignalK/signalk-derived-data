@@ -17,6 +17,8 @@ jobs:
         node-version: '22.x'
         registry-url: 'https://registry.npmjs.org'
     - run: |
+        npm --version
+    - run: |
         if [[ "${{ steps.vars.outputs.tag }}" == *beta* ]];
           then
             npm publish --access public --tag beta 
