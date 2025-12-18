@@ -52,10 +52,10 @@ module.exports = function (app, plugin) {
         }
       } else {
         mode = 'night'
-        if (now >= times.nauticalDawn) {
-          value = 'nauticalDawn'
-        } else if (now >= times.dawn) {
+        if (now >= times.dawn) {
           value = 'dawn'
+        } else if (now >= times.nauticalDawn) {
+          value = 'nauticalDawn'
         } else {
           value = 'night'
         }
