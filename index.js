@@ -126,7 +126,7 @@ module.exports = function (app) {
         stream = app.streambundle.getSelfStream(key)
         /* } */
         if (calculation.defaults && calculation.defaults[index] != undefined) {
-          stream = stream.merge(Bacon.once(calculation.defaults[index]))
+          stream = stream.toProperty(calculation.defaults[index])
         }
         return stream
       }, app.streambundle)
