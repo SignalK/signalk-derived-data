@@ -30,12 +30,57 @@ module.exports = function (app, plugin) {
         expectedRange: [
           {
             path: 'navigation.magneticVariation',
-            value: -0.1923,
+            value: -0.1922,
             delta: 0.01
           }
         ]
       },
       {
+        // Northern hemisphere, eastern longitude (Berlin)
+        input: [{ latitude: 52.52, longitude: 13.405 }],
+        expectedRange: [
+          {
+            path: 'navigation.magneticVariation',
+            value: 0.0892,
+            delta: 0.01
+          }
+        ]
+      },
+      {
+        // Southern hemisphere, eastern longitude (Sydney)
+        input: [{ latitude: -33.8688, longitude: 151.2093 }],
+        expectedRange: [
+          {
+            path: 'navigation.magneticVariation',
+            value: 0.2237,
+            delta: 0.01
+          }
+        ]
+      },
+      {
+        // North America mid-latitude (positive declination)
+        input: [{ latitude: 35, longitude: -120 }],
+        expectedRange: [
+          {
+            path: 'navigation.magneticVariation',
+            value: 0.2078,
+            delta: 0.01
+          }
+        ]
+      },
+      {
+        // Africa mid-latitude (negative declination)
+        input: [{ latitude: -20, longitude: 30 }],
+        expectedRange: [
+          {
+            path: 'navigation.magneticVariation',
+            value: -0.2101,
+            delta: 0.01
+          }
+        ]
+      },
+      {
+        // Null position — calculator returns undefined
         input: [{ latitude: null, longitude: null }]
       },
       {
