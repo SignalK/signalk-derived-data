@@ -2,6 +2,13 @@ const _ = require('lodash')
 const geomagnetism = require('geomagnetism')
 const { isPosition } = require('../utils')
 
+// The WMM-2025 model is expensive to build (it loads spherical harmonic
+// coefficients and constructs lookup tables). Position fixes arrive roughly
+// once per second on a Raspberry Pi, so building the model once at module
+// load and reusing it for every call is a straight win.
+const model = geomagnetism.model()
+const sourceName = (model.name || 'WMM-2025').replace('-', ' ')
+
 module.exports = function (app, plugin) {
   return {
     group: 'heading',
@@ -12,7 +19,6 @@ module.exports = function (app, plugin) {
     calculator: function (position) {
       if (!isPosition(position)) return
 
-      const model = geomagnetism.model()
       const info = model.point([position.latitude, position.longitude])
       const magVar = (info.decl * Math.PI) / 180
 
@@ -20,7 +26,7 @@ module.exports = function (app, plugin) {
         { path: 'navigation.magneticVariation', value: magVar },
         {
           path: 'navigation.magneticVariation.source',
-          value: (model.name || 'WMM-2025').replace('-', ' ')
+          value: sourceName
         }
       ]
     },
