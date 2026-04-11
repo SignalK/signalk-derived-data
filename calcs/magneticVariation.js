@@ -27,6 +27,11 @@ module.exports = function (app, plugin) {
     title: 'Magnetic Variation',
     derivedFrom: ['navigation.position'],
     defaults: [undefined, 9999],
+    // Magnetic variation changes on the km scale. Even a fast vessel (30 kn)
+    // covers only ~150 m per second, so downstream consumers will not notice
+    // a 10-second debounce, and it further cuts the emit path on the hot
+    // position stream.
+    debounceDelay: 10 * 1000,
     calculator: function (position) {
       if (!isPosition(position)) return
 
