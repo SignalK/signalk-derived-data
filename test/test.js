@@ -142,15 +142,25 @@ describe('calcs/magneticVariation', function () {
     done()
   })
 
-  it('returns the same value for repeated calls at the same position', done => {
-    // WMM includes secular variation based on current time, so back-to-back
-    // calls can differ at µs precision. Tolerance is far below anything that
-    // matters for navigation (1e-9 rad is roughly 2 microdegrees).
-    const pos = { latitude: 52.52, longitude: 13.405 }
-    const a = calc.calculator(pos)
-    const b = calc.calculator(pos)
-    a[0].value.should.be.closeTo(b[0].value, 1e-9)
+  it('returns bit-exact the same value for repeated calls in the same cell', done => {
+    // The coarse-cell cache means two calls within the same ~0.1° cell return
+    // the identical cached number, so strict equality holds. Without the cache,
+    // WMM's time-based secular variation makes back-to-back calls drift by
+    // ~1e-15 rad. Strict equality here is the observable proof that the cache
+    // path is taken.
+    const a = calc.calculator({ latitude: 52.52, longitude: 13.405 })
+    const b = calc.calculator({ latitude: 52.521, longitude: 13.4055 })
+    a[0].value.should.equal(b[0].value)
     a[1].value.should.equal(b[1].value)
+    done()
+  })
+
+  it('recomputes when position crosses a cache cell boundary', done => {
+    // Two positions far enough apart (>0.1°) fall into different cells, so
+    // the cache must miss and the second call must return a different value.
+    const a = calc.calculator({ latitude: 52.52, longitude: 13.405 })
+    const b = calc.calculator({ latitude: 52.9, longitude: 13.8 })
+    a[0].value.should.not.equal(b[0].value)
     done()
   })
 

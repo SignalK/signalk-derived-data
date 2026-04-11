@@ -9,6 +9,17 @@ const { isPosition } = require('../utils')
 const model = geomagnetism.model()
 const sourceName = (model.name || 'WMM-2025').replace('-', ' ')
 
+// Coarse cache: magnetic variation changes on the order of 0.01° per km, so
+// caching by a ~0.1° (≈11 km) lat/lon cell keeps the result well within the
+// tolerance of any consumer of this path, while cutting out model.point()
+// entirely for the common case of a vessel sitting in one area. Single-entry
+// because the hit rate is dominated by the "same cell as last fix" case;
+// the miss path (cell crossing) is still just one model.point() call.
+const CELL_SIZE_DEG = 0.1
+let cachedLatCell
+let cachedLonCell
+let cachedMagVar
+
 module.exports = function (app, plugin) {
   return {
     group: 'heading',
@@ -19,8 +30,19 @@ module.exports = function (app, plugin) {
     calculator: function (position) {
       if (!isPosition(position)) return
 
-      const info = model.point([position.latitude, position.longitude])
-      const magVar = (info.decl * Math.PI) / 180
+      const latCell = Math.round(position.latitude / CELL_SIZE_DEG)
+      const lonCell = Math.round(position.longitude / CELL_SIZE_DEG)
+
+      let magVar
+      if (latCell === cachedLatCell && lonCell === cachedLonCell) {
+        magVar = cachedMagVar
+      } else {
+        const info = model.point([position.latitude, position.longitude])
+        magVar = (info.decl * Math.PI) / 180
+        cachedLatCell = latCell
+        cachedLonCell = lonCell
+        cachedMagVar = magVar
+      }
 
       return [
         { path: 'navigation.magneticVariation', value: magVar },
