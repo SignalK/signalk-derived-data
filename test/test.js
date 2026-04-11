@@ -124,6 +124,71 @@ describe('Test Utility functions', function () {
   })
 })
 
+describe('calcs/magneticVariation', function () {
+  // Loaded fresh so the module-level state (if any) starts clean.
+  const calc = require('../calcs/magneticVariation')(app, plugin)
+
+  it('emits both magneticVariation and its source path', done => {
+    const res = calc.calculator({
+      latitude: 39.0631232,
+      longitude: -76.4872768
+    })
+    res.should.be.an('array').with.lengthOf(2)
+    res[0].path.should.equal('navigation.magneticVariation')
+    res[0].value.should.be.a('number')
+    res[0].value.should.be.closeTo(-0.1922, 0.01)
+    res[1].path.should.equal('navigation.magneticVariation.source')
+    res[1].value.should.be.a('string').and.match(/WMM\s*2025/)
+    done()
+  })
+
+  it('returns the same value for repeated calls at the same position', done => {
+    // WMM includes secular variation based on current time, so back-to-back
+    // calls can differ at µs precision. Tolerance is far below anything that
+    // matters for navigation (1e-9 rad is roughly 2 microdegrees).
+    const pos = { latitude: 52.52, longitude: 13.405 }
+    const a = calc.calculator(pos)
+    const b = calc.calculator(pos)
+    a[0].value.should.be.closeTo(b[0].value, 1e-9)
+    a[1].value.should.equal(b[1].value)
+    done()
+  })
+
+  it('returns different values for distant positions', done => {
+    const berlin = calc.calculator({ latitude: 52.52, longitude: 13.405 })
+    const sydney = calc.calculator({ latitude: -33.8688, longitude: 151.2093 })
+    berlin[0].value.should.not.equal(sydney[0].value)
+    done()
+  })
+
+  it('returns undefined for a null-latitude position', done => {
+    const res = calc.calculator({ latitude: null, longitude: 10 })
+    ;(typeof res).should.equal('undefined')
+    done()
+  })
+
+  it('returns undefined for a null-longitude position', done => {
+    const res = calc.calculator({ latitude: 10, longitude: null })
+    ;(typeof res).should.equal('undefined')
+    done()
+  })
+
+  it('returns undefined for an undefined position', done => {
+    const res = calc.calculator(undefined)
+    ;(typeof res).should.equal('undefined')
+    done()
+  })
+
+  it('declines to emit for position at (0, 0) because the calc guards falsy lat/lon', done => {
+    // Captures current behavior: calculator uses truthy checks on lat/lon,
+    // so (0, 0) is treated as "no fix" and returns undefined. This is arguably
+    // wrong but is intentional here to lock the behavior during the perf refactor.
+    const res = calc.calculator({ latitude: 0, longitude: 0 })
+    ;(typeof res).should.equal('undefined')
+    done()
+  })
+})
+
 describe('derived data converts', function () {
   let calcs = load_calcs()
 
