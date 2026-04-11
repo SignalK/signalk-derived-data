@@ -1,5 +1,6 @@
 const suncalc = require('suncalc')
 const _ = require('lodash')
+const { isPosition } = require('../utils')
 
 module.exports = function (app, plugin) {
   return {
@@ -19,6 +20,12 @@ module.exports = function (app, plugin) {
     debounceDelay: 60 * 1000,
     calculator: function (datetime, position) {
       var date
+
+      // navigation.position is null during startup before the first GPS
+      // fix; suncalc would throw on null coordinates and crash the server.
+      if (!isPosition(position)) {
+        return
+      }
 
       if (!_.isUndefined(datetime) && datetime.length > 0) {
         date = new Date(datetime)
@@ -91,6 +98,17 @@ module.exports = function (app, plugin) {
       }
 
       return results
-    }
+    },
+    tests: [
+      {
+        input: ['2024-06-21T12:00:00Z', null]
+      },
+      {
+        input: ['2024-06-21T12:00:00Z', undefined]
+      },
+      {
+        input: ['2024-06-21T12:00:00Z', { latitude: null, longitude: null }]
+      }
+    ]
   }
 }
