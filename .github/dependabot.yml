@@ -11,6 +11,14 @@ updates:
         update-types:
           - minor
           - patch
+    ignore:
+      # cubic-spline 2.x switched from a function call (spline(x, xs, ys))
+      # to a constructor + .at(x) method. calcs/tankVolume.js still uses
+      # the v1 form and has no test coverage. Re-enable after refactoring
+      # tankVolume.js and adding a test for the spline call.
+      - dependency-name: cubic-spline
+        update-types:
+          - version-update:semver-major
     labels:
       - dependencies
 
