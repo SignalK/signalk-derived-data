@@ -21,8 +21,6 @@ module.exports = function (app, plugin) {
     calculator: function (datetime, position) {
       var date
 
-      // navigation.position is null during startup before the first GPS
-      // fix; suncalc would throw on null coordinates and crash the server.
       if (!isPosition(position)) {
         return
       }
