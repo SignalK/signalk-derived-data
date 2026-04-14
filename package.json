@@ -47,6 +47,7 @@
     "suncalc": "^1.8.0"
   },
   "peerDependencies": {
+    "@signalk/server-api": ">=2.24.0",
     "baconjs": "^3.0.0"
   },
   "devDependencies": {
