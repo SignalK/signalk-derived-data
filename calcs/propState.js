@@ -24,7 +24,7 @@ module.exports = function (app, plugin) {
               value: 'started'
             }
           ]
-        } else if (revol == 0 && currentState !== 'stopped') {
+        } else if (!revol && currentState !== 'stopped') {
           return [
             {
               path: 'propulsion.' + instance + '.state',
