@@ -1,5 +1,8 @@
 # signalk-derived-data
 
+[![CI](https://github.com/SignalK/signalk-derived-data/actions/workflows/ci.yml/badge.svg)](https://github.com/SignalK/signalk-derived-data/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/signalk-derived-data.svg)](https://www.npmjs.com/package/signalk-derived-data)
+[![License](https://img.shields.io/npm/l/signalk-derived-data.svg)](https://github.com/SignalK/signalk-derived-data/blob/master/LICENSE)
 
 Generates deltas for values derived from Signal K values
 

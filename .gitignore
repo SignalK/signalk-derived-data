@@ -5,3 +5,7 @@ node_modules
 
 *.tgz
 .claude/
+
+# Test coverage
+coverage
+.nyc_output

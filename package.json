@@ -6,7 +6,19 @@
   "scripts": {
     "precommit": "lint-staged",
     "format": "prettier-standard calcs/*.js index.js utils.js test/*.js",
-    "test": "mocha"
+    "test": "mocha",
+    "coverage": "c8 --reporter=text --reporter=lcov npm test"
+  },
+  "c8": {
+    "include": [
+      "index.js",
+      "utils.js",
+      "calcs/**"
+    ],
+    "exclude": [
+      "test/**",
+      "coverage/**"
+    ]
   },
   "keywords": [
     "signalk-node-server-plugin"
@@ -46,6 +58,7 @@
   },
   "devDependencies": {
     "baconjs": "^3.0.0",
+    "c8": "^11.0.0",
     "chai": "^6.2.2",
     "chai-json-equal": "0.0.1",
     "husky": "^9.1.7",
