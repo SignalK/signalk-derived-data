@@ -51,18 +51,18 @@ module.exports = function (app) {
     updateOldTrafficConfig()
     plugin.engines = plugin.properties.engine_instances
       .split(',')
-      .map(e => e.trim())
+      .map((e) => e.trim())
     plugin.batteries = plugin.properties.battery_instances
       .split(',')
-      .map(e => e.trim())
+      .map((e) => e.trim())
     plugin.tanks = plugin.properties.tank_instances
       .split(',')
-      .map(e => e.trim())
-    plugin.air = plugin.properties.air_instances.split(',').map(e => e.trim())
+      .map((e) => e.trim())
+    plugin.air = plugin.properties.air_instances.split(',').map((e) => e.trim())
     calculations = load_calcs(app, plugin, 'calcs')
     calculations = [].concat.apply([], calculations)
 
-    calculations.forEach(calculation => {
+    calculations.forEach((calculation) => {
       if (calculation.group) {
         if (
           !props[calculation.group] ||
@@ -136,10 +136,10 @@ module.exports = function (app) {
           .changes()
           .debounceImmediate(calculation.debounceDelay || 20)
           .skipDuplicates(skip_function)
-          .onValue(values => {
+          .onValue((values) => {
             if (typeof values !== 'undefined' && values.length > 0) {
               if (values[0].context) {
-                values.forEach(delta => {
+                values.forEach((delta) => {
                   app.handleMessage(plugin.id, delta)
                 })
               } else {
@@ -162,11 +162,11 @@ module.exports = function (app) {
   }
 
   plugin.stop = function () {
-    unsubscribes.forEach(f => f())
+    unsubscribes.forEach((f) => f())
     unsubscribes = []
 
     if (calculations) {
-      calculations.forEach(calc => {
+      calculations.forEach((calc) => {
         if (calc.stop) {
           calc.stop()
         }
@@ -188,12 +188,12 @@ module.exports = function (app) {
     return uiSchema
   }
 
-  function updateSchema () {
+  function updateSchema() {
     if (!calculations) {
-      plugin.engines = defaultEngines.split(',').map(e => e.trim())
-      plugin.batteries = defaultBatteries.split(',').map(e => e.trim())
-      plugin.tanks = defaultTanks.split(',').map(e => e.trim())
-      plugin.air = defaultAir.split(',').map(e => e.trim())
+      plugin.engines = defaultEngines.split(',').map((e) => e.trim())
+      plugin.batteries = defaultBatteries.split(',').map((e) => e.trim())
+      plugin.tanks = defaultTanks.split(',').map((e) => e.trim())
+      plugin.air = defaultAir.split(',').map((e) => e.trim())
 
       calculations = load_calcs(app, plugin, 'calcs')
       calculations = [].concat.apply([], calculations)
@@ -251,7 +251,7 @@ module.exports = function (app) {
 
     var groups = {}
 
-    calculations.forEach(calc => {
+    calculations.forEach((calc) => {
       var groupName
 
       if (typeof calc.group !== 'undefined') {
@@ -272,7 +272,7 @@ module.exports = function (app) {
           ? calc.derivedFrom()
           : calc.derivedFrom
       title += derivedFrom
-        .map(path => {
+        .map((path) => {
           const p = app.getSelfPath(path)
           return `${path}${p ? (p.value === null ? '(❎)' : '(👍)') : '(❌)'}`
         })
@@ -282,7 +282,7 @@ module.exports = function (app) {
     })
 
     if (groups.nogroup) {
-      groups.nogroup.forEach(calc => {
+      groups.nogroup.forEach((calc) => {
         uiSchema['ui:order'].push(calc.optionKey)
         schema.properties[calc.optionKey] = {
           title: calc.title,
@@ -299,7 +299,7 @@ module.exports = function (app) {
       })
     }
 
-    _.keys(groups).forEach(groupName => {
+    _.keys(groups).forEach((groupName) => {
       if (groupName != 'nogroup') {
         uiSchema['ui:order'].push(groupName)
         uiSchema[groupName] = {
@@ -315,7 +315,7 @@ module.exports = function (app) {
           type: 'object',
           properties: {}
         }
-        groups[groupName].forEach(calc => {
+        groups[groupName].forEach((calc) => {
           var order = uiSchema[groupName]['ui:order']
           order.push(calc.optionKey)
           group.properties[calc.optionKey] = {
@@ -329,7 +329,7 @@ module.exports = function (app) {
                 ? calc.properties()
                 : calc.properties
             _.extend(group.properties, props)
-            _.keys(props).forEach(key => {
+            _.keys(props).forEach((key) => {
               order.push(key)
             })
           }
@@ -342,7 +342,7 @@ module.exports = function (app) {
     // app.debug('uiSchema: ' + JSON.stringify(uiSchema, null, 2))
   }
 
-  function updateOldTrafficConfig () {
+  function updateOldTrafficConfig() {
     if (
       !_.isUndefined(plugin.properties.traffic.notificationRange) ||
       !_.isUndefined(plugin.properties.traffic.notificationTimeLimit)
@@ -362,15 +362,15 @@ module.exports = function (app) {
   return plugin
 }
 
-function load_calcs (app, plugin, dir) {
+function load_calcs(app, plugin, dir) {
   fpath = path.join(__dirname, dir)
   files = fs.readdirSync(fpath)
   return files
-    .map(fname => {
+    .map((fname) => {
       pgn = path.basename(fname, '.js')
       return require(path.join(fpath, pgn))(app, plugin)
     })
-    .filter(calc => {
+    .filter((calc) => {
       return typeof calc !== 'undefined'
     })
 }

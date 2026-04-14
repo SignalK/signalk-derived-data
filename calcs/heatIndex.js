@@ -10,10 +10,10 @@ module.exports = function (app, plugin) {
     calculator: function (temp, humidity) {
       // NWS Heat Index Equation https://www.wpc.ncep.noaa.gov/html/heatindex_equation.shtml
       // test agsinst the chart https://www.weather.gov/safety/heat-index
-      const tempF = (temp - 273.15) * 9 / 5 + 32
+      const tempF = ((temp - 273.15) * 9) / 5 + 32
       const h = humidity * 100
 
-      if (tempF >= 80 && h >= 40 && (tempF <= 110 && h <= 40)) {
+      if (tempF >= 80 && h >= 40 && tempF <= 110 && h <= 40) {
         // regression equation of Rothfusz
         heatIndex =
           -42.379 +
@@ -29,13 +29,13 @@ module.exports = function (app, plugin) {
         // If the humidity is less than 13% and the temperature is between 80 and 112 degrees F, then the following adjustment is subtracted from HI:
         if (h < 13 && tempF >= 80 && tempF <= 112) {
           adjustment =
-            (13 - h) / 4 * Math.sqrt((17 - Math.abs(tempF - 95)) / 17)
+            ((13 - h) / 4) * Math.sqrt((17 - Math.abs(tempF - 95)) / 17)
           heatIndex -= adjustment
         }
 
         // if the humidity is greater than 85% and the temperature is between 80 and 87 degrees F, then the following adjustment is added to HI:
         if (h > 85 && tempF >= 80 && tempF <= 87) {
-          adjustment = (h - 85) / 10 * ((87 - tempF) / 5)
+          adjustment = ((h - 85) / 10) * ((87 - tempF) / 5)
           heatIndex += adjustment
         }
 

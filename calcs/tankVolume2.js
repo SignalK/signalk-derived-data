@@ -1,7 +1,7 @@
 const _ = require('lodash')
 
 module.exports = function (app, plugin) {
-  return plugin.tanks.map(instance => {
+  return plugin.tanks.map((instance) => {
     return {
       group: 'tanks',
       optionKey: 'tankVolume2_' + instance,

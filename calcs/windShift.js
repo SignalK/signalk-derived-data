@@ -73,7 +73,7 @@ module.exports = function (app, plugin) {
   }
 }
 
-function normalAlarmDelta () {
+function normalAlarmDelta() {
   return {
     path: 'notifications.windShift',
     value: {
@@ -83,6 +83,6 @@ function normalAlarmDelta () {
   }
 }
 
-function radsToDeg (radians) {
-  return radians * 180 / Math.PI
+function radsToDeg(radians) {
+  return (radians * 180) / Math.PI
 }

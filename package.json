@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "precommit": "lint-staged",
-    "format": "prettier-standard calcs/*.js index.js utils.js test/*.js",
+    "prettier:check": "prettier --check .",
+    "prettier": "prettier --write .",
+    "format": "npm run prettier",
     "test": "mocha",
     "coverage": "c8 --reporter=text --reporter=lcov npm test"
   },
@@ -34,16 +36,7 @@
   ],
   "license": "ISC",
   "lint-staged": {
-    "linters": {
-      "calcs/*.js": [
-        "prettier-standard",
-        "git add"
-      ],
-      "index.js": [
-        "prettier-standard",
-        "git add"
-      ]
-    }
+    "*.js": "prettier --write"
   },
   "dependencies": {
     "cubic-spline": "^3.0.3",
@@ -64,7 +57,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "mocha": "^11.7.5",
-    "prettier-standard": "^16.4.1"
+    "prettier": "^3.8.2"
   },
   "repository": {
     "type": "git",

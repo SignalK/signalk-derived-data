@@ -8,7 +8,7 @@ const PRECISION = 10
  * @param {number|null|undefined} angle
  * @returns {number|null}
  */
-function normalizeAngle (angle) {
+function normalizeAngle(angle) {
   if (_.isUndefined(angle) || angle === null) return null
   angle = angle % (2 * Math.PI)
   return angle < 0 ? angle + 2 * Math.PI : angle
@@ -37,7 +37,7 @@ module.exports = function (app, plugin) {
     /**
      * Calculates set and drift vector from motion data
      */
-    calculator (
+    calculator(
       headingMagnetic,
       courseOverGroundTrue,
       speedThroughWater,

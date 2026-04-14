@@ -6,7 +6,7 @@ var instance
 
 // tankInstances = ["tanks.fuel.*", "tanks.fuel.1", "tanks.water.0" ]
 module.exports = function (app, plugin) {
-  return plugin.tanks.map(instance => {
+  return plugin.tanks.map((instance) => {
     return {
       group: 'tanks',
       optionKey: 'tankVolume_' + instance,
@@ -50,18 +50,18 @@ module.exports = function (app, plugin) {
         var calVolumes = []
         app.debug(plugin.properties.tanks.volume_unit)
 
-        plugin.properties.tanks['calibrations.' + instance].forEach(function (
-          i
-        ) {
-          calLevels.push(i.level)
-          if (plugin.properties.tanks.volume_unit === 'litres') {
-            calVolumes.push(i.volume * 0.001)
-          } else if (plugin.properties.tanks.volume_unit === 'gal') {
-            calVolumes.push(i.volume * 0.00378541)
-          } else {
-            calVolumes.push(i.volume)
+        plugin.properties.tanks['calibrations.' + instance].forEach(
+          function (i) {
+            calLevels.push(i.level)
+            if (plugin.properties.tanks.volume_unit === 'litres') {
+              calVolumes.push(i.volume * 0.001)
+            } else if (plugin.properties.tanks.volume_unit === 'gal') {
+              calVolumes.push(i.volume * 0.00378541)
+            } else {
+              calVolumes.push(i.volume)
+            }
           }
-        })
+        )
 
         // cubic-spline 2.x dropped the `spline(x, xs, ys)` function form
         // in favour of a `new Spline(xs, ys).at(x)` constructor + method.
