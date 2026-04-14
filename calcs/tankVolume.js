@@ -1,4 +1,4 @@
-var spline = require('cubic-spline')
+const Spline = require('cubic-spline')
 const _ = require('lodash')
 const util = require('util') // dev
 
@@ -63,14 +63,21 @@ module.exports = function (app, plugin) {
           }
         })
 
+        // cubic-spline 2.x dropped the `spline(x, xs, ys)` function form
+        // in favour of a `new Spline(xs, ys).at(x)` constructor + method.
+        // Build the interpolator once per calculation and reuse it for
+        // both capacity (at level=1) and current volume (at the measured
+        // level).
+        const interpolator = new Spline(calLevels, calVolumes)
+
         return [
           {
             path: 'tanks.' + instance + '.capacity',
-            value: spline(1, calLevels, calVolumes)
+            value: interpolator.at(1)
           },
           {
             path: 'tanks.' + instance + '.currentVolume',
-            value: spline(level, calLevels, calVolumes)
+            value: interpolator.at(level)
           }
         ]
       }
