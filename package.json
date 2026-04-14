@@ -51,7 +51,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "mocha": "^8.2.1",
-    "prettier-standard": "^13.0.6"
+    "prettier-standard": "^16.4.1"
   },
   "repository": {
     "type": "git",
