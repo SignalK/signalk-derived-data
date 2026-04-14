@@ -9,7 +9,7 @@ const tankVolume = require('../calcs/tankVolume')
 // front and pass it into the factory. The existing `calc.tests` harness
 // in test/test.js doesn't support per-test plugin properties, which is
 // why this suite is standalone.
-function makePlugin (instance, volumeUnit, calibration) {
+function makePlugin(instance, volumeUnit, calibration) {
   return {
     tanks: [instance],
     properties: {

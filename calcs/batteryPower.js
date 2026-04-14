@@ -1,7 +1,7 @@
 const _ = require('lodash')
 
 module.exports = function (app, plugin) {
-  return plugin.batteries.map(instance => {
+  return plugin.batteries.map((instance) => {
     return {
       group: 'electrical',
       optionKey: 'batterPower' + instance,

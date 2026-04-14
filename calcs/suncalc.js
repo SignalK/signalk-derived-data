@@ -31,7 +31,7 @@ module.exports = function (app, plugin) {
       var times = suncalc.getTimes(date, position.latitude, position.longitude)
       var now = date.getTime()
 
-      _.keys(times).forEach(key => {
+      _.keys(times).forEach((key) => {
         times[key] = new Date(times[key]).getTime()
       })
 

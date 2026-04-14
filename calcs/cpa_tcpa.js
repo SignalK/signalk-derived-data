@@ -249,15 +249,16 @@ module.exports = function (app, plugin) {
               let notificationLevelIndex = 0
               if (cpa != null && tcpa != null && tcpa > 0) {
                 plugin.properties.traffic.notificationZones
-                  .filter(notificationZone => notificationZone.active === true)
-                  .forEach(notificationZone => {
+                  .filter(
+                    (notificationZone) => notificationZone.active === true
+                  )
+                  .forEach((notificationZone) => {
                     if (
                       cpa <= notificationZone.range &&
                       tcpa <= notificationZone.timeLimit
                     ) {
-                      var newNotificationLevelIndex = notificationLevels.indexOf(
-                        notificationZone.level
-                      )
+                      var newNotificationLevelIndex =
+                        notificationLevels.indexOf(notificationZone.level)
                       notificationLevelIndex =
                         newNotificationLevelIndex > notificationLevelIndex
                           ? newNotificationLevelIndex
@@ -330,8 +331,8 @@ module.exports = function (app, plugin) {
       }
 
       Object.keys(alarmSent)
-        .filter(vessel => !currentlyActiveNotifications[vessel])
-        .forEach(vessel => {
+        .filter((vessel) => !currentlyActiveNotifications[vessel])
+        .forEach((vessel) => {
           app.debug(`Clearing alarm for ${vessel}`)
           deltas.push(normalAlarmDelta(app.selfId, vessel))
           delete alarmSent[vessel]
@@ -342,21 +343,21 @@ module.exports = function (app, plugin) {
   }
 }
 
-function CPA_TCPA (cpa, tcpa) {
+function CPA_TCPA(cpa, tcpa) {
   return {
     path: 'navigation.closestApproach',
     value:
       cpa != null
         ? {
-          distance: cpa,
-          timeTo: tcpa
-        }
+            distance: cpa,
+            timeTo: tcpa
+          }
         : null,
     timestamp: new Date().toISOString()
   }
 }
 
-function normalAlarmDelta (selfId, vessel) {
+function normalAlarmDelta(selfId, vessel) {
   return {
     context: 'vessels.' + selfId,
     updates: [
@@ -376,7 +377,7 @@ function normalAlarmDelta (selfId, vessel) {
   }
 }
 
-function getCpaPositions (selfVessel, otherVessel, seconds) {
+function getCpaPositions(selfVessel, otherVessel, seconds) {
   return {
     self: geoutils.moveTo(selfVessel.location, {
       distance: selfVessel.speed * seconds,

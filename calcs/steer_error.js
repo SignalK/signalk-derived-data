@@ -29,9 +29,9 @@ module.exports = function (app) {
         }
 
         if (steer > 0) {
-          ;(leftSteer = steer), (rightSteer = 0)
+          ;((leftSteer = steer), (rightSteer = 0))
         } else {
-          ;(leftSteer = 0), (rightSteer = steer * -1)
+          ;((leftSteer = 0), (rightSteer = steer * -1))
         }
       }
 

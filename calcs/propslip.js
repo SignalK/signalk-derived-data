@@ -20,7 +20,7 @@ const selfData = {
 }
 
 module.exports = function (app, plugin) {
-  return plugin.engines.map(instance => {
+  return plugin.engines.map((instance) => {
     return {
       group: 'propulsion',
       optionKey: 'propslip' + instance,
@@ -49,7 +49,7 @@ module.exports = function (app, plugin) {
           return [
             {
               path: 'propulsion.' + instance + '.drive.propeller.slip',
-              value: 1 - stw * gearRatio / (revolutions * pitch)
+              value: 1 - (stw * gearRatio) / (revolutions * pitch)
             }
           ]
         }

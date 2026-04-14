@@ -5,7 +5,7 @@ module.exports = function (app, plugin) {
 
   app.debug('engines: %j', engines)
 
-  return engines.map(instance => {
+  return engines.map((instance) => {
     return {
       group: 'propulsion',
       optionKey: 'economy' + instance,

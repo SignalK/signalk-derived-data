@@ -13,7 +13,7 @@ module.exports = function (app, plugin) {
 
       const model = geomagnetism.model()
       const info = model.point([position.latitude, position.longitude])
-      const magVar = info.decl * Math.PI / 180
+      const magVar = (info.decl * Math.PI) / 180
 
       return [
         { path: 'navigation.magneticVariation', value: magVar },

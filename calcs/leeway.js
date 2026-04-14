@@ -15,12 +15,12 @@ module.exports = function (app, plugin) {
     },
     calculator: function (attitude, stw) {
       var kFactor = plugin.properties.heading.kFactor
-      var rollDegrees = attitude.roll / Math.PI * 360
+      var rollDegrees = (attitude.roll / Math.PI) * 360
       var stwKnots = stw * 1.94384
       var leewayAngle =
         stwKnots <= 0
           ? 0
-          : kFactor * rollDegrees / Math.pow(stwKnots, 2) / 360 * Math.PI
+          : ((kFactor * rollDegrees) / Math.pow(stwKnots, 2) / 360) * Math.PI
       // app.debug('roll: ' + rollDegrees + ' stw: ' + stwKnots + ' knots => leeway: ' + leewayAngle/Math.PI*360)
       return [{ path: 'performance.leeway', value: leewayAngle }]
     }

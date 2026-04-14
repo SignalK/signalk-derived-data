@@ -3,7 +3,7 @@ const _ = require('lodash')
 selfData = {}
 
 module.exports = function (app, plugin) {
-  return plugin.air.map(instance => {
+  return plugin.air.map((instance) => {
     return {
       group: 'air',
       optionKey: instance + 'dewPoint',
@@ -21,8 +21,8 @@ module.exports = function (app, plugin) {
           const tempC = temp - 273.15
           const b = 17.625
           const c = 243.04
-          const magnus = Math.log(hum) + b * tempC / (c + tempC)
-          dewPoint = c * magnus / (b - magnus) + 273.15
+          const magnus = Math.log(hum) + (b * tempC) / (c + tempC)
+          dewPoint = (c * magnus) / (b - magnus) + 273.15
         }
         return [
           {

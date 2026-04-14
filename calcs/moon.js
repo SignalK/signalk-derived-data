@@ -33,7 +33,7 @@ module.exports = function (app, plugin) {
 
       app.debug(`Using datetime: ${date} position: ${JSON.stringify(position)}`)
 
-      function getPhaseName (phase) {
+      function getPhaseName(phase) {
         switch (true) {
           case phase == 0:
             return 'New Moon'
@@ -62,7 +62,7 @@ module.exports = function (app, plugin) {
         targetDate.setDate(targetDate.getDate() + day)
 
         const illumination = suncalc.getMoonIllumination(targetDate)
-        _.keys(illumination).forEach(key => {
+        _.keys(illumination).forEach((key) => {
           illumination[key] = _.round(illumination[key], 2)
         })
         app.debug(
