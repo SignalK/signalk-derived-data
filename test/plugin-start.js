@@ -73,7 +73,7 @@ describe('plugin.start() stream pipeline', function () {
   })
 
   it('starts and emits for a multi-input calc (set and drift)', (done) => {
-    const { app, streams, handled } = makeApp()
+    const { app, handled } = makeApp()
     const plugin = require('../')(app)
 
     plugin.start({
@@ -91,6 +91,80 @@ describe('plugin.start() stream pipeline', function () {
         handled.length.should.be.greaterThan(0)
         const delta = handled[0]
         delta.updates[0].values.length.should.be.greaterThan(0)
+        done()
+      } catch (e) {
+        done(e)
+      }
+    }, 100)
+  })
+
+  it('starts and emits for a multi-input calc with mixed defaults (true heading)', (done) => {
+    const { app, handled } = makeApp()
+    const plugin = require('../')(app)
+
+    plugin.start({
+      traffic: { notificationZones: [] },
+      heading: { heading: true }
+    })
+
+    // headingTrue: derivedFrom = [headingMagnetic, magneticVariation],
+    // defaults = [undefined, 9999]. magneticVariation is the second slot
+    // and is defaulted to the 9999 sentinel; the calc falls back to
+    // app.getSelfPath('navigation.magneticVariation.value') in that case.
+    // Push variation BEFORE heading so the first combineWith fire already
+    // has a real value (debounceImmediate(20) collapses synchronous bursts).
+    app.streambundle.getSelfStream('navigation.magneticVariation').push(0.1)
+    app.streambundle.getSelfStream('navigation.headingMagnetic').push(0.5)
+
+    setTimeout(() => {
+      try {
+        handled.length.should.be.greaterThan(0)
+        const values = handled[0].updates[0].values
+        const ht = values.find((v) => v.path === 'navigation.headingTrue')
+        ht.should.exist
+        // 0.5 + 0.1 = 0.6 rad
+        ht.value.should.be.closeTo(0.6, 1e-9)
+        done()
+      } catch (e) {
+        done(e)
+      }
+    }, 100)
+  })
+
+  it('starts and emits for a single-input calc with dynamic derivedFrom (tankVolume)', (done) => {
+    const { app, handled } = makeApp()
+    const plugin = require('../')(app)
+
+    // tankVolume's derivedFrom is a function returning a 1-element array.
+    // This exercises both the dynamic-derivedFrom branch in plugin.start
+    // and the single-input combineStreamsWith path. We use the default
+    // tank instance 'fuel.0' from defaultTanks.
+    plugin.start({
+      traffic: { notificationZones: [] },
+      tank_instances: 'fuel.0',
+      tanks: {
+        'tankVolume_fuel.0': true,
+        volume_unit: 'litres',
+        'calibrations.fuel.0': [
+          { level: 0, volume: 0 },
+          { level: 0.5, volume: 50 },
+          { level: 1, volume: 100 }
+        ]
+      }
+    })
+
+    app.streambundle.getSelfStream('tanks.fuel.0.currentLevel').push(0.5)
+
+    setTimeout(() => {
+      try {
+        handled.length.should.be.greaterThan(0)
+        const values = handled[0].updates[0].values
+        const cap = values.find((v) => v.path === 'tanks.fuel.0.capacity')
+        const cur = values.find((v) => v.path === 'tanks.fuel.0.currentVolume')
+        cap.should.exist
+        cur.should.exist
+        // 50 L at level 0.5 -> 0.05 m^3
+        cur.value.should.be.closeTo(0.05, 1e-3)
         done()
       } catch (e) {
         done(e)
