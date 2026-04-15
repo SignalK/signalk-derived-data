@@ -32,7 +32,63 @@ module.exports = function (app, plugin) {
             }
           ]
         }
-      }
+      },
+      tests: [
+        // Spinning, no prior state -> transition to 'started'.
+        {
+          input: [1200],
+          expected: [
+            { path: 'propulsion.' + instance + '.state', value: 'started' }
+          ]
+        },
+        // Spinning, already 'started' -> no update.
+        {
+          input: [1200],
+          selfData: {
+            propulsion: { [instance]: { state: { value: 'started' } } }
+          }
+        },
+        // revol === 0 while running -> transition to 'stopped'.
+        {
+          input: [0],
+          selfData: {
+            propulsion: { [instance]: { state: { value: 'started' } } }
+          },
+          expected: [
+            { path: 'propulsion.' + instance + '.state', value: 'stopped' }
+          ]
+        },
+        // revol === null while running -> transition to 'stopped'.
+        // Regression coverage for the bug fixed in this PR: NMEA gateways
+        // that emit revolutions = null when the engine is off used to leave
+        // propulsion.<instance>.state stuck on 'started'.
+        {
+          input: [null],
+          selfData: {
+            propulsion: { [instance]: { state: { value: 'started' } } }
+          },
+          expected: [
+            { path: 'propulsion.' + instance + '.state', value: 'stopped' }
+          ]
+        },
+        // revol === undefined while running -> transition to 'stopped'.
+        {
+          input: [undefined],
+          selfData: {
+            propulsion: { [instance]: { state: { value: 'started' } } }
+          },
+          expected: [
+            { path: 'propulsion.' + instance + '.state', value: 'stopped' }
+          ]
+        },
+        // revol === 0, already 'stopped' -> no update.
+        {
+          input: [0],
+          selfData: {
+            propulsion: { [instance]: { state: { value: 'stopped' } } }
+          }
+        }
+      ]
     }
   })
 }
