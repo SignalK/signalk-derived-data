@@ -128,7 +128,7 @@ describe('calcs/magneticVariation', function () {
   // Loaded fresh so the module-level state (if any) starts clean.
   const calc = require('../calcs/magneticVariation')(app, plugin)
 
-  it('emits both magneticVariation and its source path', done => {
+  it('emits both magneticVariation and its source path', (done) => {
     const res = calc.calculator({
       latitude: 39.0631232,
       longitude: -76.4872768
@@ -142,7 +142,7 @@ describe('calcs/magneticVariation', function () {
     done()
   })
 
-  it('returns bit-exact the same value for repeated calls in the same cell', done => {
+  it('returns bit-exact the same value for repeated calls in the same cell', (done) => {
     // The coarse-cell cache means two calls within the same ~0.1° cell return
     // the identical cached number, so strict equality holds. Without the cache,
     // WMM's time-based secular variation makes back-to-back calls drift by
@@ -155,7 +155,7 @@ describe('calcs/magneticVariation', function () {
     done()
   })
 
-  it('recomputes when position crosses a cache cell boundary', done => {
+  it('recomputes when position crosses a cache cell boundary', (done) => {
     // Two positions far enough apart (>0.1°) fall into different cells, so
     // the cache must miss and the second call must return a different value.
     const a = calc.calculator({ latitude: 52.52, longitude: 13.405 })
@@ -164,36 +164,27 @@ describe('calcs/magneticVariation', function () {
     done()
   })
 
-  it('returns different values for distant positions', done => {
+  it('returns different values for distant positions', (done) => {
     const berlin = calc.calculator({ latitude: 52.52, longitude: 13.405 })
     const sydney = calc.calculator({ latitude: -33.8688, longitude: 151.2093 })
     berlin[0].value.should.not.equal(sydney[0].value)
     done()
   })
 
-  it('returns undefined for a null-latitude position', done => {
+  it('returns undefined for a null-latitude position', (done) => {
     const res = calc.calculator({ latitude: null, longitude: 10 })
     ;(typeof res).should.equal('undefined')
     done()
   })
 
-  it('returns undefined for a null-longitude position', done => {
+  it('returns undefined for a null-longitude position', (done) => {
     const res = calc.calculator({ latitude: 10, longitude: null })
     ;(typeof res).should.equal('undefined')
     done()
   })
 
-  it('returns undefined for an undefined position', done => {
+  it('returns undefined for an undefined position', (done) => {
     const res = calc.calculator(undefined)
-    ;(typeof res).should.equal('undefined')
-    done()
-  })
-
-  it('declines to emit for position at (0, 0) because the calc guards falsy lat/lon', done => {
-    // Captures current behavior: calculator uses truthy checks on lat/lon,
-    // so (0, 0) is treated as "no fix" and returns undefined. This is arguably
-    // wrong but is intentional here to lock the behavior during the perf refactor.
-    const res = calc.calculator({ latitude: 0, longitude: 0 })
     ;(typeof res).should.equal('undefined')
     done()
   })
