@@ -17,14 +17,19 @@ const _ = require('lodash')
 const path = require('path')
 const fs = require('fs')
 
-// Combine N streams into a single stream whose values are fn(v1, v2, ...vN),
+// Combine N streams into a single Property whose values are fn(v1, v2, ...vN),
 // using only the instance-method .combine(other, fn) that exists on both
 // baconjs 1.x and 3.x. Avoids require('baconjs') in the plugin so that
 // the plugin never carries its own Bacon copy: all stream operations run on
 // the Bacon instance the host signalk-server created the streams with.
+//
+// The seed of the reduce calls .toProperty() so the result is always a
+// Property even when there is only one input stream (no .combine call to
+// implicitly lift it). Downstream callers depend on .changes(), which is a
+// Property-only method.
 function combineStreamsWith(streams, fn) {
   const accumulated = streams.reduce((acc, stream, i) => {
-    if (i === 0) return stream.map((v) => [v])
+    if (i === 0) return stream.toProperty().map((v) => [v])
     return acc.combine(stream, (arr, v) => arr.concat([v]))
   }, null)
   return accumulated.map((args) => fn.apply(null, args))
