@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   test:
-    name: Node ${{ matrix.node-version }}
+    name: Node ${{ matrix.node-version }} / baconjs ${{ matrix.baconjs }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -23,6 +23,7 @@ jobs:
       fail-fast: false
       matrix:
         node-version: [22.x, 24.x]
+        baconjs: ['1.0.1', '3.0.23']
 
     steps:
       - name: Checkout
@@ -37,22 +38,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Pin baconjs to ${{ matrix.baconjs }}
+        run: npm install --no-save baconjs@${{ matrix.baconjs }}
+
       - name: Check formatting
+        if: matrix.baconjs == '3.0.23'
         run: npm run prettier:check
 
       - name: Run tests
-        if: matrix.node-version != '24.x'
+        if: matrix.node-version != '24.x' || matrix.baconjs != '3.0.23'
         run: npm test
 
       - name: Run tests with coverage
-        if: matrix.node-version == '24.x'
+        if: matrix.node-version == '24.x' && matrix.baconjs == '3.0.23'
         shell: bash
         run: |
           set -eo pipefail
           npm run coverage | tee coverage.log
 
       - name: Coverage step summary
-        if: matrix.node-version == '24.x'
+        if: matrix.node-version == '24.x' && matrix.baconjs == '3.0.23'
         shell: bash
         run: |
           {
@@ -64,7 +69,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload coverage (lcov) as artifact
-        if: matrix.node-version == '24.x'
+        if: matrix.node-version == '24.x' && matrix.baconjs == '3.0.23'
         uses: actions/upload-artifact@v7
         with:
           name: coverage-lcov
