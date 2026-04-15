@@ -13,10 +13,22 @@
  * limitations under the License.
  */
 
-const Bacon = require('baconjs')
 const _ = require('lodash')
 const path = require('path')
 const fs = require('fs')
+
+// Combine N streams into a single stream whose values are fn(v1, v2, ...vN),
+// using only the instance-method .combine(other, fn) that exists on both
+// baconjs 1.x and 3.x. Avoids require('baconjs') in the plugin so that
+// the plugin never carries its own Bacon copy: all stream operations run on
+// the Bacon instance the host signalk-server created the streams with.
+function combineStreamsWith(streams, fn) {
+  const accumulated = streams.reduce((acc, stream, i) => {
+    if (i === 0) return stream.map((v) => [v])
+    return acc.combine(stream, (arr, v) => arr.concat([v]))
+  }, null)
+  return accumulated.map((args) => fn.apply(null, args))
+}
 
 const defaultEngines = 'port, starboard'
 const defaultBatteries = '0'
@@ -132,7 +144,7 @@ module.exports = function (app) {
       }, app.streambundle)
 
       unsubscribes.push(
-        Bacon.combineWith(calculation.calculator, selfStreams)
+        combineStreamsWith(selfStreams, calculation.calculator)
           .changes()
           .debounceImmediate(calculation.debounceDelay || 20)
           .skipDuplicates(skip_function)
