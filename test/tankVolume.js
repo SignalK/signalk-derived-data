@@ -112,4 +112,29 @@ describe('tankVolume', () => {
 
     expect(() => calc.calculator(0.5)).to.not.throw()
   })
+
+  it('returns a constant capacity across repeated calculator calls', () => {
+    // Per-tick caching means capacity is computed once; successive calls
+    // at different levels must still report the same capacity value.
+    const plugin = makePlugin('fuel.0', 'litres', linearCalLitres)
+    const calc = tankVolume(app, plugin)[0]
+    const a = calc.calculator(0.1)
+    const b = calc.calculator(0.9)
+    a[0].value.should.equal(b[0].value)
+  })
+
+  it('falls back to the m^3 factor for an unknown volume unit', () => {
+    // Matches the pre-refactor `else` branch: any unit we don't recognise
+    // is treated as already-in-m^3 so configured calibration values are
+    // passed through unchanged.
+    const cal = [
+      { level: 0, volume: 0 },
+      { level: 1, volume: 0.25 }
+    ]
+    const plugin = makePlugin('fuel.0', 'hogsheads', cal)
+    const calc = tankVolume(app, plugin)[0]
+
+    const result = calc.calculator(1)
+    result[0].value.should.be.closeTo(0.25, 1e-9)
+  })
 })
