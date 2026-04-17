@@ -1,5 +1,3 @@
-const _ = require('lodash')
-
 const DEFAULT_MAGNETIC_VARIATION = 9999
 const PRECISION = 10
 
@@ -9,7 +7,7 @@ const PRECISION = 10
  * @returns {number|null}
  */
 function normalizeAngle(angle) {
-  if (_.isUndefined(angle) || angle === null) return null
+  if (angle == null) return null
   angle = angle % (2 * Math.PI)
   return angle < 0 ? angle + 2 * Math.PI : angle
 }
@@ -100,7 +98,7 @@ module.exports = function (app, plugin) {
 
       // Convert to true direction
       let setTrue =
-        _.isUndefined(magneticVariation) || magneticVariation === null
+        magneticVariation == null
           ? null
           : normalizeAngle(setMagnetic + magneticVariation)
 

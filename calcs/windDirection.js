@@ -1,5 +1,4 @@
 const { formatCompassAngle } = require('../utils')
-const _ = require('lodash')
 
 const selfData = {}
 
@@ -14,7 +13,7 @@ module.exports = function (app, plugin) {
         'environment.wind.angleApparent'
       ],
       calculator: function (headingMagnetic, awa) {
-        if (!_.isFinite(headingMagnetic) || !_.isFinite(awa)) {
+        if (!Number.isFinite(headingMagnetic) || !Number.isFinite(awa)) {
           return [{ path: 'environment.wind.directionMagnetic', value: null }]
         }
 
@@ -54,7 +53,10 @@ module.exports = function (app, plugin) {
         'navigation.magneticVariation'
       ],
       calculator: function (directionTrue, magneticVariation) {
-        if (!_.isFinite(directionTrue) || !_.isFinite(magneticVariation)) {
+        if (
+          !Number.isFinite(directionTrue) ||
+          !Number.isFinite(magneticVariation)
+        ) {
           return [{ path: 'environment.wind.directionMagnetic', value: null }]
         }
 
@@ -112,16 +114,19 @@ module.exports = function (app, plugin) {
         let angle
         let speed
 
-        if (!_.isFinite(stw) || !_.isFinite(aws) || !_.isFinite(awa)) {
+        if (
+          !Number.isFinite(stw) ||
+          !Number.isFinite(aws) ||
+          !Number.isFinite(awa)
+        ) {
           angle = null
           speed = null
         } else {
           const apparentX = Math.cos(awa) * aws
           const apparentY = Math.sin(awa) * aws
-          angle = Math.atan2(apparentY, -stw + apparentX)
-          speed = Math.sqrt(
-            Math.pow(apparentY, 2) + Math.pow(-stw + apparentX, 2)
-          )
+          const gx = apparentX - stw
+          angle = Math.atan2(apparentY, gx)
+          speed = Math.sqrt(apparentY * apparentY + gx * gx)
           if (aws < 1e-9) {
             angle = awa
           }
@@ -163,7 +168,7 @@ module.exports = function (app, plugin) {
         'environment.wind.angleTrueWater'
       ],
       calculator: function (headingTrue, twa) {
-        if (!_.isFinite(headingTrue) || !_.isFinite(twa)) {
+        if (!Number.isFinite(headingTrue) || !Number.isFinite(twa)) {
           return [{ path: 'environment.wind.directionTrue', value: null }]
         }
 

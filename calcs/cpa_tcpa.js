@@ -144,7 +144,7 @@ module.exports = function (app, plugin) {
       const timelimit = traffic.timelimit
       const distanceToSelfEnabled = traffic.distanceToSelf
       const sendNotifications =
-        _.isUndefined(traffic.sendNotifications) || traffic.sendNotifications
+        traffic.sendNotifications === undefined || traffic.sendNotifications
       const notificationZones = traffic.notificationZones
       const selfId = app.selfId
       const selfLat = selfPosition.latitude
@@ -299,7 +299,7 @@ module.exports = function (app, plugin) {
           const vesselCourse =
             nav.courseOverGroundTrue && nav.courseOverGroundTrue.value
           const vesselSpeed = nav.speedOverGround && nav.speedOverGround.value
-          if (!_.isUndefined(vesselCourse) && !_.isUndefined(vesselSpeed)) {
+          if (vesselCourse !== undefined && vesselSpeed !== undefined) {
             otherVessel.location.lon = vesselPos.longitude
             otherVessel.location.lat = vesselPos.latitude
             otherVessel.speed = vesselSpeed // meters/second

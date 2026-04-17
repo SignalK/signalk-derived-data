@@ -1,5 +1,4 @@
 const { formatCompassAngle } = require('../utils')
-const _ = require('lodash')
 
 const selfData = {}
 
@@ -21,10 +20,10 @@ module.exports = function (app, plugin) {
         let dir
 
         if (
-          !_.isFinite(headTrue) ||
-          !_.isFinite(sog) ||
-          !_.isFinite(aws) ||
-          !_.isFinite(awa)
+          !Number.isFinite(headTrue) ||
+          !Number.isFinite(sog) ||
+          !Number.isFinite(aws) ||
+          !Number.isFinite(awa)
         ) {
           angle = null
           speed = null
@@ -32,10 +31,9 @@ module.exports = function (app, plugin) {
         } else {
           const apparentX = Math.cos(awa) * aws
           const apparentY = Math.sin(awa) * aws
-          angle = Math.atan2(apparentY, -sog + apparentX)
-          speed = Math.sqrt(
-            Math.pow(apparentY, 2) + Math.pow(-sog + apparentX, 2)
-          )
+          const gx = apparentX - sog
+          angle = Math.atan2(apparentY, gx)
+          speed = Math.sqrt(apparentY * apparentY + gx * gx)
           if (aws < 1e-9) {
             angle = awa
           }
@@ -70,7 +68,7 @@ module.exports = function (app, plugin) {
         'environment.wind.angleTrueGround'
       ],
       calculator: function (headingTrue, gwa) {
-        if (!_.isFinite(headingTrue) || !_.isFinite(gwa)) {
+        if (!Number.isFinite(headingTrue) || !Number.isFinite(gwa)) {
           return [{ path: 'environment.wind.directionGround', value: null }]
         }
 
