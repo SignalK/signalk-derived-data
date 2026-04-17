@@ -1,3 +1,5 @@
+const _ = require('lodash')
+
 module.exports = function (app, plugin) {
   return {
     group: 'air',
@@ -13,6 +15,14 @@ module.exports = function (app, plugin) {
       // pressure is Pa. Saturation pressure via Tetens comes out in
       // hPa, so it is multiplied by 100 before being used alongside
       // the pressure input.
+      if (
+        !_.isFinite(temp) ||
+        !_.isFinite(hum) ||
+        !_.isFinite(press) ||
+        temp <= 0
+      ) {
+        return undefined
+      }
       var tempC = temp - 273.15
       var psat = 6.1078 * Math.pow(10, (7.5 * tempC) / (tempC + 237.3)) * 100
       var pv = hum * psat
