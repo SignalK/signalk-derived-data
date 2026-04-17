@@ -33,4 +33,26 @@ describe('setDrift — frame mismatch regression', () => {
     const out = d.calculator(0.5, 0.7, 6, 5.5, 0.1)
     out.map((x) => x.path).should.include('environment.current.driftImpact')
   })
+
+  // Covers the null/undefined guard inside normalizeAngle. Exported from
+  // calcs/setDrift.js for testability — the guard is defensive and is
+  // never reached through the calculator path (atan2/cos/sin outputs are
+  // always finite, and magneticVariation is filtered to non-null
+  // upstream before normalizeAngle is called).
+  describe('normalizeAngle', () => {
+    const { normalizeAngle } = require('../calcs/setDrift')
+
+    it('returns null for null and undefined', () => {
+      ;(normalizeAngle(null) === null).should.equal(true)
+      ;(normalizeAngle(undefined) === null).should.equal(true)
+    })
+
+    it('wraps positive values above 2*PI back into [0, 2*PI)', () => {
+      normalizeAngle(2 * Math.PI + 0.1).should.be.closeTo(0.1, 1e-9)
+    })
+
+    it('wraps negative values into [0, 2*PI)', () => {
+      normalizeAngle(-0.1).should.be.closeTo(2 * Math.PI - 0.1, 1e-9)
+    })
+  })
 })
