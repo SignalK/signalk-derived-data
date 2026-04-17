@@ -33,6 +33,7 @@ module.exports = function (app, plugin) {
       undefined,
       DEFAULT_MAGNETIC_VARIATION
     ],
+    debounceDelay: 200,
 
     /**
      * Calculates set and drift vector from motion data

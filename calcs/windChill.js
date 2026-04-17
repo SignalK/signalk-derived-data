@@ -7,6 +7,7 @@ module.exports = function (app, plugin) {
       'environment.outside.temperature',
       'environment.wind.speedApparent'
     ],
+    debounceDelay: 200,
     calculator: function (temp, windSpeed) {
       // standard Wind Chill formula for Environment Canada
       const tempC = temp - 273.16

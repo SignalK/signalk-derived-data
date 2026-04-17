@@ -7,6 +7,7 @@ module.exports = function (app, plugin) {
     optionKey: 'leewayAngle',
     title: 'Leeway Angle',
     derivedFrom: ['navigation.headingTrue', 'navigation.courseOverGroundTrue'],
+    debounceDelay: 200,
     calculator: function (hdg, cog) {
       let leewayAngle = null
       if (!_.isFinite(hdg) || !_.isFinite(cog)) {

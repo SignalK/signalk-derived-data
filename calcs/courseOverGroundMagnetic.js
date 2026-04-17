@@ -10,6 +10,7 @@ module.exports = function (app, plugin) {
       'navigation.magneticVariation'
     ],
     defaults: [undefined, 9999],
+    debounceDelay: 200,
     calculator: function (courseOverGroundTrue, magneticVariation) {
       if (magneticVariation === 9999) {
         magneticVariation = app.getSelfPath(

@@ -5,6 +5,7 @@ module.exports = function (app, plugin) {
     optionKey: 'leeway',
     title: 'Leeway',
     derivedFrom: ['navigation.attitude', 'navigation.speedThroughWater'],
+    debounceDelay: 200,
     properties: {
       kFactor: {
         type: 'number',

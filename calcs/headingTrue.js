@@ -7,6 +7,7 @@ module.exports = function (app, plugin) {
     title: 'True Heading',
     derivedFrom: ['navigation.headingMagnetic', 'navigation.magneticVariation'],
     defaults: [undefined, 9999],
+    debounceDelay: 200,
     calculator: function (heading, magneticVariation) {
       if (magneticVariation === 9999) {
         magneticVariation = app.getSelfPath(
