@@ -9,3 +9,7 @@ node_modules
 # Test coverage
 coverage
 .nyc_output
+
+# Mutation testing
+reports
+.stryker-tmp
