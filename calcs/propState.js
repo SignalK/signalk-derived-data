@@ -1,33 +1,33 @@
-const _ = require('lodash')
-
 module.exports = function (app, plugin) {
-  var engines = plugin.engines
+  const engines = plugin.engines
 
   app.debug('engines: %j', engines)
 
   return engines.map((instance) => {
+    const statePath = 'propulsion.' + instance + '.state'
+    const currentStatePath = 'propulsion.' + instance + '.state.value'
+    const derivedFromList = ['propulsion.' + instance + '.revolutions']
     return {
       group: 'propulsion',
       optionKey: instance + 'state',
       title: `${instance} propulsion state (based on revolutions)`,
       derivedFrom: function () {
-        return ['propulsion.' + instance + '.revolutions']
+        return derivedFromList
       },
       calculator: function (revol) {
-        const currentState =
-          app.getSelfPath('propulsion.' + instance + '.state.value') || 'none'
+        const currentState = app.getSelfPath(currentStatePath) || 'none'
 
         if (revol > 0 && currentState !== 'started') {
           return [
             {
-              path: 'propulsion.' + instance + '.state',
+              path: statePath,
               value: 'started'
             }
           ]
         } else if (!revol && currentState !== 'stopped') {
           return [
             {
-              path: 'propulsion.' + instance + '.state',
+              path: statePath,
               value: 'stopped'
             }
           ]
