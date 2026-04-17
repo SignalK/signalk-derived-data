@@ -52,8 +52,17 @@ describe('plugin.start() stream pipeline', function () {
       depth: { belowKeel: true }
     })
 
-    // Plugin uses 20 ms debounceImmediate by default; push then wait.
+    // Push the same value twice. The second emission triggers the
+    // `.skipDuplicates(skip_function)` comparator, which covers the
+    // non-ttl skip_function branch in plugin.start.
     app.streambundle.getSelfStream('environment.depth.belowSurface').push(10)
+    setTimeout(
+      () =>
+        app.streambundle
+          .getSelfStream('environment.depth.belowSurface')
+          .push(10),
+      40
+    )
 
     setTimeout(() => {
       try {
@@ -69,7 +78,38 @@ describe('plugin.start() stream pipeline', function () {
       } catch (e) {
         done(e)
       }
-    }, 100)
+    }, 150)
+  })
+
+  it('honours default_ttl > 0 by using the throttling skip_function', (done) => {
+    const { app, handled } = makeApp()
+    const plugin = require('../')(app)
+
+    plugin.start({
+      default_ttl: 1, // seconds
+      traffic: { notificationZones: [] },
+      depth: { belowKeel: true }
+    })
+
+    // Push the same value repeatedly; the ttl skip_function should
+    // still emit the first one and throttle subsequent duplicates until
+    // ttl elapses.
+    const stream = app.streambundle.getSelfStream(
+      'environment.depth.belowSurface'
+    )
+    stream.push(10)
+    setTimeout(() => stream.push(10), 30)
+    setTimeout(() => stream.push(10), 60)
+
+    setTimeout(() => {
+      try {
+        handled.length.should.be.greaterThan(0)
+        plugin.stop()
+        done()
+      } catch (e) {
+        done(e)
+      }
+    }, 150)
   })
 
   it('starts and emits for a multi-input calc (set and drift)', (done) => {
@@ -130,6 +170,71 @@ describe('plugin.start() stream pipeline', function () {
       }
     }, 100)
   })
+
+  it('forwards calculator-authored deltas that include their own context (cpa_tcpa)', (done) => {
+    // cpa_tcpa is the only calc that emits deltas with an outer
+    // `context` property. The onValue branch that forwards such deltas
+    // directly (instead of wrapping them in a self-context delta) is
+    // only reached via this calc.
+    const { app, handled } = makeApp()
+    // cpa_tcpa reads app.getPath(...) for other vessels. Return an
+    // empty vessel list so the calc produces at least one pass without
+    // throwing but emits no context-bearing deltas of its own. That
+    // still exercises the onValue branch: an empty array short-circuits
+    // `values.length > 0`, so we also inject a tiny vessel to force a
+    // distanceToSelf delta (which has its own context).
+    const vessels = {
+      other: {
+        navigation: {
+          position: {
+            value: { latitude: 0.0001, longitude: 0 },
+            timestamp: new Date().toISOString()
+          },
+          courseOverGroundTrue: {
+            value: 0,
+            timestamp: new Date().toISOString()
+          },
+          speedOverGround: { value: 0, timestamp: new Date().toISOString() }
+        }
+      }
+    }
+    app.getPath = (p) => require('lodash').get({ vessels }, p)
+
+    const plugin = require('../')(app)
+    plugin.start({
+      traffic: {
+        range: 1852,
+        distanceToSelf: true,
+        timelimit: 30,
+        sendNotifications: false,
+        notificationZones: [],
+        CPA: true
+      }
+    })
+
+    app.streambundle
+      .getSelfStream('navigation.position')
+      .push({ latitude: 0, longitude: 0 })
+    app.streambundle.getSelfStream('navigation.courseOverGroundTrue').push(0)
+    app.streambundle.getSelfStream('navigation.speedOverGround').push(0)
+
+    setTimeout(() => {
+      try {
+        // cpa_tcpa's distanceToSelf delta is forwarded via handleMessage
+        // with its own context.
+        const distDelta = handled.find(
+          (d) =>
+            d.context === 'vessels.other' &&
+            d.updates[0].values[0].path === 'navigation.distanceToSelf'
+        )
+        distDelta.should.exist
+        plugin.stop()
+        done()
+      } catch (e) {
+        done(e)
+      }
+    }, 5100) // cpa_tcpa uses debounceDelay: 5000 ms
+  }).timeout(10000)
 
   it('starts and emits for a single-input calc with dynamic derivedFrom (tankVolume)', (done) => {
     const { app, handled } = makeApp()
