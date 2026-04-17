@@ -141,6 +141,15 @@ module.exports = function (app, plugin) {
       const currentlyActiveNotifications = {}
       const currentMs = currentTimeMs()
 
+      // Scratch object mutated per vessel — `geoutils.cpa` treats its inputs
+      // as read-only, so reusing one allocation across the loop saves a
+      // per-vessel `{ location: {}, ... }` allocation on every tick.
+      const otherVessel = {
+        location: { lon: 0, lat: 0 },
+        speed: 0,
+        heading: 0
+      }
+
       for (var vessel in vesselList) {
         var cpa, tcpa
         if (vessel == selfId) {
@@ -244,15 +253,10 @@ module.exports = function (app, plugin) {
             nav.courseOverGroundTrue && nav.courseOverGroundTrue.value
           const vesselSpeed = nav.speedOverGround && nav.speedOverGround.value
           if (!_.isUndefined(vesselCourse) && !_.isUndefined(vesselSpeed)) {
-            var vesselCourseDeg = geoutils.radToDeg(vesselCourse)
-            var otherVessel = {
-              location: {
-                lon: vesselPos.longitude,
-                lat: vesselPos.latitude
-              },
-              speed: vesselSpeed, // meters/second
-              heading: vesselCourseDeg // degrees
-            }
+            otherVessel.location.lon = vesselPos.longitude
+            otherVessel.location.lat = vesselPos.latitude
+            otherVessel.speed = vesselSpeed // meters/second
+            otherVessel.heading = geoutils.radToDeg(vesselCourse) // degrees
 
             const obj = geoutils.cpa(selfVessel, otherVessel)
             tcpa = obj.time
@@ -262,23 +266,16 @@ module.exports = function (app, plugin) {
               let alarmDelta
               let notificationLevelIndex = 0
               if (cpa != null && tcpa != null && tcpa > 0) {
-                notificationZones
-                  .filter(
-                    (notificationZone) => notificationZone.active === true
-                  )
-                  .forEach((notificationZone) => {
-                    if (
-                      cpa <= notificationZone.range &&
-                      tcpa <= notificationZone.timeLimit
-                    ) {
-                      var newNotificationLevelIndex =
-                        notificationLevels.indexOf(notificationZone.level)
-                      notificationLevelIndex =
-                        newNotificationLevelIndex > notificationLevelIndex
-                          ? newNotificationLevelIndex
-                          : notificationLevelIndex
+                for (let zi = 0; zi < notificationZones.length; zi++) {
+                  const zone = notificationZones[zi]
+                  if (zone.active !== true) continue
+                  if (cpa <= zone.range && tcpa <= zone.timeLimit) {
+                    const zoneLevel = notificationLevels.indexOf(zone.level)
+                    if (zoneLevel > notificationLevelIndex) {
+                      notificationLevelIndex = zoneLevel
                     }
-                  })
+                  }
+                }
               }
               if (notificationLevelIndex > 0) {
                 var mmsi = vesselData.mmsi
