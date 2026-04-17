@@ -188,6 +188,40 @@ describe('calcs/magneticVariation', function () {
     ;(typeof res).should.equal('undefined')
     done()
   })
+
+  // Covers the `(model.name || 'WMM-2025')` fallback branch. Real
+  // geomagnetism always returns a named model, so we stub the module in
+  // require.cache, force-reload magneticVariation, and inspect the
+  // emitted source value before restoring the real module.
+  it('falls back to "WMM 2025" when the loaded model has no name', (done) => {
+    const geomagnetismPath = require.resolve('geomagnetism')
+    const magvarPath = require.resolve('../calcs/magneticVariation')
+    const realGeo = require.cache[geomagnetismPath]
+    const realMagvar = require.cache[magvarPath]
+    try {
+      require.cache[geomagnetismPath] = {
+        id: geomagnetismPath,
+        filename: geomagnetismPath,
+        loaded: true,
+        exports: {
+          // No `name` property so `model.name || 'WMM-2025'` takes the
+          // fallback branch.
+          model: () => ({ point: () => ({ decl: 0 }) })
+        }
+      }
+      delete require.cache[magvarPath]
+      const freshCalc = require('../calcs/magneticVariation')(app, plugin)
+      const res = freshCalc.calculator({ latitude: 0, longitude: 0 })
+      res[1].path.should.equal('navigation.magneticVariation.source')
+      res[1].value.should.equal('WMM 2025')
+    } finally {
+      if (realGeo) require.cache[geomagnetismPath] = realGeo
+      else delete require.cache[geomagnetismPath]
+      if (realMagvar) require.cache[magvarPath] = realMagvar
+      else delete require.cache[magvarPath]
+    }
+    done()
+  })
 })
 
 describe('derived data converts', function () {
