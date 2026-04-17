@@ -1,5 +1,6 @@
 const chai = require('chai')
 chai.Should()
+const expect = chai.expect
 
 const { makeApp, makePlugin } = require('./helpers')
 
@@ -77,5 +78,79 @@ describe('moon (covers the calculator path with valid inputs)', () => {
       'Last Quarter',
       'Waning Crescent'
     ].should.include(phaseName.value)
+  })
+
+  // suncalc.getMoonIllumination returns phase as a float in [0, 1), and
+  // in practice it is essentially never exactly 0, 0.25, 0.5, or 0.75
+  // at the instant of a real date input. The phase-name switch in moon.js
+  // has dedicated `phase == X` cases for those four fixed points,
+  // matching how astronomers label the cardinal phases. Stubbing suncalc
+  // is the only way to hit them with deterministic inputs.
+  it('names the four cardinal phases when suncalc returns exact equality', () => {
+    const suncalcPath = require.resolve('suncalc')
+    const moonPath = require.resolve('../calcs/moon')
+    const realSuncalc = require.cache[suncalcPath]
+    const realMoon = require.cache[moonPath]
+
+    function stubWithPhase(phase, times) {
+      require.cache[suncalcPath] = {
+        id: suncalcPath,
+        filename: suncalcPath,
+        loaded: true,
+        exports: {
+          getMoonIllumination: () => ({ phase, fraction: 0.5, angle: 0 }),
+          getMoonTimes: () =>
+            times || {
+              rise: new Date(),
+              set: new Date(),
+              alwaysUp: false,
+              alwaysDown: false
+            }
+        }
+      }
+      delete require.cache[moonPath]
+      return require('../calcs/moon')
+    }
+
+    try {
+      const cases = [
+        [0, 'New Moon'],
+        [0.25, 'First Quarter'],
+        [0.5, 'Full Moon'],
+        [0.75, 'Last Quarter']
+      ]
+      for (const [phase, expectedName] of cases) {
+        const moonCalc = stubWithPhase(phase)
+        const d = moonCalc(makeApp(), makePlugin())
+        const out = d.calculator('2024-06-21T12:00:00Z', {
+          latitude: 10,
+          longitude: 20
+        })
+        const name = out.find((x) => x.path === 'environment.moon.phaseName')
+        name.value.should.equal(expectedName)
+      }
+
+      // times.rise / times.set are falsy when the moon neither rises nor
+      // sets on a given day — the `|| null` fallbacks in moon.js emit
+      // null for both. Latitudes above the polar circles during winter
+      // produce this naturally; stubbing is the surest way to hit it.
+      const polarMoon = stubWithPhase(0.1, {
+        alwaysUp: false,
+        alwaysDown: true
+      })
+      const polar = polarMoon(makeApp(), makePlugin()).calculator(
+        '2024-12-21T12:00:00Z',
+        { latitude: 80, longitude: 0 }
+      )
+      const rise = polar.find((x) => x.path === 'environment.moon.times.rise')
+      const setT = polar.find((x) => x.path === 'environment.moon.times.set')
+      expect(rise.value).to.equal(null)
+      expect(setT.value).to.equal(null)
+    } finally {
+      if (realSuncalc) require.cache[suncalcPath] = realSuncalc
+      else delete require.cache[suncalcPath]
+      if (realMoon) require.cache[moonPath] = realMoon
+      else delete require.cache[moonPath]
+    }
   })
 })

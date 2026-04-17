@@ -285,4 +285,16 @@ describe('plugin.start() stream pipeline', function () {
       }
     }, 100)
   })
+
+  it('initialises traffic.notificationZones to [] when the key is absent', () => {
+    // Covers the `if (!plugin.properties.traffic.notificationZones)` fallback
+    // in plugin.start — the traffic section exists but the zones list is
+    // missing (e.g. a pre-notificationZones config).
+    const { app } = makeApp()
+    const plugin = require('../..')(app)
+    const props = { traffic: { sendNotifications: true } }
+    plugin.start(props)
+    props.traffic.notificationZones.should.deep.equal([])
+    plugin.stop()
+  })
 })

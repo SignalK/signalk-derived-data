@@ -212,3 +212,11 @@ module.exports = function (app, plugin) {
     ]
   }
 }
+
+// Exposed for unit testing. The null/undefined guard inside
+// normalizeAngle is defensive — it is never reached by the calculator
+// above because the inputs are always finite (cos/sin/atan2 outputs or
+// the `magneticVariation != null` branch already guarded upstream).
+// Exporting lets a test hit the guard directly without contorting the
+// calculator inputs.
+module.exports.normalizeAngle = normalizeAngle
