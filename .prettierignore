@@ -3,3 +3,10 @@ coverage
 .nyc_output
 .claude
 package-lock.json
+
+# Build output
+dist
+
+# Mutation testing
+reports
+.stryker-tmp

@@ -23,6 +23,12 @@ jobs:
       fail-fast: false
       matrix:
         node-version: [22.x, 24.x]
+        # Dual baconjs matrix exists because Cerbo GX / Venus OS still
+        # bundles an older signalk-server that pins baconjs 1.x in
+        # `node_modules`, while upstream signalk-server is on baconjs
+        # 3.x. Testing both keeps the plugin usable on Cerbo today.
+        # Drop the `1.0.1` cell once Cerbo ships a signalk-server with
+        # baconjs 3.x.
         baconjs: ['1.0.1', '3.0.23']
 
     steps:
@@ -44,6 +50,14 @@ jobs:
       - name: Check formatting
         if: matrix.baconjs == '3.0.23'
         run: npm run prettier:check
+
+      - name: Typecheck
+        if: matrix.baconjs == '3.0.23'
+        run: npm run typecheck
+
+      - name: Build
+        if: matrix.baconjs == '3.0.23'
+        run: npm run build
 
       - name: Run tests
         if: matrix.node-version != '24.x' || matrix.baconjs != '3.0.23'
