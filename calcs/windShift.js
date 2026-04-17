@@ -36,13 +36,17 @@ module.exports = function (app, plugin) {
 
       var values
       app.debug('angleApparent: ' + angleApparent)
-      if (angleApparent < 0) angleApparent = angleApparent + Math.PI / 2
+      // Normalise to [0, 2*PI) so the circular-mean math below has a
+      // consistent range to work with.
+      if (angleApparent < 0) angleApparent = angleApparent + 2 * Math.PI
       app.debug('angleApparent2: ' + angleApparent)
       app.debug('alarm: ' + alarm)
       if (typeof windAvg === 'undefined') {
         windAvg = angleApparent
       } else {
-        var diff = Math.abs(windAvg - angleApparent)
+        // Smallest signed angle between the two bearings, in [0, PI].
+        var rawDiff = windAvg - angleApparent
+        var diff = Math.abs(Math.atan2(Math.sin(rawDiff), Math.cos(rawDiff)))
         app.debug('' + windAvg + ', ' + angleApparent + ', ' + diff)
         if (diff > alarm) {
           values = [
@@ -65,7 +69,12 @@ module.exports = function (app, plugin) {
             values = [normalAlarmDelta()]
             alarmSent = false
           }
-          windAvg = (windAvg + angleApparent) / 2
+          // Circular mean of the previous average and the new sample.
+          windAvg = Math.atan2(
+            Math.sin(windAvg) + Math.sin(angleApparent),
+            Math.cos(windAvg) + Math.cos(angleApparent)
+          )
+          if (windAvg < 0) windAvg = windAvg + 2 * Math.PI
         }
       }
       return values

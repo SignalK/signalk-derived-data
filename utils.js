@@ -29,9 +29,10 @@ exports.isCompassAngle = (value) => {
 exports.formatCompassAngle = (value) => {
   if (isNumeric(value)) {
     const twoPi = Math.PI * 2
-    if (value >= twoPi) return value - twoPi
-    if (value < 0) return twoPi + value
-    return value
+    // Fast path keeps already-normalised values bit-identical; the
+    // modulo handles any multiple of 2*Pi, including large negatives.
+    if (value >= 0 && value < twoPi) return value
+    return ((value % twoPi) + twoPi) % twoPi
   } else {
     return null
   }

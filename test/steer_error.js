@@ -1,7 +1,3 @@
-// Tests marked with `// BUG: ...` lock the CURRENT (incorrect) behaviour
-// of the module so the suite stays green today. A follow-up pass flips
-// those assertions to the correct behaviour and fixes the implementations.
-
 const chai = require('chai')
 chai.Should()
 
@@ -45,21 +41,24 @@ describe('steer_error', () => {
     out[2].value.should.be.closeTo(0.5, 1e-9)
   })
 
-  // BUG: the wrap-around branch uses `(err - PI) * -1` instead of
-  // `err - 2*PI`. For COG = 5.934 rad, bearing = 0 rad (err > PI), the
-  // current code returns -2.79 rad, while the geometrically correct
-  // normalized error is -0.349 rad (≈ -20°).
-  it('wraps err > PI to the (buggy) negative-PI-flipped value', () => {
+  it('normalises err > PI back into (-PI, PI] (circular wrap)', () => {
     const d = calc(makeApp(), makePlugin())
+    // cog ≈ 340°, bearing = 0°: raw err = 5.934 rad, true signed error
+    // is ≈ -0.349 rad (turn right 20°).
     const out = d.calculator(5.934, 0)
-    // steererr = 5.934; (5.934 - PI) * -1 = -(5.934 - PI) ≈ -2.7924
-    out[0].value.should.be.closeTo(-(5.934 - Math.PI), 1e-6)
+    out[0].value.should.be.closeTo(5.934 - 2 * Math.PI, 1e-6)
+    // Right turn -> rightSteer populated, leftSteer zero.
+    out[1].value.should.equal(0)
+    out[2].value.should.be.closeTo(2 * Math.PI - 5.934, 1e-6)
   })
 
-  it('wraps err < -PI to the (buggy) negative-PI-flipped value', () => {
+  it('normalises err < -PI back into (-PI, PI] (circular wrap)', () => {
     const d = calc(makeApp(), makePlugin())
+    // cog = 0°, bearing ≈ 340°: raw err = -5.934 rad, true signed error
+    // is ≈ +0.349 rad (turn left 20°).
     const out = d.calculator(0, 5.934)
-    // steererr = -5.934; (-5.934 + PI) * -1 = 5.934 - PI ≈ 2.7924
-    out[0].value.should.be.closeTo(5.934 - Math.PI, 1e-6)
+    out[0].value.should.be.closeTo(2 * Math.PI - 5.934, 1e-6)
+    out[1].value.should.be.closeTo(2 * Math.PI - 5.934, 1e-6)
+    out[2].value.should.equal(0)
   })
 })

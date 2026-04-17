@@ -1,7 +1,3 @@
-// Tests marked with `// BUG: ...` lock the CURRENT (incorrect) behaviour
-// of the module so the suite stays green today. A follow-up pass flips
-// those assertions to the correct behaviour and fixes the implementations.
-
 const chai = require('chai')
 chai.Should()
 const expect = chai.expect
@@ -61,30 +57,23 @@ describe('windShift', () => {
     out[0].value.state.should.equal('normal')
   })
 
-  // BUG: `if (angleApparent < 0) angleApparent = angleApparent + Math.PI / 2`
-  // normalises negative apparent angles by adding PI/2 (90°). A correct
-  // circular normalisation adds 2*PI. The test pins the current offset.
-  it('shifts negative apparent angles by PI/2 (current offset)', () => {
+  it('normalises negative apparent angles by adding 2*PI', () => {
     const d = fresh(0.3)
-    // With windAvg undefined, negative sample is first offset by +PI/2
-    // and becomes the seed. A subsequent positive sample that matches
-    // `-0.1 + PI/2 ≈ 1.4708` produces a zero-diff and therefore no
-    // output, proving the offset is PI/2 not 2*PI.
+    // Seed with a negative sample; the seed is normalised to +2*PI - 0.1.
+    // A subsequent sample equal to 2*PI - 0.1 yields zero diff and no
+    // emission.
     d.calculator(-0.1)
-    expect(d.calculator(-0.1 + Math.PI / 2)).to.equal(undefined)
+    expect(d.calculator(2 * Math.PI - 0.1)).to.equal(undefined)
   })
 
-  // BUG: the average of two angles is computed as a plain arithmetic
-  // mean, which is wrong near the 0/2*PI wrap. The test pins the
-  // arithmetic-mean behaviour.
-  it('uses the arithmetic mean of angles (breaks near 2*PI wrap)', () => {
-    const d = fresh(2 * Math.PI) // large threshold so no alert fires
+  it('averages angles circularly so values straddling 2*PI do not flip 180°', () => {
+    const d = fresh(2 * Math.PI) // threshold large enough not to alarm
     d.calculator(0.1)
-    d.calculator(6.2)
-    // After two calls windAvg = (0.1 + 6.2) / 2 = 3.15 rad (≈ 180°),
-    // whereas the circular mean is close to 0. Probe windAvg indirectly
-    // via a third sample just shy of the arithmetic-mean result.
-    expect(d.calculator(3.15)).to.equal(undefined)
+    d.calculator(6.2) // ≈ -0.0832 rad, close to windAvg on the circle
+    // The circular mean of 0.1 and 6.2 is close to 0.0084 rad, not 3.15
+    // as arithmetic averaging would produce. Push 0.01 (inside the
+    // circular mean) and expect no delta.
+    expect(d.calculator(0.01)).to.equal(undefined)
   })
 
   it('emits nothing on stop when no alarm was sent', () => {

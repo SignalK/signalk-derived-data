@@ -62,6 +62,9 @@ module.exports = function (app) {
     if (!plugin.properties.air_instances) {
       plugin.properties.air_instances = defaultAir
     }
+    if (!plugin.properties.traffic) {
+      plugin.properties.traffic = {}
+    }
     if (!plugin.properties.traffic.notificationZones) {
       plugin.properties.traffic.notificationZones = []
     }

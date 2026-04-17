@@ -9,10 +9,19 @@ module.exports = function (app) {
     calculator: function (depthBelowSurface) {
       var draft = app.getSelfPath('design.draft.value.maximum')
 
+      if (typeof depthBelowSurface !== 'number' || typeof draft !== 'number') {
+        return undefined
+      }
+
+      const value = depthBelowSurface - draft
+      if (isNaN(value)) {
+        return undefined
+      }
+
       return [
         {
           path: 'environment.depth.belowKeel',
-          value: depthBelowSurface - draft
+          value
         }
       ]
     }

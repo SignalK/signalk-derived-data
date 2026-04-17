@@ -43,6 +43,15 @@ function makeApp() {
 }
 
 describe('plugin.start() stream pipeline', function () {
+  it('does not throw when the traffic config section is missing entirely', () => {
+    const { app } = makeApp()
+    const plugin = require('../..')(app)
+    // A fresh install saves an empty config; plugin.start must not
+    // crash just because the `traffic` section has not been created.
+    ;(() => plugin.start({ depth: { belowKeel: true } })).should.not.throw()
+    plugin.stop()
+  })
+
   it('starts and emits for a single-input calc (depthBelowKeel)', (done) => {
     const { app, streams, handled } = makeApp()
     const plugin = require('../..')(app)

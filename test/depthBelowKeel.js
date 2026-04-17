@@ -1,9 +1,6 @@
-// Tests marked with `// BUG: ...` lock the CURRENT (incorrect) behaviour
-// of the module so the suite stays green today. A follow-up pass flips
-// those assertions to the correct behaviour and fixes the implementations.
-
 const chai = require('chai')
 chai.Should()
+const expect = chai.expect
 
 const { makeApp, makePlugin } = require('./helpers')
 
@@ -19,13 +16,26 @@ describe('depthBelowKeel', () => {
     out.should.deep.equal([{ path: 'environment.depth.belowKeel', value: 8.5 }])
   })
 
-  // BUG: no guard against undefined draft. Result becomes NaN when
-  // design.draft.value.maximum is missing. depthBelowKeel2.js shows the
-  // correct null-guard pattern.
-  it('returns NaN when draft is missing (current behaviour)', () => {
+  it('returns undefined when draft is missing', () => {
     const app = makeApp()
     const d = calc(app, makePlugin())
-    const out = d.calculator(10)
-    Number.isNaN(out[0].value).should.equal(true)
+    expect(d.calculator(10)).to.equal(undefined)
+  })
+
+  it('returns undefined when depthBelowSurface is not a number', () => {
+    const app = makeApp({
+      selfPaths: { design: { draft: { value: { maximum: 1.5 } } } }
+    })
+    const d = calc(app, makePlugin())
+    expect(d.calculator(null)).to.equal(undefined)
+    expect(d.calculator(undefined)).to.equal(undefined)
+  })
+
+  it('returns undefined when depthBelowSurface is NaN', () => {
+    const app = makeApp({
+      selfPaths: { design: { draft: { value: { maximum: 1.5 } } } }
+    })
+    const d = calc(app, makePlugin())
+    expect(d.calculator(NaN)).to.equal(undefined)
   })
 })

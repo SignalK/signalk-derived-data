@@ -9,8 +9,11 @@ module.exports = function (app, plugin) {
     derivedFrom: ['navigation.headingTrue', 'navigation.courseOverGroundTrue'],
     calculator: function (hdg, cog) {
       let leewayAngle = null
-      if (!_.isFinite(hdg) || !_.isFinite(cog)) {
-        leewayAngle = Math.abs(hdg - cog)
+      if (_.isFinite(hdg) && _.isFinite(cog)) {
+        // Circular subtraction preserves the sign (positive to
+        // starboard, negative to port) and handles the 0/2*PI wrap.
+        const delta = hdg - cog
+        leewayAngle = Math.atan2(Math.sin(delta), Math.cos(delta))
       }
       return [{ path: 'navigation.leewayAngle', value: leewayAngle }]
     }

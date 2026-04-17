@@ -45,14 +45,22 @@ module.exports = function (app, plugin) {
         var pitch = app.getSelfPath(
           'propulsion.' + instance + '.drive.propeller.pitch.value'
         )
-        if (revolutions > 0) {
-          return [
-            {
-              path: 'propulsion.' + instance + '.drive.propeller.slip',
-              value: 1 - (stw * gearRatio) / (revolutions * pitch)
-            }
-          ]
+        if (
+          !_.isFinite(revolutions) ||
+          revolutions <= 0 ||
+          !_.isFinite(stw) ||
+          !_.isFinite(gearRatio) ||
+          !_.isFinite(pitch) ||
+          pitch === 0
+        ) {
+          return undefined
         }
+        return [
+          {
+            path: 'propulsion.' + instance + '.drive.propeller.slip',
+            value: 1 - (stw * gearRatio) / (revolutions * pitch)
+          }
+        ]
       },
       tests: [
         {

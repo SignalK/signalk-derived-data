@@ -17,6 +17,9 @@ module.exports = function (app, plugin) {
         ]
       },
       calculator: function (rate, speed) {
+        if (!_.isFinite(rate) || rate === 0 || !_.isFinite(speed)) {
+          return undefined
+        }
         return [
           {
             path: 'propulsion.' + instance + '.fuel.economy',

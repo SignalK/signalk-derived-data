@@ -208,10 +208,12 @@ module.exports = function (app, plugin) {
           if (
             secondsSinceVesselUpdate(
               vessel,
-              'navigation.courseOverGroundTrue'
+              'navigation.courseOverGroundTrue.timestamp'
             ) > plugin.properties.traffic.timelimit ||
-            secondsSinceVesselUpdate(vessel, 'navigation.speedOverGround') >
-              plugin.properties.traffic.timelimit
+            secondsSinceVesselUpdate(
+              vessel,
+              'navigation.speedOverGround.timestamp'
+            ) > plugin.properties.traffic.timelimit
           ) {
             app.debug('old course data from vessel, not calculating CPA')
             if (vesselCourse !== null || vesselSpeed !== null) {
