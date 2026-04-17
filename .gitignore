@@ -6,6 +6,9 @@ node_modules
 *.tgz
 .claude/
 
+# Build output
+dist
+
 # Test coverage
 coverage
 .nyc_output
@@ -13,3 +16,6 @@ coverage
 # Mutation testing
 reports
 .stryker-tmp
+
+# Fake calcs written by integration tests
+src/calcs/__*.ts

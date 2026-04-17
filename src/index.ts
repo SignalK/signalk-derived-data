@@ -1,0 +1,514 @@
+/*
+ * Copyright 2017 Scott Bender <scott@scottbender.net>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * Signal K derived-data plugin entry point.
+ *
+ * Loads every calculator under `calcs/`, wires its `derivedFrom` paths
+ * into the host server's Bacon.js streams, and forwards the calculator
+ * output back through `app.handleMessage`. The schema/uiSchema builder
+ * discovers the same set of calculators so the plugin's configuration
+ * UI stays in sync with whatever lives in `calcs/`.
+ */
+
+import { isDeepStrictEqual } from 'node:util'
+import * as path from 'path'
+import * as fs from 'fs'
+import type {
+  BaconStream,
+  BaconProperty,
+  Calculation,
+  CalculationFactory,
+  PluginInstance,
+  PluginProperties,
+  PluginState,
+  ServerApp,
+  SignalKDelta,
+  SignalKValue
+} from './types'
+
+// Combine N streams into a single Property whose values are fn(v1, v2, ...vN),
+// using only the instance-method .combine(other, fn) that exists on both
+// baconjs 1.x and 3.x. Avoids require('baconjs') in the plugin so that
+// the plugin never carries its own Bacon copy: all stream operations run on
+// the Bacon instance the host signalk-server created the streams with.
+//
+// The seed of the reduce calls .toProperty() so the result is always a
+// Property even when there is only one input stream (no .combine call to
+// implicitly lift it). Downstream callers depend on .changes(), which is a
+// Property-only method.
+function combineStreamsWith(
+  streams: Array<BaconStream<unknown> | BaconProperty<unknown>>,
+  fn: (...args: unknown[]) => unknown
+): BaconProperty<unknown> {
+  // Seed the reduce with streams[0] lifted to a Property<unknown[]> so
+  // the running accumulator never holds null. Iterating streams.slice(1)
+  // avoids the null-seeded branch that needed a `!` non-null assertion
+  // and would have crashed downstream as `null.map` if a caller ever
+  // passed an empty stream list.
+  if (streams.length === 0) {
+    throw new Error('combineStreamsWith requires at least one stream')
+  }
+  const first = streams[0]!.toProperty().map((v: unknown): unknown[] => [v])
+  return streams
+    .slice(1)
+    .reduce<BaconProperty<unknown[]>>(
+      (acc, stream) =>
+        acc.combine(stream, (arr: unknown[], v: unknown) =>
+          arr.concat([v])
+        ) as BaconProperty<unknown[]>,
+      first
+    )
+    .map((args: unknown[]) => fn.apply(null, args))
+}
+
+const defaultEngines = 'port, starboard'
+const defaultBatteries = '0'
+const defaultTanks = 'fuel.0, fuel.1'
+const defaultAir = 'outside'
+
+const createPlugin = function (app: ServerApp): PluginState {
+  const plugin = {} as PluginState
+  let unsubscribes: Array<() => void> = []
+  let schema: Record<string, unknown> | undefined
+  let uiSchema: Record<string, unknown> | undefined
+  let calculations: Calculation[] | undefined
+
+  plugin.start = function (props: PluginProperties) {
+    plugin.properties = props
+
+    if (!plugin.properties.engine_instances) {
+      plugin.properties.engine_instances = defaultEngines
+    }
+    if (!plugin.properties.battery_instances) {
+      plugin.properties.battery_instances = defaultBatteries
+    }
+    if (!plugin.properties.tank_instances) {
+      plugin.properties.tank_instances = defaultTanks
+    }
+    if (!plugin.properties.air_instances) {
+      plugin.properties.air_instances = defaultAir
+    }
+    if (!plugin.properties.traffic) {
+      plugin.properties.traffic = {}
+    }
+    if (!plugin.properties.traffic.notificationZones) {
+      plugin.properties.traffic.notificationZones = []
+    }
+    updateOldTrafficConfig()
+    plugin.engines = plugin.properties.engine_instances
+      .split(',')
+      .map((e: string) => e.trim())
+    plugin.batteries = plugin.properties.battery_instances
+      .split(',')
+      .map((e: string) => e.trim())
+    plugin.tanks = plugin.properties.tank_instances
+      .split(',')
+      .map((e: string) => e.trim())
+    plugin.air = plugin.properties.air_instances
+      .split(',')
+      .map((e: string) => e.trim())
+    calculations = flattenCalcs(load_calcs(app, plugin, 'calcs'))
+
+    calculations.forEach((calculation) => {
+      if (calculation.group) {
+        const group = props[calculation.group] as
+          | Record<string, unknown>
+          | undefined
+        if (!group || !group[calculation.optionKey]) {
+          return
+        }
+      } else if (!props[calculation.optionKey]) {
+        return
+      }
+
+      let derivedFrom: string[]
+
+      if (typeof calculation.derivedFrom === 'function') {
+        derivedFrom = calculation.derivedFrom()
+      } else derivedFrom = calculation.derivedFrom
+
+      let skip_function: (before: unknown, after: unknown) => boolean
+      if (
+        (typeof calculation.ttl !== 'undefined' && calculation.ttl > 0) ||
+        (props.default_ttl !== undefined && props.default_ttl > 0)
+      ) {
+        // app.debug("using skip")
+        skip_function = function (before: unknown, after: unknown): boolean {
+          const tnow = new Date().getTime()
+          if (isDeepStrictEqual(before, after)) {
+            // values are equial, but should we emit the delta anyway.
+            // This protects from a sequence of changes that produce no change from
+            // generating events, but ensures events are still generated at
+            // a default rate. On  Pi Zero W, the extra cycles reduce power consumption.
+            if (
+              calculation.nextOutput !== undefined &&
+              calculation.nextOutput > tnow
+            ) {
+              // console.log("Rejected dupilate ", calculation.nextOutput - tnow);
+              return true
+            }
+            // console.log("Sent dupilate ", calculation.nextOutput - tnow);
+          }
+
+          const ttl =
+            typeof calculation.ttl === 'undefined'
+              ? (props.default_ttl ?? 0)
+              : calculation.ttl
+          // app.debug("ttl: " + ttl, "def: " + props.default_ttl)
+
+          calculation.nextOutput = tnow + ttl * 1000
+          // console.log("New Value ----------------------------- ", before, after);
+          return false
+        }
+      } else {
+        skip_function = function (_before: unknown, _after: unknown): boolean {
+          return false
+        }
+      }
+
+      const selfStreams = derivedFrom.map((key: string, index: number) => {
+        let stream: BaconStream<unknown> | BaconProperty<unknown>
+        /*
+        if ( !_.isUndefined(calculation.allContexts) && calculation.allContexts ) {
+          stream = app.streambundle.getBus(key)
+        } else {
+        */
+        stream = app.streambundle.getSelfStream(key)
+        /* } */
+        if (calculation.defaults && calculation.defaults[index] !== undefined) {
+          stream = stream.toProperty(calculation.defaults[index])
+        }
+        return stream
+      })
+
+      const combined = combineStreamsWith(
+        selfStreams,
+        calculation.calculator as (...args: unknown[]) => unknown
+      )
+      const changes = combined.changes!()
+      const debounced = changes.debounceImmediate!(
+        calculation.debounceDelay || 20
+      )
+      const deduped = debounced.skipDuplicates!(skip_function)
+      const unsubscribe = deduped.onValue!((values: unknown) => {
+        if (
+          typeof values !== 'undefined' &&
+          Array.isArray(values) &&
+          values.length > 0
+        ) {
+          const first = values[0] as { context?: string } | SignalKValue
+          if ((first as { context?: string }).context) {
+            ;(values as SignalKDelta[]).forEach((delta) => {
+              app.handleMessage(plugin.id, delta)
+            })
+          } else {
+            const delta: SignalKDelta = {
+              context: 'vessels.' + app.selfId,
+              updates: [
+                {
+                  values: values as SignalKValue[]
+                }
+              ]
+            }
+
+            // app.debug("got delta: " + JSON.stringify(delta))
+            app.handleMessage(plugin.id, delta)
+          }
+        }
+      })
+      unsubscribes.push(unsubscribe)
+    })
+  }
+
+  plugin.stop = function () {
+    unsubscribes.forEach((f) => f())
+    unsubscribes = []
+
+    if (calculations) {
+      calculations.forEach((calc) => {
+        if (calc.stop) {
+          calc.stop()
+        }
+      })
+    }
+  }
+
+  plugin.id = 'derived-data'
+  plugin.name = 'Derived Data'
+  plugin.description = 'Plugin that derives data'
+
+  plugin.schema = function () {
+    updateSchema()
+    return schema!
+  }
+
+  plugin.uiSchema = function () {
+    updateSchema()
+    return uiSchema!
+  }
+
+  function updateSchema() {
+    if (!calculations) {
+      plugin.engines = defaultEngines.split(',').map((e) => e.trim())
+      plugin.batteries = defaultBatteries.split(',').map((e) => e.trim())
+      plugin.tanks = defaultTanks.split(',').map((e) => e.trim())
+      plugin.air = defaultAir.split(',').map((e) => e.trim())
+
+      calculations = flattenCalcs(load_calcs(app, plugin, 'calcs'))
+    }
+
+    schema = {
+      title: 'Derived Data',
+      description:
+        'Legend: 👍 Path is present, ❎ Path value = `null`, ❌ Path not present',
+      type: 'object',
+      properties: {
+        default_ttl: {
+          title: 'Default TTL',
+          type: 'number',
+          description:
+            "The plugin won't send out duplicate calculation values for this time period (s) (0=no ttl check)",
+          default: 0
+        },
+        engine_instances: {
+          title: 'Engines',
+          type: 'string',
+          description: 'Comma delimited list of available engines',
+          default: defaultEngines
+        },
+        battery_instances: {
+          title: 'Batteries',
+          type: 'string',
+          description: 'Comma delimited list of available batteries',
+          default: defaultBatteries
+        },
+        tank_instances: {
+          title: 'Tanks',
+          type: 'string',
+          description: 'Comma delimited list of available tanks',
+          default: defaultTanks
+        },
+        air_instances: {
+          title: 'Air',
+          type: 'string',
+          description: 'Comma delimited list of available air areas',
+          default: defaultAir
+        }
+      } as Record<string, unknown>
+    }
+
+    uiSchema = {
+      'ui:order': [
+        'default_ttl',
+        'engine_instances',
+        'battery_instances',
+        'tank_instances',
+        'air_instances'
+      ] as string[]
+    }
+
+    const groups: Record<string, Calculation[]> = {}
+
+    calculations.forEach((calc) => {
+      let groupName: string
+
+      if (typeof calc.group !== 'undefined') {
+        groupName = calc.group
+      } else {
+        groupName = 'nogroup'
+      }
+
+      if (!groups[groupName]) {
+        groups[groupName] = []
+      }
+      let title = `${calc.title.includes('DEPRECATED') ? '❗' : ''}${
+        calc.title
+      }`
+      title += ' ['
+      const derivedFrom =
+        typeof calc.derivedFrom === 'function'
+          ? calc.derivedFrom()
+          : calc.derivedFrom
+      title += derivedFrom
+        .map((p) => {
+          const node = app.getSelfPath(p) as
+            | { value?: unknown }
+            | null
+            | undefined
+          return `${p}${node ? (node.value === null ? '(❎)' : '(👍)') : '(❌)'}`
+        })
+        .join(', ')
+      title += ']'
+      groups[groupName]!.push({ ...calc, title })
+    })
+
+    const schemaProps = schema.properties as Record<string, unknown>
+    const uiOrder = uiSchema['ui:order'] as string[]
+
+    if (groups['nogroup']) {
+      groups['nogroup'].forEach((calc) => {
+        uiOrder.push(calc.optionKey)
+        schemaProps[calc.optionKey] = {
+          title: calc.title,
+          type: 'boolean',
+          default: false
+        }
+        if (calc.properties) {
+          const props =
+            typeof calc.properties === 'function'
+              ? calc.properties()
+              : calc.properties
+          Object.assign(schemaProps, props)
+        }
+      })
+    }
+
+    Object.keys(groups).forEach((groupName) => {
+      if (groupName !== 'nogroup') {
+        uiOrder.push(groupName)
+        ;(uiSchema as Record<string, unknown>)[groupName] = {
+          'ui:order': [] as string[],
+          'ui:field': 'collapsible',
+          collapse: {
+            field: 'ObjectField',
+            wrapClassName: 'panel-group'
+          }
+        }
+        const group: {
+          title: string
+          type: string
+          properties: Record<string, unknown>
+        } = {
+          title: groupName.charAt(0).toUpperCase() + groupName.slice(1),
+          type: 'object',
+          properties: {}
+        }
+        groups[groupName]!.forEach((calc) => {
+          const order = (uiSchema as Record<string, Record<string, unknown>>)[
+            groupName
+          ]!['ui:order'] as string[]
+          order.push(calc.optionKey)
+          group.properties[calc.optionKey] = {
+            title: calc.title,
+            type: 'boolean',
+            default: false
+          }
+          if (calc.properties) {
+            const props =
+              typeof calc.properties === 'function'
+                ? calc.properties()
+                : calc.properties
+            Object.assign(group.properties, props)
+            Object.keys(props).forEach((key) => {
+              order.push(key)
+            })
+          }
+        })
+        schemaProps[groupName] = group
+      }
+    })
+
+    // app.debug('schema: ' + JSON.stringify(schema, null, 2))
+    // app.debug('uiSchema: ' + JSON.stringify(uiSchema, null, 2))
+  }
+
+  function updateOldTrafficConfig() {
+    const traffic = plugin.properties!.traffic!
+    if (
+      traffic.notificationRange !== undefined ||
+      traffic.notificationTimeLimit !== undefined
+    ) {
+      traffic.notificationZones!.push({
+        range: traffic.notificationRange || 1852,
+        timeLimit: traffic.notificationTimeLimit || 600,
+        level: 'alert',
+        active: traffic.sendNotifications
+      })
+      delete traffic.notificationRange
+      delete traffic.notificationTimeLimit
+      app.savePluginOptions?.(plugin.properties!)
+    }
+  }
+
+  return plugin
+}
+
+function flattenCalcs(
+  calcs: Array<Calculation | Calculation[] | undefined>
+): Calculation[] {
+  // `[].concat.apply([], calculations)` in the JS version handled both
+  // single-descriptor and array-of-descriptors modules. Doing it with a
+  // typed reduce keeps the shape narrow for downstream consumers.
+  const out: Calculation[] = []
+  calcs.forEach((c) => {
+    if (Array.isArray(c)) out.push(...c)
+    else if (c) out.push(c)
+  })
+  return out
+}
+
+function load_calcs(
+  app: ServerApp,
+  plugin: PluginInstance,
+  dir: string
+): Array<Calculation | Calculation[]> {
+  const fpath = path.join(__dirname, dir)
+  const files = fs.readdirSync(fpath)
+  return files
+    .map((fname) => {
+      const pgn = path.basename(fname, path.extname(fname))
+      const modulePath = path.join(fpath, pgn)
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const mod: CalculationFactory = require(modulePath)
+      return mod(app, plugin)
+    })
+    .filter((calc): calc is Calculation | Calculation[] => calc != null)
+}
+
+// `export = createPlugin` emits `module.exports = createPlugin` so the
+// signalk-server plugin loader (plain CJS `require(...)`) continues to
+// receive the factory directly. The named form (vs the older
+// `module.exports = ...` assignment) gives tsc a concrete symbol to
+// emit into the `.d.ts`, so consumers see the real factory signature
+// instead of the opaque `export {}` the older pattern produced.
+//
+// A namespace merge on the same identifier re-exports the companion
+// types from the package root. `export =` forbids named exports, so
+// the merge is the canonical way to make
+//   import type { ServerApp } from 'signalk-derived-data'
+// resolve without forcing consumers into brittle subpath imports.
+// eslint-disable-next-line @typescript-eslint/no-namespace
+namespace createPlugin {
+  export type ServerApp = import('./types').ServerApp
+  export type PluginProperties = import('./types').PluginProperties
+  export type PluginInstance = import('./types').PluginInstance
+  export type PluginState = import('./types').PluginState
+  export type Calculation = import('./types').Calculation
+  export type CalculationFactory = import('./types').CalculationFactory
+  export type CalculationTest = import('./types').CalculationTest
+  export type CalculatorFn = import('./types').CalculatorFn
+  export type CalculatorOutput = import('./types').CalculatorOutput
+  export type SignalKDelta = import('./types').SignalKDelta
+  export type SignalKUpdate = import('./types').SignalKUpdate
+  export type SignalKValue = import('./types').SignalKValue
+  export type SignalKPluginDefinition =
+    import('./types').SignalKPluginDefinition
+  export type BaconStream<T = unknown> = import('./types').BaconStream<T>
+  export type BaconProperty<T = unknown> = import('./types').BaconProperty<T>
+  export type StreamBundle = import('./types').StreamBundle
+}
+
+export = createPlugin

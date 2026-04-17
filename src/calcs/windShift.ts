@@ -1,0 +1,93 @@
+import type { Calculation, CalculationFactory, SignalKValue } from '../types'
+
+let windAvg: number | undefined
+let alarmSent = false
+
+const factory: CalculationFactory = function (app, plugin): Calculation {
+  return {
+    group: 'wind',
+    optionKey: 'windShift',
+    title: 'Wind Shift (experimental)',
+    derivedFrom: ['environment.wind.angleApparent'],
+    debounceDelay: 200,
+    stop: function () {
+      windAvg = undefined
+      if (alarmSent) {
+        alarmSent = false
+        app.handleMessage(plugin.id, {
+          context: 'vessels.' + app.selfId,
+          updates: [
+            {
+              source: {
+                // "src": key
+              },
+              timestamp: new Date().toISOString(),
+              values: [normalAlarmDelta()]
+            }
+          ]
+        })
+      }
+    },
+    calculator: function (angleApparent: number) {
+      const alarm = app.getSelfPath(
+        'environment.wind.directionChangeAlarm.value'
+      ) as number | undefined
+      if (typeof alarm === 'undefined') {
+        app.debug('no directionChangeAlarm value')
+        return undefined
+      }
+
+      let values: SignalKValue[] | undefined
+      app.debug('angleApparent: ' + angleApparent)
+      if (angleApparent < 0) angleApparent = angleApparent + Math.PI / 2
+      app.debug('angleApparent2: ' + angleApparent)
+      app.debug('alarm: ' + alarm)
+      if (typeof windAvg === 'undefined') {
+        windAvg = angleApparent
+      } else {
+        const diff = Math.abs(windAvg - angleApparent)
+        app.debug('' + windAvg + ', ' + angleApparent + ', ' + diff)
+        if (diff > alarm) {
+          values = [
+            {
+              path: 'notifications.windShift',
+              value: {
+                state: 'alert',
+                method: ['visual', 'sound'],
+                message:
+                  'Wind has shifted by ' +
+                  Math.round(radsToDeg(diff)) +
+                  ' degrees',
+                timestamp: new Date().toISOString()
+              }
+            }
+          ]
+          alarmSent = true
+        } else {
+          if (alarmSent) {
+            values = [normalAlarmDelta()]
+            alarmSent = false
+          }
+          windAvg = (windAvg + angleApparent) / 2
+        }
+      }
+      return values
+    }
+  }
+}
+
+function normalAlarmDelta(): SignalKValue {
+  return {
+    path: 'notifications.windShift',
+    value: {
+      state: 'normal',
+      timestamp: new Date().toISOString()
+    }
+  }
+}
+
+function radsToDeg(radians: number): number {
+  return (radians * 180) / Math.PI
+}
+
+module.exports = factory
