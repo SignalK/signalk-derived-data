@@ -2,7 +2,6 @@ const _ = require('lodash')
 const geolib = require('geolib')
 const geoutils = require('geolocation-utils')
 
-var alarmSent = {}
 var notificationLevels = ['normal', 'alert', 'warn', 'alarm', 'emergency']
 
 // 1deg of latitude is ~111319 m everywhere; 1deg of longitude is that times
@@ -11,7 +10,21 @@ var notificationLevels = ['normal', 'alert', 'warn', 'alarm', 'emergency']
 // configured range cannot possibly be within range.
 const METERS_PER_DEG = 111319
 
+// Minimum change (m) that triggers a new distanceToSelf emission. Smaller
+// wobble on the GPS fix no longer causes a per-tick duplicate delta for
+// every visible AIS target.
+const DISTANCE_TO_SELF_EPSILON = 1
+
 module.exports = function (app, plugin) {
+  // Per-instance state — not module scope — so the plugin can be stopped
+  // and restarted cleanly (and so tests that share `require` don't leak
+  // alarm/distance caches between suites).
+  const alarmSent = {}
+  // Last distanceToSelf value emitted per vessel, keyed by vessel id. Reset
+  // to `undefined` when we emit a null delta (stale branch) so a subsequent
+  // re-appearance is treated as a fresh emission.
+  const lastDistanceToSelf = {}
+
   // Parses a SignalK timestamp (ISO string on the node, or undefined) and
   // returns true when older than `timelimitSec`. Missing/unparseable
   // timestamps are treated as stale so misconfigured feeders don't produce
@@ -193,6 +206,7 @@ module.exports = function (app, plugin) {
                 }
               ]
             })
+            delete lastDistanceToSelf[vessel]
           }
           continue
         } // old data from vessel, not calculating
@@ -225,20 +239,27 @@ module.exports = function (app, plugin) {
           )
 
           if (distanceToSelfEnabled) {
-            app.debug('distance of ' + vessel + ' to self: ' + distance)
-            app.handleMessage(plugin.id, {
-              context: 'vessels.' + vessel,
-              updates: [
-                {
-                  values: [
-                    {
-                      path: 'navigation.distanceToSelf',
-                      value: distance
-                    }
-                  ]
-                }
-              ]
-            })
+            const previous = lastDistanceToSelf[vessel]
+            if (
+              previous === undefined ||
+              Math.abs(distance - previous) >= DISTANCE_TO_SELF_EPSILON
+            ) {
+              app.debug('distance of ' + vessel + ' to self: ' + distance)
+              app.handleMessage(plugin.id, {
+                context: 'vessels.' + vessel,
+                updates: [
+                  {
+                    values: [
+                      {
+                        path: 'navigation.distanceToSelf',
+                        value: distance
+                      }
+                    ]
+                  }
+                ]
+              })
+              lastDistanceToSelf[vessel] = distance
+            }
           }
 
           if (distance >= range && rangeActive) {

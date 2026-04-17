@@ -119,13 +119,73 @@ describe('cpa_tcpa', () => {
       }
     }
     const app = cpaApp({ vessels, handled })
-    const d = calcFactory(
-      app,
-      cpaPlugin({ distanceToSelf: true, range: 1852 })
-    )
+    const d = calcFactory(app, cpaPlugin({ distanceToSelf: true, range: 1852 }))
     const out = d.calculator({ latitude: 0, longitude: 0 }, 0, 0)
     out.should.deep.equal([])
     handled.should.deep.equal([])
+  })
+
+  it('distanceToSelf is skipped on subsequent calls when the distance barely changes', () => {
+    const handled = []
+    const vessels = {
+      other: {
+        navigation: {
+          position: {
+            value: { latitude: 0.01, longitude: 0 },
+            timestamp: iso()
+          },
+          courseOverGroundTrue: { value: 0, timestamp: iso() },
+          speedOverGround: { value: 0, timestamp: iso() }
+        }
+      }
+    }
+    const app = cpaApp({ vessels, handled })
+    const d = calcFactory(app, cpaPlugin({ distanceToSelf: true, range: -1 }))
+    d.calculator({ latitude: 0, longitude: 0 }, 0, 0)
+    handled
+      .filter(
+        (x) => x.updates[0].values[0].path === 'navigation.distanceToSelf'
+      )
+      .should.have.length(1)
+    // Second call at the exact same position: distance has not changed so
+    // no new delta should be emitted.
+    d.calculator({ latitude: 0, longitude: 0 }, 0, 0)
+    handled
+      .filter(
+        (x) => x.updates[0].values[0].path === 'navigation.distanceToSelf'
+      )
+      .should.have.length(1)
+  })
+
+  it('distanceToSelf re-emits once the accumulated change crosses the threshold', () => {
+    const handled = []
+    const vessels = {
+      other: {
+        navigation: {
+          position: {
+            value: { latitude: 0.01, longitude: 0 },
+            timestamp: iso()
+          },
+          courseOverGroundTrue: { value: 0, timestamp: iso() },
+          speedOverGround: { value: 0, timestamp: iso() }
+        }
+      }
+    }
+    const app = cpaApp({ vessels, handled })
+    const d = calcFactory(app, cpaPlugin({ distanceToSelf: true, range: -1 }))
+    d.calculator({ latitude: 0, longitude: 0 }, 0, 0)
+    // Move self position enough to yield >1m change in computed distance.
+    vessels.other.navigation.position.value = {
+      latitude: 0.0105,
+      longitude: 0
+    }
+    vessels.other.navigation.position.timestamp = iso()
+    d.calculator({ latitude: 0, longitude: 0 }, 0, 0)
+    handled
+      .filter(
+        (x) => x.updates[0].values[0].path === 'navigation.distanceToSelf'
+      )
+      .should.have.length(2)
   })
 
   it('cheap-reject is disabled when range < 0 and falls through to geolib', () => {
@@ -143,10 +203,7 @@ describe('cpa_tcpa', () => {
       }
     }
     const app = cpaApp({ vessels, handled })
-    const d = calcFactory(
-      app,
-      cpaPlugin({ distanceToSelf: true, range: -1 })
-    )
+    const d = calcFactory(app, cpaPlugin({ distanceToSelf: true, range: -1 }))
     d.calculator({ latitude: 0, longitude: 0 }, 0, 0)
     // With range disabled, we still compute distance and emit distanceToSelf.
     const dist = handled.find(
