@@ -188,6 +188,58 @@ describe('cpa_tcpa', () => {
       .should.have.length(2)
   })
 
+  it('cheap-reject handles longitude wraparound across the ±180 meridian', () => {
+    // Self at 179.9, vessel at -179.9 => great-circle arc is ~0.2deg
+    // (~22km), well outside 1852m range, but the NAIVE abs(lon1-lon2)=359.8
+    // would falsely accept the vessel into the cheap-reject window and fall
+    // through to geolib (where the real distance also rejects it). The wrap
+    // branch flips this so we still reject cheaply.
+    const handled = []
+    const vessels = {
+      other: {
+        navigation: {
+          position: {
+            value: { latitude: 0, longitude: -179.9 },
+            timestamp: iso()
+          },
+          courseOverGroundTrue: { value: 0, timestamp: iso() },
+          speedOverGround: { value: 0, timestamp: iso() }
+        }
+      }
+    }
+    const app = cpaApp({ vessels, handled })
+    const d = calcFactory(app, cpaPlugin({ distanceToSelf: true, range: 1852 }))
+    const out = d.calculator({ latitude: 0, longitude: 179.9 }, 0, 0)
+    out.should.deep.equal([])
+    handled.should.deep.equal([])
+  })
+
+  it('cheap-reject passes vessels across the date line that are within range', () => {
+    // Self at 179.9995, vessel at -179.9995 => actual delta 0.001deg
+    // (~111m), well inside 1852m range. The wrap-aware cheap reject must
+    // NOT drop this vessel.
+    const handled = []
+    const vessels = {
+      other: {
+        navigation: {
+          position: {
+            value: { latitude: 0, longitude: -179.9995 },
+            timestamp: iso()
+          },
+          courseOverGroundTrue: { value: 0, timestamp: iso() },
+          speedOverGround: { value: 0, timestamp: iso() }
+        }
+      }
+    }
+    const app = cpaApp({ vessels, handled })
+    const d = calcFactory(app, cpaPlugin({ distanceToSelf: true, range: 1852 }))
+    d.calculator({ latitude: 0, longitude: 179.9995 }, 0, 0)
+    const dist = handled.find(
+      (x) => x.updates[0].values[0].path === 'navigation.distanceToSelf'
+    )
+    expect(dist).to.exist
+  })
+
   it('cheap-reject is disabled when range < 0 and falls through to geolib', () => {
     const handled = []
     const vessels = {

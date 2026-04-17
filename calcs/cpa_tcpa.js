@@ -223,10 +223,12 @@ module.exports = function (app, plugin) {
             const dLatMeters =
               Math.abs(vesselPos.latitude - selfLat) * METERS_PER_DEG
             if (dLatMeters > range) continue
-            const dLonMeters =
-              Math.abs(vesselPos.longitude - selfLon) *
-              METERS_PER_DEG *
-              cosSelfLat
+            // Longitude wraps at ±180 — take the shorter of the two arcs so
+            // a vessel at -179.9 vs self at 179.9 is treated as ~0.2deg apart
+            // (the actual great-circle distance) instead of ~359.8deg.
+            let dLonDeg = Math.abs(vesselPos.longitude - selfLon)
+            if (dLonDeg > 180) dLonDeg = 360 - dLonDeg
+            const dLonMeters = dLonDeg * METERS_PER_DEG * cosSelfLat
             if (dLonMeters > range) continue
           }
 
