@@ -1,5 +1,3 @@
-const _ = require('lodash')
-
 const selfData = {
   propulsion: {
     port: {
@@ -21,6 +19,14 @@ const selfData = {
 
 module.exports = function (app, plugin) {
   return plugin.engines.map((instance) => {
+    const slipPath = 'propulsion.' + instance + '.drive.propeller.slip'
+    const gearRatioPath =
+      'propulsion.' + instance + '.transmission.gearRatio.value'
+    const pitchPath = 'propulsion.' + instance + '.drive.propeller.pitch.value'
+    const derivedFromList = [
+      'propulsion.' + instance + '.revolutions',
+      'navigation.speedThroughWater'
+    ]
     return {
       group: 'propulsion',
       optionKey: 'propslip' + instance,
@@ -33,22 +39,15 @@ module.exports = function (app, plugin) {
         instance +
         '.drive.propeller.pitch)',
       derivedFrom: function () {
-        return [
-          'propulsion.' + instance + '.revolutions',
-          'navigation.speedThroughWater'
-        ]
+        return derivedFromList
       },
       calculator: function (revolutions, stw) {
-        var gearRatio = app.getSelfPath(
-          'propulsion.' + instance + '.transmission.gearRatio.value'
-        )
-        var pitch = app.getSelfPath(
-          'propulsion.' + instance + '.drive.propeller.pitch.value'
-        )
+        const gearRatio = app.getSelfPath(gearRatioPath)
+        const pitch = app.getSelfPath(pitchPath)
         if (revolutions > 0) {
           return [
             {
-              path: 'propulsion.' + instance + '.drive.propeller.slip',
+              path: slipPath,
               value: 1 - (stw * gearRatio) / (revolutions * pitch)
             }
           ]

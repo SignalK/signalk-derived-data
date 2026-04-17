@@ -1,28 +1,23 @@
-const _ = require('lodash')
-
 module.exports = function (app, plugin) {
-  var engines = plugin.engines
+  const engines = plugin.engines
 
   app.debug('engines: %j', engines)
 
   return engines.map((instance) => {
+    const economyPath = 'propulsion.' + instance + '.fuel.economy'
+    const derivedFromList = [
+      'propulsion.' + instance + '.fuel.rate',
+      'navigation.speedOverGround'
+    ]
     return {
       group: 'propulsion',
       optionKey: 'economy' + instance,
       title: `${instance} fuel economy`,
       derivedFrom: function () {
-        return [
-          'propulsion.' + instance + '.fuel.rate',
-          'navigation.speedOverGround'
-        ]
+        return derivedFromList
       },
       calculator: function (rate, speed) {
-        return [
-          {
-            path: 'propulsion.' + instance + '.fuel.economy',
-            value: speed / rate
-          }
-        ]
+        return [{ path: economyPath, value: speed / rate }]
       }
     }
   })

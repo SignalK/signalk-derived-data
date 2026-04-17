@@ -1,18 +1,20 @@
 const _ = require('lodash')
 
-selfData = {}
+const selfData = {}
 
 module.exports = function (app, plugin) {
   return plugin.air.map((instance) => {
+    const dewPointPath = 'environment.' + instance + '.dewPointTemperature'
+    const derivedFromList = [
+      'environment.' + instance + '.temperature',
+      'environment.' + instance + '.humidity'
+    ]
     return {
       group: 'air',
       optionKey: instance + 'dewPoint',
       title: instance + 'Air dewpoint temperature',
       derivedFrom: function () {
-        return [
-          'environment.' + instance + '.temperature',
-          'environment.' + instance + '.humidity'
-        ]
+        return derivedFromList
       },
       calculator: function (temp, hum) {
         let dewPoint = null
@@ -26,7 +28,7 @@ module.exports = function (app, plugin) {
         }
         return [
           {
-            path: 'environment.' + instance + '.dewPointTemperature',
+            path: dewPointPath,
             value: dewPoint
           }
         ]
