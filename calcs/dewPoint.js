@@ -1,5 +1,3 @@
-const _ = require('lodash')
-
 const selfData = {}
 
 module.exports = function (app, plugin) {
@@ -18,7 +16,7 @@ module.exports = function (app, plugin) {
       },
       calculator: function (temp, hum) {
         let dewPoint = null
-        if (_.isFinite(temp) && _.isFinite(hum)) {
+        if (Number.isFinite(temp) && Number.isFinite(hum)) {
           // Magnus formula:
           const tempC = temp - 273.15
           const b = 17.625

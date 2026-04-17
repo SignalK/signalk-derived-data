@@ -1,5 +1,3 @@
-const _ = require('lodash')
-
 module.exports = function (app, plugin) {
   return {
     group: 'air',
@@ -16,9 +14,9 @@ module.exports = function (app, plugin) {
       // hPa, so it is multiplied by 100 before being used alongside
       // the pressure input.
       if (
-        !_.isFinite(temp) ||
-        !_.isFinite(hum) ||
-        !_.isFinite(press) ||
+        !Number.isFinite(temp) ||
+        !Number.isFinite(hum) ||
+        !Number.isFinite(press) ||
         temp <= 0
       ) {
         return undefined

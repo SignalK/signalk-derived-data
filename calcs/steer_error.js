@@ -1,5 +1,3 @@
-const _ = require('lodash')
-
 module.exports = function (app) {
   return {
     group: 'course data',
@@ -16,8 +14,8 @@ module.exports = function (app) {
       let rightSteer = null
 
       if (
-        _.isFinite(courseOverGroundTrue) &&
-        _.isFinite(bearingToDestinationTrue)
+        Number.isFinite(courseOverGroundTrue) &&
+        Number.isFinite(bearingToDestinationTrue)
       ) {
         steererr = courseOverGroundTrue - bearingToDestinationTrue
         if (steererr > Math.PI) {

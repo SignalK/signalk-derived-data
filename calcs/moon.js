@@ -25,7 +25,7 @@ module.exports = function (app, plugin) {
         return
       }
 
-      if (!_.isUndefined(datetime) && datetime.length > 0) {
+      if (datetime !== undefined && datetime.length > 0) {
         date = new Date(datetime)
       } else {
         date = new Date()

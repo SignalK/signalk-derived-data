@@ -1,5 +1,3 @@
-const _ = require('lodash')
-
 module.exports = function (app, plugin) {
   return {
     group: 'heading',
@@ -16,13 +14,10 @@ module.exports = function (app, plugin) {
           'navigation.magneticVariation.value'
         )
       }
-      if (_.isUndefined(magneticVariation) || magneticVariation === null) {
+      if (magneticVariation == null) {
         return
       }
-      if (
-        _.isUndefined(courseOverGroundMagnetic) ||
-        courseOverGroundMagnetic === null
-      ) {
+      if (courseOverGroundMagnetic == null) {
         return [{ path: 'navigation.courseOverGroundTrue', value: null }]
       }
       var courseOverGroundTrue = courseOverGroundMagnetic + magneticVariation
