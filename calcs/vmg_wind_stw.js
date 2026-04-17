@@ -7,6 +7,7 @@ module.exports = function (app) {
       'environment.wind.angleTrueWater',
       'navigation.speedThroughWater'
     ],
+    debounceDelay: 200,
     calculator: function (angleTrueWater, speedThroughWater) {
       return [
         {

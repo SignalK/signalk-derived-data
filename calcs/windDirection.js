@@ -12,6 +12,7 @@ module.exports = function (app, plugin) {
         'navigation.headingMagnetic',
         'environment.wind.angleApparent'
       ],
+      debounceDelay: 200,
       calculator: function (headingMagnetic, awa) {
         if (!Number.isFinite(headingMagnetic) || !Number.isFinite(awa)) {
           return [{ path: 'environment.wind.directionMagnetic', value: null }]
@@ -52,6 +53,7 @@ module.exports = function (app, plugin) {
         'environment.wind.directionTrue',
         'navigation.magneticVariation'
       ],
+      debounceDelay: 200,
       calculator: function (directionTrue, magneticVariation) {
         if (
           !Number.isFinite(directionTrue) ||
@@ -110,6 +112,7 @@ module.exports = function (app, plugin) {
         'environment.wind.speedApparent',
         'environment.wind.angleApparent'
       ],
+      debounceDelay: 200,
       calculator: function (stw, aws, awa) {
         let angle
         let speed
@@ -167,6 +170,7 @@ module.exports = function (app, plugin) {
         'navigation.headingTrue',
         'environment.wind.angleTrueWater'
       ],
+      debounceDelay: 200,
       calculator: function (headingTrue, twa) {
         if (!Number.isFinite(headingTrue) || !Number.isFinite(twa)) {
           return [{ path: 'environment.wind.directionTrue', value: null }]

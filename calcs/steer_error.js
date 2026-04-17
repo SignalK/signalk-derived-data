@@ -7,6 +7,7 @@ module.exports = function (app) {
       'navigation.courseOverGroundTrue',
       'navigation.course.calcValues.bearingTrue'
     ],
+    debounceDelay: 200,
     calculator: function (courseOverGroundTrue, bearingToDestinationTrue) {
       let steererr
       let steer = null

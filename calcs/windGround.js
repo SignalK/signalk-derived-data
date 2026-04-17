@@ -14,6 +14,7 @@ module.exports = function (app, plugin) {
         'environment.wind.speedApparent',
         'environment.wind.angleApparent'
       ],
+      debounceDelay: 200,
       calculator: function (headTrue, sog, aws, awa) {
         let angle
         let speed
@@ -67,6 +68,7 @@ module.exports = function (app, plugin) {
         'navigation.headingTrue',
         'environment.wind.angleTrueGround'
       ],
+      debounceDelay: 200,
       calculator: function (headingTrue, gwa) {
         if (!Number.isFinite(headingTrue) || !Number.isFinite(gwa)) {
           return [{ path: 'environment.wind.directionGround', value: null }]

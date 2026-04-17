@@ -9,6 +9,7 @@ module.exports = function (app, plugin) {
     optionKey: 'windShift',
     title: 'Wind Shift (experimental)',
     derivedFrom: ['environment.wind.angleApparent'],
+    debounceDelay: 200,
     stop: function () {
       windAvg = undefined
       if (alarmSent) {

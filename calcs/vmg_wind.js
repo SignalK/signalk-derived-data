@@ -7,6 +7,7 @@ module.exports = function (app) {
       'environment.wind.angleTrueWater',
       'navigation.speedOverGround'
     ],
+    debounceDelay: 200,
     calculator: function (trueWindAngle, speedOverGround) {
       var vmg_wind = Math.cos(trueWindAngle) * speedOverGround
       return [{ path: 'performance.velocityMadeGood', value: vmg_wind }]
