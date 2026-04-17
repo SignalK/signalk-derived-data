@@ -5,6 +5,12 @@ const geoutils = require('geolocation-utils')
 var alarmSent = {}
 var notificationLevels = ['normal', 'alert', 'warn', 'alarm', 'emergency']
 
+// 1deg of latitude is ~111319 m everywhere; 1deg of longitude is that times
+// cos(lat). max(dLatDeg*M, dLonDeg*M*cos(lat)) is a strict lower bound on
+// the great-circle distance, so a vessel whose coarse delta exceeds the
+// configured range cannot possibly be within range.
+const METERS_PER_DEG = 111319
+
 module.exports = function (app, plugin) {
   // Parses a SignalK timestamp (ISO string on the node, or undefined) and
   // returns true when older than `timelimitSec`. Missing/unparseable
@@ -130,6 +136,7 @@ module.exports = function (app, plugin) {
       const selfId = app.selfId
       const selfLat = selfPosition.latitude
       const selfLon = selfPosition.longitude
+      const cosSelfLat = Math.cos((selfLat * Math.PI) / 180)
       const selfCourseDeg = geoutils.radToDeg(selfCourse)
       const selfVessel = {
         location: { lon: selfLon, lat: selfLat },
@@ -192,6 +199,23 @@ module.exports = function (app, plugin) {
 
         const vesselPos = posNode && posNode.value
         if (typeof vesselPos !== 'undefined') {
+          // Cheap lower-bound filter: when a positive range is configured,
+          // skip vessels whose coarse lat/lon delta already exceeds it.
+          // Avoids the geolib haversine call (and the distanceToSelf emit)
+          // for clearly-out-of-range AIS targets on busy feeds. range<0
+          // disables the range filter entirely so we keep the old full-fat
+          // path for that opt-in.
+          if (rangeActive) {
+            const dLatMeters =
+              Math.abs(vesselPos.latitude - selfLat) * METERS_PER_DEG
+            if (dLatMeters > range) continue
+            const dLonMeters =
+              Math.abs(vesselPos.longitude - selfLon) *
+              METERS_PER_DEG *
+              cosSelfLat
+            if (dLonMeters > range) continue
+          }
+
           var distance = geolib.getDistance(
             {
               latitude: selfLat,

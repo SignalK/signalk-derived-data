@@ -100,6 +100,62 @@ describe('cpa_tcpa', () => {
     out.should.deep.equal([])
   })
 
+  it('cheap-reject skips distanceToSelf emission for far vessels when range>=0', () => {
+    // When a positive range is configured, a vessel whose coarse lat/lon
+    // delta already exceeds the range is filtered before the geolib call,
+    // which also suppresses the per-tick distanceToSelf emission. Users who
+    // want distances for arbitrarily-far vessels should set range < 0.
+    const handled = []
+    const vessels = {
+      other: {
+        navigation: {
+          position: {
+            value: { latitude: 10, longitude: 10 }, // ~1500km away
+            timestamp: iso()
+          },
+          courseOverGroundTrue: { value: 0, timestamp: iso() },
+          speedOverGround: { value: 0, timestamp: iso() }
+        }
+      }
+    }
+    const app = cpaApp({ vessels, handled })
+    const d = calcFactory(
+      app,
+      cpaPlugin({ distanceToSelf: true, range: 1852 })
+    )
+    const out = d.calculator({ latitude: 0, longitude: 0 }, 0, 0)
+    out.should.deep.equal([])
+    handled.should.deep.equal([])
+  })
+
+  it('cheap-reject is disabled when range < 0 and falls through to geolib', () => {
+    const handled = []
+    const vessels = {
+      other: {
+        navigation: {
+          position: {
+            value: { latitude: 1, longitude: 0 }, // ~111 km away
+            timestamp: iso()
+          },
+          courseOverGroundTrue: { value: 0, timestamp: iso() },
+          speedOverGround: { value: 0, timestamp: iso() }
+        }
+      }
+    }
+    const app = cpaApp({ vessels, handled })
+    const d = calcFactory(
+      app,
+      cpaPlugin({ distanceToSelf: true, range: -1 })
+    )
+    d.calculator({ latitude: 0, longitude: 0 }, 0, 0)
+    // With range disabled, we still compute distance and emit distanceToSelf.
+    const dist = handled.find(
+      (x) => x.updates[0].values[0].path === 'navigation.distanceToSelf'
+    )
+    expect(dist).to.exist
+    expect(dist.updates[0].values[0].value).to.be.greaterThan(100000)
+  })
+
   it('emits null distanceToSelf + null CPA when the position timestamp is stale', () => {
     const vessels = {
       other: {
