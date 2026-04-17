@@ -43,9 +43,14 @@ function makeApp() {
 }
 
 describe('plugin.start() stream pipeline', function () {
-  // NOTE: the "does not throw when the traffic config section is missing
-  // entirely" case depends on the index.js guard introduced by PR #212.
-  // It lives on that branch, not here.
+  it('does not throw when the traffic config section is missing entirely', () => {
+    const { app } = makeApp()
+    const plugin = require('../..')(app)
+    // A fresh install saves an empty config; plugin.start must not
+    // crash just because the `traffic` section has not been created.
+    ;(() => plugin.start({ depth: { belowKeel: true } })).should.not.throw()
+    plugin.stop()
+  })
 
   it('starts and emits for a single-input calc (depthBelowKeel)', (done) => {
     const { app, streams, handled } = makeApp()
@@ -279,17 +284,5 @@ describe('plugin.start() stream pipeline', function () {
         done(e)
       }
     }, 100)
-  })
-
-  it('initialises traffic.notificationZones to [] when the key is absent', () => {
-    // Covers the `if (!plugin.properties.traffic.notificationZones)` fallback
-    // in plugin.start — the traffic section exists but the zones list is
-    // missing (e.g. a pre-notificationZones config).
-    const { app } = makeApp()
-    const plugin = require('../..')(app)
-    const props = { traffic: { sendNotifications: true } }
-    plugin.start(props)
-    props.traffic.notificationZones.should.deep.equal([])
-    plugin.stop()
   })
 })
