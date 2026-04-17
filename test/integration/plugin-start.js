@@ -45,7 +45,7 @@ function makeApp() {
 describe('plugin.start() stream pipeline', function () {
   it('starts and emits for a single-input calc (depthBelowKeel)', (done) => {
     const { app, streams, handled } = makeApp()
-    const plugin = require('../')(app)
+    const plugin = require('../..')(app)
 
     plugin.start({
       traffic: { notificationZones: [] },
@@ -83,7 +83,7 @@ describe('plugin.start() stream pipeline', function () {
 
   it('honours default_ttl > 0 by using the throttling skip_function', (done) => {
     const { app, handled } = makeApp()
-    const plugin = require('../')(app)
+    const plugin = require('../..')(app)
 
     plugin.start({
       default_ttl: 1, // seconds
@@ -114,7 +114,7 @@ describe('plugin.start() stream pipeline', function () {
 
   it('starts and emits for a multi-input calc (set and drift)', (done) => {
     const { app, handled } = makeApp()
-    const plugin = require('../')(app)
+    const plugin = require('../..')(app)
 
     plugin.start({
       traffic: { notificationZones: [] },
@@ -140,7 +140,7 @@ describe('plugin.start() stream pipeline', function () {
 
   it('starts and emits for a multi-input calc with mixed defaults (true heading)', (done) => {
     const { app, handled } = makeApp()
-    const plugin = require('../')(app)
+    const plugin = require('../..')(app)
 
     plugin.start({
       traffic: { notificationZones: [] },
@@ -200,7 +200,7 @@ describe('plugin.start() stream pipeline', function () {
     }
     app.getPath = (p) => require('lodash').get({ vessels }, p)
 
-    const plugin = require('../')(app)
+    const plugin = require('../..')(app)
     plugin.start({
       traffic: {
         range: 1852,
@@ -238,7 +238,7 @@ describe('plugin.start() stream pipeline', function () {
 
   it('starts and emits for a single-input calc with dynamic derivedFrom (tankVolume)', (done) => {
     const { app, handled } = makeApp()
-    const plugin = require('../')(app)
+    const plugin = require('../..')(app)
 
     // tankVolume's derivedFrom is a function returning a 1-element array.
     // This exercises both the dynamic-derivedFrom branch in plugin.start
