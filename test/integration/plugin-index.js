@@ -65,9 +65,7 @@ function serialiseDescriptor(obj) {
     return (
       '{' +
       Object.entries(obj)
-        .map(
-          ([k, v]) => JSON.stringify(k) + ': ' + serialiseDescriptor(v)
-        )
+        .map(([k, v]) => JSON.stringify(k) + ': ' + serialiseDescriptor(v))
         .join(', ') +
       '}'
     )
