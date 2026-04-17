@@ -52,6 +52,18 @@ describe('plugin.start() stream pipeline', function () {
     plugin.stop()
   })
 
+  it('initialises traffic.notificationZones to [] when the key is absent', () => {
+    // Covers the `if (!plugin.properties.traffic.notificationZones)` arm,
+    // i.e. `traffic` is set but the zones list is missing (e.g. a
+    // pre-notificationZones config migrated forward).
+    const { app } = makeApp()
+    const plugin = require('../..')(app)
+    const props = { traffic: { sendNotifications: true } }
+    plugin.start(props)
+    props.traffic.notificationZones.should.deep.equal([])
+    plugin.stop()
+  })
+
   it('starts and emits for a single-input calc (depthBelowKeel)', (done) => {
     const { app, streams, handled } = makeApp()
     const plugin = require('../..')(app)
