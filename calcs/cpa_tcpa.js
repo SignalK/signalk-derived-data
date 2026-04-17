@@ -6,22 +6,23 @@ var alarmSent = {}
 var notificationLevels = ['normal', 'alert', 'warn', 'alarm', 'emergency']
 
 module.exports = function (app, plugin) {
-  const secondsSinceVesselUpdate = (vessel, path) => {
-    const _vesselTimestamp = app.getPath('vessels.' + vessel + '.' + path)
-    if (!_vesselTimestamp) {
-      return Date.now() / 1000
-    }
-    const vesselTimestamp = new Date(_vesselTimestamp).getTime()
+  // Parses a SignalK timestamp (ISO string on the node, or undefined) and
+  // returns true when older than `timelimitSec`. Missing/unparseable
+  // timestamps are treated as stale so misconfigured feeders don't produce
+  // phantom "fresh" data.
+  function isStale(currentMs, timestampRaw, timelimitSec) {
+    if (!timestampRaw) return true
+    const t = new Date(timestampRaw).getTime()
+    if (!Number.isFinite(t)) return false // non-parsing node (object) -> not stale
+    return Math.floor((currentMs - t) / 1000) > timelimitSec
+  }
 
-    let currentTime
-    const currentTimeString = app.getSelfPath('navigation.datetime.value')
-    if (currentTimeString) {
-      currentTime = new Date(currentTimeString).getTime()
-    } else {
-      currentTime = Date.now()
-    }
-
-    return Math.floor((currentTime - vesselTimestamp) / 1e3)
+  // Resolve the per-tick reference clock once, using the self vessel's
+  // reported navigation.datetime when present (lets the plugin stay honest
+  // when the host clock drifts vs. GPS time) and falling back to Date.now().
+  function currentTimeMs() {
+    const s = app.getSelfPath('navigation.datetime.value')
+    return s ? new Date(s).getTime() : Date.now()
   }
 
   return {
@@ -118,31 +119,50 @@ module.exports = function (app, plugin) {
       app.debug('stopped')
     },
     calculator: function (selfPosition, selfCourse, selfSpeed) {
-      var selfCourseDeg = geoutils.radToDeg(selfCourse)
-      var selfVessel = {
-        location: { lon: selfPosition.longitude, lat: selfPosition.latitude },
+      const traffic = plugin.properties.traffic
+      const range = traffic.range
+      const rangeActive = range >= 0
+      const timelimit = traffic.timelimit
+      const distanceToSelfEnabled = traffic.distanceToSelf
+      const sendNotifications =
+        _.isUndefined(traffic.sendNotifications) || traffic.sendNotifications
+      const notificationZones = traffic.notificationZones
+      const selfId = app.selfId
+      const selfLat = selfPosition.latitude
+      const selfLon = selfPosition.longitude
+      const selfCourseDeg = geoutils.radToDeg(selfCourse)
+      const selfVessel = {
+        location: { lon: selfLon, lat: selfLat },
         speed: selfSpeed, // meters/second
         heading: selfCourseDeg // degrees
       }
-      var vesselList = app.getPath('vessels')
-      var deltas = []
+      const vesselList = app.getPath('vessels')
+      const deltas = []
       const currentlyActiveNotifications = {}
+      const currentMs = currentTimeMs()
+
       for (var vessel in vesselList) {
         var cpa, tcpa
-        if (typeof vessel === 'undefined' || vessel == app.selfId) {
+        if (vessel == selfId) {
           continue
         }
 
-        if (
-          secondsSinceVesselUpdate(vessel, 'navigation.position.timestamp') >
-          plugin.properties.traffic.timelimit
-        ) {
+        const vesselData = vesselList[vessel]
+        if (!vesselData) {
+          continue
+        }
+        const nav = vesselData.navigation
+        if (!nav) {
+          continue
+        }
+        const posNode = nav.position
+        const posTimestamp = posNode && posNode.timestamp
+
+        if (isStale(currentMs, posTimestamp, timelimit)) {
           app.debug('old position of vessel, not calculating')
-          if (
-            app.getPath(
-              'vessels.' + vessel + '.navigation.distanceToSelf.value'
-            ) !== null
-          ) {
+          const currentDistanceToSelf =
+            nav.distanceToSelf && nav.distanceToSelf.value
+          if (currentDistanceToSelf !== null) {
             deltas.push({
               context: 'vessels.' + vessel,
               updates: [
@@ -161,19 +181,17 @@ module.exports = function (app, plugin) {
           continue
         } // old data from vessel, not calculating
 
-        var vesselPos = app.getPath(
-          'vessels.' + vessel + '.navigation.position.value'
-        )
+        const vesselPos = posNode && posNode.value
         if (typeof vesselPos !== 'undefined') {
           var distance = geolib.getDistance(
             {
-              latitude: selfPosition.latitude,
-              longitude: selfPosition.longitude
+              latitude: selfLat,
+              longitude: selfLon
             },
             { latitude: vesselPos.latitude, longitude: vesselPos.longitude }
           )
 
-          if (plugin.properties.traffic.distanceToSelf) {
+          if (distanceToSelfEnabled) {
             app.debug('distance of ' + vessel + ' to self: ' + distance)
             app.handleMessage(plugin.id, {
               context: 'vessels.' + vessel,
@@ -190,31 +208,27 @@ module.exports = function (app, plugin) {
             })
           }
 
-          if (
-            distance >= plugin.properties.traffic.range &&
-            plugin.properties.traffic.range >= 0
-          ) {
+          if (distance >= range && rangeActive) {
             app.debug('distance outside range, dont calculate')
             continue
           } // if distance outside range, don't calculate
 
-          var vesselCourse = app.getPath(
-            'vessels.' + vessel + '.navigation.courseOverGroundTrue.value'
-          )
-          var vesselSpeed = app.getPath(
-            'vessels.' + vessel + '.navigation.speedOverGround.value'
-          )
-
+          // NB: these stale-check reads target the parent node (not
+          // `.timestamp`) to match the pre-refactor behaviour — the companion
+          // bug fix is tracked separately in PR #223 so it doesn't bundle
+          // with this perf change.
           if (
-            secondsSinceVesselUpdate(
-              vessel,
-              'navigation.courseOverGroundTrue'
-            ) > plugin.properties.traffic.timelimit ||
-            secondsSinceVesselUpdate(vessel, 'navigation.speedOverGround') >
-              plugin.properties.traffic.timelimit
+            isStale(currentMs, nav.courseOverGroundTrue, timelimit) ||
+            isStale(currentMs, nav.speedOverGround, timelimit)
           ) {
             app.debug('old course data from vessel, not calculating CPA')
-            if (vesselCourse !== null || vesselSpeed !== null) {
+            const vCourseVal = app.getPath(
+              'vessels.' + vessel + '.navigation.courseOverGroundTrue.value'
+            )
+            const vSpeedVal = app.getPath(
+              'vessels.' + vessel + '.navigation.speedOverGround.value'
+            )
+            if (vCourseVal !== null || vSpeedVal !== null) {
               deltas.push({
                 context: 'vessels.' + vessel,
                 updates: [
@@ -226,6 +240,9 @@ module.exports = function (app, plugin) {
             }
             continue
           }
+          const vesselCourse =
+            nav.courseOverGroundTrue && nav.courseOverGroundTrue.value
+          const vesselSpeed = nav.speedOverGround && nav.speedOverGround.value
           if (!_.isUndefined(vesselCourse) && !_.isUndefined(vesselSpeed)) {
             var vesselCourseDeg = geoutils.radToDeg(vesselCourse)
             var otherVessel = {
@@ -241,14 +258,11 @@ module.exports = function (app, plugin) {
             tcpa = obj.time
             cpa = obj.distance
 
-            if (
-              _.isUndefined(plugin.properties.traffic.sendNotifications) ||
-              plugin.properties.traffic.sendNotifications
-            ) {
+            if (sendNotifications) {
               let alarmDelta
               let notificationLevelIndex = 0
               if (cpa != null && tcpa != null && tcpa > 0) {
-                plugin.properties.traffic.notificationZones
+                notificationZones
                   .filter(
                     (notificationZone) => notificationZone.active === true
                   )
@@ -267,9 +281,9 @@ module.exports = function (app, plugin) {
                   })
               }
               if (notificationLevelIndex > 0) {
-                var mmsi = app.getPath('vessels.' + vessel + '.mmsi')
+                var mmsi = vesselData.mmsi
                 app.debug('sending CPA alarm for ' + vessel)
-                let vesselName = app.getPath('vessels.' + vessel + '.name')
+                let vesselName = vesselData.name
                 if (!vesselName) {
                   vesselName = mmsi || '(unknown)'
                 }
@@ -279,7 +293,7 @@ module.exports = function (app, plugin) {
                   tcpa
                 )
                 alarmDelta = {
-                  context: 'vessels.' + app.selfId,
+                  context: 'vessels.' + selfId,
                   updates: [
                     {
                       values: [
@@ -308,7 +322,7 @@ module.exports = function (app, plugin) {
               } else {
                 if (alarmSent[vessel]) {
                   app.debug(`Clearing alarm for ${vessel}`)
-                  alarmDelta = normalAlarmDelta(app.selfId, vessel)
+                  alarmDelta = normalAlarmDelta(selfId, vessel)
                   delete alarmSent[vessel]
                 }
               }
@@ -334,7 +348,7 @@ module.exports = function (app, plugin) {
         .filter((vessel) => !currentlyActiveNotifications[vessel])
         .forEach((vessel) => {
           app.debug(`Clearing alarm for ${vessel}`)
-          deltas.push(normalAlarmDelta(app.selfId, vessel))
+          deltas.push(normalAlarmDelta(selfId, vessel))
           delete alarmSent[vessel]
         })
 
