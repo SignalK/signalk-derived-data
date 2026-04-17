@@ -35,4 +35,18 @@ describe('airDensity', () => {
     // ISA dry air at 15°C, 1013.25 hPa = 1.225 kg/m³
     out[0].value.should.be.closeTo(1.225, 1e-3)
   })
+
+  it('returns undefined when any input is non-finite', () => {
+    const d = calc(makeApp(), makePlugin())
+    expect(d.calculator(NaN, 0.5, 101325)).to.equal(undefined)
+    expect(d.calculator(298.15, null, 101325)).to.equal(undefined)
+    expect(d.calculator(298.15, 0.5, undefined)).to.equal(undefined)
+    expect(d.calculator(Infinity, 0.5, 101325)).to.equal(undefined)
+  })
+
+  it('returns undefined when temperature is at or below absolute zero', () => {
+    const d = calc(makeApp(), makePlugin())
+    expect(d.calculator(0, 0.5, 101325)).to.equal(undefined)
+    expect(d.calculator(-10, 0.5, 101325)).to.equal(undefined)
+  })
 })
