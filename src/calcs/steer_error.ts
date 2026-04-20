@@ -24,13 +24,9 @@ const factory: CalculationFactory = function (app): Calculation {
         Number.isFinite(bearingToDestinationTrue)
       ) {
         steererr = courseOverGroundTrue - bearingToDestinationTrue
-        if (steererr > Math.PI) {
-          steer = (steererr - Math.PI) * -1
-        } else if (steererr < -Math.PI) {
-          steer = (steererr + Math.PI) * -1
-        } else {
-          steer = steererr
-        }
+        // Normalise to (-PI, PI]. atan2(sin, cos) handles both the >PI
+        // and <-PI wraps with a single expression.
+        steer = Math.atan2(Math.sin(steererr), Math.cos(steererr))
 
         if (steer > 0) {
           ;((leftSteer = steer), (rightSteer = 0))
