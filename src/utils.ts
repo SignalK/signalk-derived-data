@@ -14,9 +14,9 @@ function isNumeric(value: unknown): value is number {
 }
 
 /**
- * @description Tests that supplied value is between 0 & 2*Pi
+ * @description Tests that supplied value is a compass angle in [0, 2*Pi).
  * @param value Value in radians
- * @returns true if value is between 0 & 2*Pi
+ * @returns true if value is numeric and in [0, 2*Pi); false otherwise (including exactly 2*Pi).
  */
 export const isCompassAngle = (value: unknown): boolean => {
   if (isNumeric(value)) {
@@ -28,16 +28,17 @@ export const isCompassAngle = (value: unknown): boolean => {
 }
 
 /**
- * @description Ensures supplied value is between 0 & 2*Pi
+ * @description Folds any finite radian value into the canonical compass range [0, 2*Pi).
  * @param value Value in radians
- * @returns Value between 0 & 2*Pi
+ * @returns Value in [0, 2*Pi), or null if the input is not a finite number.
  */
 export const formatCompassAngle = (value: unknown): number | null => {
   if (isNumeric(value)) {
     const twoPi = Math.PI * 2
-    if (value >= twoPi) return value - twoPi
-    if (value < 0) return twoPi + value
-    return value
+    // Fast path keeps already-normalised values bit-identical; the
+    // modulo handles any multiple of 2*Pi, including large negatives.
+    if (value >= 0 && value < twoPi) return value
+    return ((value % twoPi) + twoPi) % twoPi
   } else {
     return null
   }
