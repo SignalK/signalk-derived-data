@@ -10,7 +10,12 @@ import {
   radiansToDegrees
 } from '../src/utils'
 
-describe('utils.js — extra branches', () => {
+// Unit tests for ../src/utils. The older "Test Utility functions"
+// suite lives in test/test.ts and covers the happy paths; the cases
+// below fill in the edge branches (non-numeric guards, multi-wrap
+// folding, exact boundary behaviour).
+
+describe('utils.js', () => {
   it('returns null for Infinity (non-numeric guard)', () => {
     expect(formatCompassAngle(Infinity)).to.equal(null)
   })
@@ -19,8 +24,8 @@ describe('utils.js — extra branches', () => {
     expect(formatCompassAngle(NaN)).to.equal(null)
   })
 
-  it('returns the value unchanged when already in [0, 2*PI)', () => {
-    formatCompassAngle(1.23)!.should.equal(1.23)
+  it('returns the value essentially unchanged when already in [0, 2*PI)', () => {
+    formatCompassAngle(1.23)!.should.be.closeTo(1.23, 1e-9)
   })
 
   it('isCompassAngle returns false for non-numeric input', () => {
@@ -78,5 +83,13 @@ describe('utils.js — extra branches', () => {
   it('formatCompassAngle folds exactly 2*PI down to 0', () => {
     // Distinguishes the `>= 2*PI` branch from `> 2*PI` at the boundary.
     formatCompassAngle(2 * Math.PI)!.should.be.closeTo(0, 1e-9)
+  })
+
+  it('formatCompassAngle wraps multiple full turns back into [0, 2*PI)', () => {
+    // Multi-wrap values such as 4*PI + 0.1 or -4*PI + 0.1 should fold
+    // down to 0.1. Single-subtraction logic would stop short.
+    formatCompassAngle(4 * Math.PI + 0.1)!.should.be.closeTo(0.1, 1e-9)
+    formatCompassAngle(-4 * Math.PI + 0.1)!.should.be.closeTo(0.1, 1e-9)
+    formatCompassAngle(-10 * Math.PI)!.should.be.closeTo(0, 1e-9)
   })
 })
