@@ -272,6 +272,44 @@ describe('plugin.start() stream pipeline', function () {
     }, 5100) // cpa_tcpa uses debounceDelay: 5000 ms
   }).timeout(10000)
 
+  it('headingTrue returns undefined when magneticVariation position never arrives', (done) => {
+    // Regression test for #236: when position data never arrives,
+    // magneticVariation stays at the 9999 sentinel. headingTrue should
+    // return undefined rather than crashing or emitting invalid values.
+    const { app, handled } = makeApp()
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const plugin = require('../../src')(app)
+
+    plugin.start({
+      traffic: { notificationZones: [] },
+      heading: { heading: true, magneticVariation: true }
+    })
+
+    // Push heading BUT NOT magneticVariation position data.
+    // magneticVariation will stay at the 9999 sentinel.
+    // headingTrue should NOT emit because magneticVariation is unavailable.
+    app.streambundle.getSelfStream('navigation.headingMagnetic').push(0.5)
+
+    setTimeout(() => {
+      try {
+        // With position never arriving, magneticVariation can't calculate.
+        // headingTrue depends on magneticVariation, so it should also not emit.
+        // (If it emits, the calc is broken because it used the 9999 sentinel)
+        const allValues = handled.flatMap((d: any) => d.updates[0].values)
+        const headingTrueValues = allValues.filter((v: any) => v.path === 'navigation.headingTrue')
+        const magneticVariationValues = allValues.filter((v: any) => v.path === 'navigation.magneticVariation')
+
+        // magneticVariation should also not emit (no position data)
+        magneticVariationValues.should.have.lengthOf(0, 'magneticVariation should not emit without position data')
+        // headingTrue should not emit either (no valid magneticVariation)
+        headingTrueValues.should.have.lengthOf(0, 'headingTrue should not emit without valid magneticVariation')
+        done()
+      } catch (e) {
+        done(e as Error)
+      }
+    }, 100)
+  })
+
   it('starts and emits for a single-input calc with dynamic derivedFrom (tankVolume)', (done) => {
     const { app, handled } = makeApp()
     // eslint-disable-next-line @typescript-eslint/no-require-imports
