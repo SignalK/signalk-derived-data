@@ -475,11 +475,24 @@ function load_calcs(
     const ext = path.extname(f)
     return (ext === '.js' || ext === '.ts') && !f.endsWith('.d.ts')
   })
+  // A single calc throwing at require() time must not take down the
+  // rest of the plugin. Calcs frequently import native-ish packages
+  // (geomagnetism's WMM data, baconjs version mismatches, ...) whose
+  // failure modes only show up on a customer's machine, long after
+  // tests have passed. Logging the failure and dropping the calc
+  // keeps every other calc online and gives the customer a filename
+  // to grep for in the server log.
   return files
     .map((fname) => {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const mod: CalculationFactory = require(path.join(fpath, fname))
-      return mod(app, plugin)
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const mod: CalculationFactory = require(path.join(fpath, fname))
+        return mod(app, plugin)
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        app.error(`failed to load calc ${fname}: ${msg}`)
+        return undefined
+      }
     })
     .filter((calc): calc is Calculation | Calculation[] => calc != null)
 }
