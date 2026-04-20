@@ -466,13 +466,19 @@ function load_calcs(
   dir: string
 ): Array<Calculation | Calculation[]> {
   const fpath = path.join(__dirname, dir)
-  const files = fs.readdirSync(fpath)
+  // Whitelist runtime modules: `.js` for the published `dist/` package
+  // and `.ts` for the in-source mocha+tsx test setup. Reject `.d.ts`
+  // declarations and `.map` source maps the build emits alongside each
+  // module — they are not requireable and would crash the loader with
+  // MODULE_NOT_FOUND.
+  const files = fs.readdirSync(fpath).filter((f) => {
+    const ext = path.extname(f)
+    return (ext === '.js' || ext === '.ts') && !f.endsWith('.d.ts')
+  })
   return files
     .map((fname) => {
-      const pgn = path.basename(fname, path.extname(fname))
-      const modulePath = path.join(fpath, pgn)
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const mod: CalculationFactory = require(modulePath)
+      const mod: CalculationFactory = require(path.join(fpath, fname))
       return mod(app, plugin)
     })
     .filter((calc): calc is Calculation | Calculation[] => calc != null)
