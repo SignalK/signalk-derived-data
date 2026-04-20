@@ -26,7 +26,7 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation {
     optionKey: 'magneticVariation',
     title: 'Magnetic Variation',
     derivedFrom: ['navigation.position'],
-    defaults: [undefined, 9999],
+    defaults: [undefined],
     // Magnetic variation changes on the km scale. Even a fast vessel (30 kn)
     // covers only ~150 m per second, so downstream consumers will not notice
     // a 10-second debounce, and it further cuts the emit path on the hot
