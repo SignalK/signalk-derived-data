@@ -322,21 +322,13 @@ const factory: CalculationFactory = function (app, plugin): Calculation {
             continue
           } // if distance outside range, don't calculate
 
-          // NB: these stale-check reads target the parent node (not
-          // `.timestamp`) to match the pre-refactor behaviour — the companion
-          // bug fix is tracked separately in PR #223 so it doesn't bundle
-          // with this perf change.
           if (
             isStale(
               currentMs,
-              nav.courseOverGroundTrue as unknown as string | undefined,
+              nav.courseOverGroundTrue?.timestamp,
               timelimit
             ) ||
-            isStale(
-              currentMs,
-              nav.speedOverGround as unknown as string | undefined,
-              timelimit
-            )
+            isStale(currentMs, nav.speedOverGround?.timestamp, timelimit)
           ) {
             app.debug('old course data from vessel, not calculating CPA')
             const vCourseVal = app.getPath(
