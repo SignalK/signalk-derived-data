@@ -68,7 +68,7 @@
       "name": "Joachim Bakke"
     }
   ],
-  "license": "ISC",
+  "license": "Apache-2.0",
   "lint-staged": {
     "*.ts": "prettier --write"
   },
