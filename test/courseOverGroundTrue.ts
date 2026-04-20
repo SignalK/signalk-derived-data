@@ -8,18 +8,13 @@ describe('courseOverGroundTrue (extra branches)', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const calc: any = require('../src/calcs/courseOverGroundTrue')
 
-  it('falls back to getSelfPath when magneticVariation is the 9999 sentinel', () => {
+  it('returns undefined while magneticVariation is still the 9999 sentinel', () => {
+    // Before the stream has produced a real magneticVariation, the
+    // toProperty default of 9999 fires. Previously the calc fell back to
+    // app.getSelfPath on every tick; we now skip the conversion until a
+    // real value arrives via the stream.
     const app = makeApp({
       selfPaths: { navigation: { magneticVariation: { value: 0.1 } } }
-    })
-    const d = calc(app, makePlugin())
-    const out = d.calculator(0.5, 9999)
-    out[0].value.should.be.closeTo(0.6, 1e-9)
-  })
-
-  it('returns undefined when the fallback also yields null', () => {
-    const app = makeApp({
-      selfPaths: { navigation: { magneticVariation: { value: null } } }
     })
     const d = calc(app, makePlugin())
     expect(d.calculator(0.5, 9999)).to.equal(undefined)

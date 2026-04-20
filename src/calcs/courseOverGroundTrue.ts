@@ -1,6 +1,6 @@
 import type { Calculation, CalculationFactory } from '../types'
 
-const factory: CalculationFactory = function (app, _plugin): Calculation {
+const factory: CalculationFactory = function (_app, _plugin): Calculation {
   return {
     group: 'heading',
     optionKey: 'cog_true',
@@ -15,12 +15,10 @@ const factory: CalculationFactory = function (app, _plugin): Calculation {
       courseOverGroundMagnetic: number | null | undefined,
       magneticVariation: number | null | undefined
     ) {
-      if (magneticVariation === 9999) {
-        magneticVariation = app.getSelfPath(
-          'navigation.magneticVariation.value'
-        ) as number | null | undefined
-      }
-      if (magneticVariation == null) {
+      // See courseOverGroundMagnetic.ts — 9999 is the `toProperty` sentinel
+      // that fires before any real magneticVariation has arrived; null
+      // or undefined mean the source pushed an absent value.
+      if (magneticVariation === 9999 || magneticVariation == null) {
         return
       }
       if (courseOverGroundMagnetic == null) {
