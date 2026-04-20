@@ -4,10 +4,29 @@ import type { Calculation, CalculationFactory } from '../types'
 
 // The WMM-2025 model is expensive to build (it loads spherical harmonic
 // coefficients and constructs lookup tables). Position fixes arrive roughly
-// once per second on a Raspberry Pi, so building the model once at module
-// load and reusing it for every call is a straight win.
-const model = geomagnetism.model()
-const sourceName = (model.name || 'WMM-2025').replace('-', ' ')
+// once per second on a Raspberry Pi, so building the model once and
+// reusing it for every call is a straight win — but the build must be
+// deferred off the module-load path. geomagnetism.model() can throw
+// (missing coefficients, corrupt install, future API break); if that
+// throw escapes require() it takes out the plugin loader in
+// src/index.ts and every other calc with it. Building lazily on first
+// use and memoising a null on failure scopes the problem to this calc.
+type GeoModel = ReturnType<typeof geomagnetism.model>
+let model: GeoModel | null | undefined = undefined
+let sourceName = 'WMM 2025'
+
+function getModel(): GeoModel | null {
+  if (model !== undefined) return model
+  try {
+    const m = geomagnetism.model()
+    sourceName = (m.name || 'WMM-2025').replace('-', ' ')
+    model = m
+    return m
+  } catch {
+    model = null
+    return null
+  }
+}
 
 // Coarse cache: magnetic variation changes on the order of 0.01° per km, so
 // caching by a ~0.1° (≈11 km) lat/lon cell keeps the result well within the
@@ -34,6 +53,8 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation {
     debounceDelay: 10 * 1000,
     calculator: function (position: unknown) {
       if (!isPosition(position)) return
+      const m = getModel()
+      if (!m) return
 
       const latCell = Math.round(position.latitude / CELL_SIZE_DEG)
       const lonCell = Math.round(position.longitude / CELL_SIZE_DEG)
@@ -42,7 +63,7 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation {
       if (latCell === cachedLatCell && lonCell === cachedLonCell) {
         magVar = cachedMagVar!
       } else {
-        const info = model.point([position.latitude, position.longitude])
+        const info = m.point([position.latitude, position.longitude])
         magVar = (info.decl * Math.PI) / 180
         cachedLatCell = latCell
         cachedLonCell = lonCell
