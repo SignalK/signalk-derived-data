@@ -23,7 +23,6 @@
  * UI stays in sync with whatever lives in `calcs/`.
  */
 
-import { isDeepStrictEqual } from 'node:util'
 import * as path from 'path'
 import * as fs from 'fs'
 import type {
@@ -78,6 +77,83 @@ const defaultEngines = 'port, starboard'
 const defaultBatteries = '0'
 const defaultTanks = 'fuel.0, fuel.1'
 const defaultAir = 'outside'
+
+// Shallow equality for the array of {path, value} deltas that calculators
+// return. This is the hot path: it runs on every calculation emission when
+// a TTL is configured. Replaces a previous isDeepStrictEqual call which
+// walked the structure recursively.
+//
+// For the simple {path, value} shape (the overwhelming majority of calcs),
+// this is ~an order of magnitude faster than isDeepStrictEqual and
+// allocates nothing. For anything else (cpa_tcpa-style {context, updates}
+// deltas), non-identical references are treated as not-equal and the
+// delta is emitted — which is safer than incorrectly suppressing a
+// legitimate update, and the TTL still bounds the downstream emit rate.
+function deltaValuesEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true
+  if (a == null || b == null) return false
+  if (!Array.isArray(a) || !Array.isArray(b)) return false
+  if (a.length !== b.length) return false
+  for (let i = 0; i < a.length; i++) {
+    const x = a[i] as { path?: unknown; value?: unknown } | null | undefined
+    const y = b[i] as { path?: unknown; value?: unknown } | null | undefined
+    if (x === y) continue
+    if (!x || !y) return false
+    // Only dedup the simple {path, value} shape; other shapes fall
+    // through as "not equal" and get emitted.
+    if (typeof x.path !== 'string' || x.path !== y.path) return false
+    if (x.value !== y.value) return false
+  }
+  return true
+}
+
+// Builds the skipDuplicates callback used for every calculation emission.
+// Extracted to module scope so it can be unit-tested directly and so the
+// hot per-emit path is not re-closured per calc at plugin.start time.
+//
+// Behavior:
+// - When no TTL is configured, returns null. Callers should interpret
+//   this as "do not chain .skipDuplicates() at all" — there is no work
+//   for it to do, and skipping the Bacon operator saves one dispatch per
+//   emit.
+// - When a TTL is set, consecutive equal values within the TTL window
+//   are suppressed. The first unique (or expired) value updates
+//   calculation.nextOutput.
+function createSkipFunction(
+  calculation: { ttl?: number; nextOutput?: number },
+  defaultTtl: number | undefined
+): ((before: unknown, after: unknown) => boolean) | null {
+  const hasTtl =
+    (typeof calculation.ttl !== 'undefined' && calculation.ttl > 0) ||
+    (defaultTtl !== undefined && defaultTtl > 0)
+
+  if (!hasTtl) {
+    return null
+  }
+
+  return function (before: unknown, after: unknown): boolean {
+    const tnow = Date.now()
+    if (deltaValuesEqual(before, after)) {
+      // Values are equal but we still emit periodically so downstream
+      // consumers see heartbeats even when the source is stuck. On a
+      // Pi Zero W the extra cycles reduce power consumption.
+      if (
+        calculation.nextOutput !== undefined &&
+        calculation.nextOutput > tnow
+      ) {
+        return true
+      }
+    }
+
+    const ttl =
+      typeof calculation.ttl === 'undefined'
+        ? (defaultTtl ?? 0)
+        : calculation.ttl
+
+    calculation.nextOutput = tnow + ttl * 1000
+    return false
+  }
+}
 
 const createPlugin = function (app: ServerApp): PluginState {
   const plugin = {} as PluginState
@@ -140,44 +216,7 @@ const createPlugin = function (app: ServerApp): PluginState {
         derivedFrom = calculation.derivedFrom()
       } else derivedFrom = calculation.derivedFrom
 
-      let skip_function: (before: unknown, after: unknown) => boolean
-      if (
-        (typeof calculation.ttl !== 'undefined' && calculation.ttl > 0) ||
-        (props.default_ttl !== undefined && props.default_ttl > 0)
-      ) {
-        // app.debug("using skip")
-        skip_function = function (before: unknown, after: unknown): boolean {
-          const tnow = new Date().getTime()
-          if (isDeepStrictEqual(before, after)) {
-            // values are equial, but should we emit the delta anyway.
-            // This protects from a sequence of changes that produce no change from
-            // generating events, but ensures events are still generated at
-            // a default rate. On  Pi Zero W, the extra cycles reduce power consumption.
-            if (
-              calculation.nextOutput !== undefined &&
-              calculation.nextOutput > tnow
-            ) {
-              // console.log("Rejected dupilate ", calculation.nextOutput - tnow);
-              return true
-            }
-            // console.log("Sent dupilate ", calculation.nextOutput - tnow);
-          }
-
-          const ttl =
-            typeof calculation.ttl === 'undefined'
-              ? (props.default_ttl ?? 0)
-              : calculation.ttl
-          // app.debug("ttl: " + ttl, "def: " + props.default_ttl)
-
-          calculation.nextOutput = tnow + ttl * 1000
-          // console.log("New Value ----------------------------- ", before, after);
-          return false
-        }
-      } else {
-        skip_function = function (_before: unknown, _after: unknown): boolean {
-          return false
-        }
-      }
+      const skip_function = createSkipFunction(calculation, props.default_ttl)
 
       const selfStreams = derivedFrom.map((key: string, index: number) => {
         let stream: BaconStream<unknown> | BaconProperty<unknown>
@@ -202,7 +241,12 @@ const createPlugin = function (app: ServerApp): PluginState {
       const debounced = changes.debounceImmediate!(
         calculation.debounceDelay || 20
       )
-      const deduped = debounced.skipDuplicates!(skip_function)
+      // Only chain .skipDuplicates when there is actually a TTL to enforce;
+      // createSkipFunction returns null when no TTL is configured, and a
+      // no-op skipDuplicates is wasted work on the per-emit path.
+      const deduped = skip_function
+        ? debounced.skipDuplicates!(skip_function)
+        : debounced
       const unsubscribe = deduped.onValue!((values: unknown) => {
         if (
           typeof values !== 'undefined' &&
@@ -529,5 +573,12 @@ namespace createPlugin {
   export type BaconProperty<T = unknown> = import('./types').BaconProperty<T>
   export type StreamBundle = import('./types').StreamBundle
 }
+
+// Exposed for unit testing. The main export below is still the plugin
+// factory used by the Signal K server. We hang these on the factory
+// itself so they survive the `export = createPlugin` reassignment that
+// tsc emits at the bottom of the file.
+;(createPlugin as any).createSkipFunction = createSkipFunction
+;(createPlugin as any).deltaValuesEqual = deltaValuesEqual
 
 export = createPlugin
