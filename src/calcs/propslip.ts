@@ -46,18 +46,24 @@ const factory: CalculationFactory = function (app, plugin): Calculation[] {
       calculator: function (revolutions: number, stw: number) {
         const gearRatio = app.getSelfPath(gearRatioPath) as number | undefined
         const pitch = app.getSelfPath(pitchPath) as number | undefined
-        if (revolutions > 0) {
-          return [
-            {
-              path: slipPath,
-              value:
-                1 -
-                (stw * (gearRatio as number)) /
-                  (revolutions * (pitch as number))
-            }
-          ]
+        if (
+          !Number.isFinite(revolutions) ||
+          revolutions <= 0 ||
+          !Number.isFinite(stw) ||
+          !Number.isFinite(gearRatio) ||
+          !Number.isFinite(pitch) ||
+          pitch === 0
+        ) {
+          return undefined
         }
-        return undefined
+        return [
+          {
+            path: slipPath,
+            value:
+              1 -
+              (stw * (gearRatio as number)) / (revolutions * (pitch as number))
+          }
+        ]
       },
       tests: [
         {
