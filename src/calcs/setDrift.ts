@@ -11,7 +11,7 @@ function normalizeAngle(angle: number | null | undefined): number | null {
   return angle < 0 ? angle + 2 * Math.PI : angle
 }
 
-const factory: CalculationFactory = function (app, _plugin): Calculation {
+const factory: CalculationFactory = function (_app, _plugin): Calculation {
   return {
     group: 'course data',
     optionKey: 'setDrift',
@@ -42,10 +42,12 @@ const factory: CalculationFactory = function (app, _plugin): Calculation {
       speedOverGround: number,
       magneticVariation: number | null | undefined
     ) {
+      // `magneticVariation` arrives as a stream value (see `derivedFrom`).
+      // The sentinel default fires before any real variation has emitted,
+      // in which case we continue without setTrue instead of falling back
+      // to a per-tick app.getSelfPath tree walk.
       if (magneticVariation === DEFAULT_MAGNETIC_VARIATION) {
-        magneticVariation = app.getSelfPath(
-          'navigation.magneticVariation.value'
-        ) as number | null | undefined
+        magneticVariation = null
       }
 
       // Case: no movement

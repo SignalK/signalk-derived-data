@@ -1,6 +1,6 @@
 import type { Calculation, CalculationFactory } from '../types'
 
-const factory: CalculationFactory = function (app, _plugin): Calculation {
+const factory: CalculationFactory = function (_app, _plugin): Calculation {
   return {
     group: 'course data',
     optionKey: 'cog_magnetic',
@@ -15,12 +15,11 @@ const factory: CalculationFactory = function (app, _plugin): Calculation {
       courseOverGroundTrue: number | null | undefined,
       magneticVariation: number | null | undefined
     ) {
-      if (magneticVariation === 9999) {
-        magneticVariation = app.getSelfPath(
-          'navigation.magneticVariation.value'
-        ) as number | null | undefined
-      }
-      if (magneticVariation == null) {
+      // `magneticVariation` arrives as a stream value (see `derivedFrom`).
+      // The 9999 sentinel is the `toProperty` default that fires when no
+      // real variation has emitted yet; null/undefined mean the source
+      // pushed an absent value. In either case we can't convert.
+      if (magneticVariation === 9999 || magneticVariation == null) {
         return
       }
       if (courseOverGroundTrue == null) {

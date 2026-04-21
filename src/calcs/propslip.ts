@@ -29,6 +29,12 @@ const factory: CalculationFactory = function (app, plugin): Calculation[] {
       'propulsion.' + instance + '.revolutions',
       'navigation.speedThroughWater'
     ]
+    // gearRatio and propeller.pitch are drivetrain design config — static
+    // for the life of the plugin. Cache the first non-undefined read so
+    // per-revolution updates no longer walk the state tree twice.
+    let cachedGearRatio: number | undefined
+    let cachedPitch: number | undefined
+
     return {
       group: 'propulsion',
       optionKey: 'propslip' + instance,
@@ -44,15 +50,19 @@ const factory: CalculationFactory = function (app, plugin): Calculation[] {
         return derivedFromList
       },
       calculator: function (revolutions: number, stw: number) {
-        const gearRatio = app.getSelfPath(gearRatioPath) as number | undefined
-        const pitch = app.getSelfPath(pitchPath) as number | undefined
+        if (cachedGearRatio === undefined) {
+          cachedGearRatio = app.getSelfPath(gearRatioPath) as number | undefined
+        }
+        if (cachedPitch === undefined) {
+          cachedPitch = app.getSelfPath(pitchPath) as number | undefined
+        }
         if (
           !Number.isFinite(revolutions) ||
           revolutions <= 0 ||
           !Number.isFinite(stw) ||
-          !Number.isFinite(gearRatio) ||
-          !Number.isFinite(pitch) ||
-          pitch === 0
+          !Number.isFinite(cachedGearRatio) ||
+          !Number.isFinite(cachedPitch) ||
+          cachedPitch === 0
         ) {
           return undefined
         }
@@ -61,7 +71,8 @@ const factory: CalculationFactory = function (app, plugin): Calculation[] {
             path: slipPath,
             value:
               1 -
-              (stw * (gearRatio as number)) / (revolutions * (pitch as number))
+              (stw * (cachedGearRatio as number)) /
+                (revolutions * (cachedPitch as number))
           }
         ]
       },

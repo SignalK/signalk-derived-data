@@ -39,4 +39,24 @@ describe('depthBelowKeel', () => {
     const d = calc(app, makePlugin())
     expect(d.calculator(NaN)).to.equal(undefined)
   })
+
+  it('reads draft once and reuses it on subsequent calls', () => {
+    // Replace getSelfPath with a spy so we can assert the tree walk only
+    // happens for the first calculator call. Any more than one lookup and
+    // the cache isn't doing its job.
+    let lookups = 0
+    const app = makeApp({
+      selfPaths: { design: { draft: { value: { maximum: 1.5 } } } }
+    })
+    const realGetSelfPath = app.getSelfPath
+    app.getSelfPath = (p: string) => {
+      lookups += 1
+      return realGetSelfPath(p)
+    }
+    const d = calc(app, makePlugin())
+    d.calculator(10)
+    d.calculator(11)
+    d.calculator(12)
+    lookups.should.equal(1)
+  })
 })
