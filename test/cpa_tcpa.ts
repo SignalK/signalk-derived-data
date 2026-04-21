@@ -296,12 +296,7 @@ describe('cpa_tcpa', () => {
     expect(nullCpa.updates[0].values[0].value).to.equal(null)
   })
 
-  // BUG: the stale-check for course/speed reads
-  // `vessels.<id>.navigation.courseOverGroundTrue` instead of
-  // `...courseOverGroundTrue.timestamp`, so the branch only fires when
-  // the entry under that path is already a bare ISO string (which only
-  // happens via external feeders that write the parent node directly).
-  it('pushes a null CPA delta when course/speed entries are bare ISO strings older than the timelimit', () => {
+  it('pushes a null CPA delta when course/speed timestamps are older than the timelimit', () => {
     const vessels = {
       other: {
         navigation: {
@@ -309,10 +304,8 @@ describe('cpa_tcpa', () => {
             value: { latitude: 0.0001, longitude: 0 },
             timestamp: iso()
           },
-          // Bare ISO strings so the (buggy) stale lookup returns a
-          // parseable value.
-          courseOverGroundTrue: iso(-120),
-          speedOverGround: iso(-120)
+          courseOverGroundTrue: { value: 0, timestamp: iso(-120) },
+          speedOverGround: { value: 0, timestamp: iso(-120) }
         }
       }
     }
@@ -580,10 +573,14 @@ describe('cpa_tcpa — remaining branches', () => {
             value: { latitude: 0.001, longitude: 0 },
             timestamp: new Date().toISOString()
           },
-          // Bare ISO strings so the (buggy) stale lookup parses a time.
-          courseOverGroundTrue: new Date(Date.now() - 120000).toISOString(),
-          speedOverGround: new Date(Date.now() - 120000).toISOString()
-          // no .value nested paths -> vesselCourse/vesselSpeed === null
+          courseOverGroundTrue: {
+            value: null,
+            timestamp: new Date(Date.now() - 120000).toISOString()
+          },
+          speedOverGround: {
+            value: null,
+            timestamp: new Date(Date.now() - 120000).toISOString()
+          }
         }
       }
     }
@@ -592,16 +589,7 @@ describe('cpa_tcpa — remaining branches', () => {
       error: () => {},
       selfId: 'self',
       handleMessage: () => {},
-      getPath: (p: string): any => {
-        // Course/speed .value lookups must return null explicitly so the
-        // inner `!== null` branch is false and no delta is pushed.
-        if (
-          p === 'vessels.other.navigation.courseOverGroundTrue.value' ||
-          p === 'vessels.other.navigation.speedOverGround.value'
-        )
-          return null
-        return getPath({ vessels }, p)
-      },
+      getPath: (p: string): any => getPath({ vessels }, p),
       getSelfPath: () => undefined
     }
     const d = calcFactory(app, makePlugin())
