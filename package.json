@@ -88,7 +88,7 @@
     "@types/suncalc": "^1.9.2",
     "baconjs": "^3.0.0",
     "c8": "^11.0.0",
-    "chai": "^4.5.0",
+    "chai": "^6.2.2",
     "chai-json-equal": "0.0.1",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
