@@ -229,6 +229,257 @@ describe('calcs/magneticVariation', function () {
   })
 })
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const indexModule: any = require('../src')
+const { createSkipFunction, deltaValuesEqual } = indexModule
+
+describe('index.js deltaValuesEqual', function () {
+  it('treats identical references as equal', (done) => {
+    const v = [{ path: 'a', value: 1 }]
+    deltaValuesEqual(v, v).should.equal(true)
+    done()
+  })
+
+  it('treats two fresh arrays with matching {path, value} as equal', (done) => {
+    deltaValuesEqual(
+      [{ path: 'a', value: 1 }],
+      [{ path: 'a', value: 1 }]
+    ).should.equal(true)
+    done()
+  })
+
+  it('distinguishes by path', (done) => {
+    deltaValuesEqual(
+      [{ path: 'a', value: 1 }],
+      [{ path: 'b', value: 1 }]
+    ).should.equal(false)
+    done()
+  })
+
+  it('distinguishes by value', (done) => {
+    deltaValuesEqual(
+      [{ path: 'a', value: 1 }],
+      [{ path: 'a', value: 2 }]
+    ).should.equal(false)
+    done()
+  })
+
+  it('handles multi-item arrays', (done) => {
+    deltaValuesEqual(
+      [
+        { path: 'a', value: 1 },
+        { path: 'b', value: 2 }
+      ],
+      [
+        { path: 'a', value: 1 },
+        { path: 'b', value: 2 }
+      ]
+    ).should.equal(true)
+    deltaValuesEqual(
+      [
+        { path: 'a', value: 1 },
+        { path: 'b', value: 2 }
+      ],
+      [
+        { path: 'a', value: 1 },
+        { path: 'b', value: 3 }
+      ]
+    ).should.equal(false)
+    done()
+  })
+
+  it('returns false for different lengths', (done) => {
+    deltaValuesEqual(
+      [{ path: 'a', value: 1 }],
+      [
+        { path: 'a', value: 1 },
+        { path: 'b', value: 2 }
+      ]
+    ).should.equal(false)
+    done()
+  })
+
+  it('treats null/undefined as not equal unless both are the same ref', (done) => {
+    deltaValuesEqual(undefined, undefined).should.equal(true)
+    deltaValuesEqual(null, null).should.equal(true)
+    deltaValuesEqual(null, undefined).should.equal(false)
+    deltaValuesEqual([{ path: 'a', value: 1 }], null).should.equal(false)
+    done()
+  })
+
+  it('handles null and NaN as values strictly', (done) => {
+    // null === null is true
+    deltaValuesEqual(
+      [{ path: 'a', value: null }],
+      [{ path: 'a', value: null }]
+    ).should.equal(true)
+    // NaN !== NaN — shallow compare follows strict equality semantics,
+    // so two NaN values are treated as not equal. Acceptable: it just
+    // means a stuck-NaN source emits every tick instead of being dropped.
+    deltaValuesEqual(
+      [{ path: 'a', value: NaN }],
+      [{ path: 'a', value: NaN }]
+    ).should.equal(false)
+    done()
+  })
+
+  it('treats two non-array non-null arguments as not equal', (done) => {
+    // Neither argument is null so the `a == null || b == null` early-out
+    // is skipped, then the Array.isArray guard returns false. Covers the
+    // non-array branch of that guard.
+    deltaValuesEqual('foo', 'bar').should.equal(false)
+    deltaValuesEqual({}, {}).should.equal(false)
+    deltaValuesEqual([{ path: 'a', value: 1 }], 'not-an-array').should.equal(
+      false
+    )
+    done()
+  })
+
+  it('treats identical element references inside matching arrays as equal', (done) => {
+    // Same object reference reused in both arrays -> the inner `x === y`
+    // fast-path fires for each element. Verifies that branch is taken.
+    const item = { path: 'a', value: 1 }
+    deltaValuesEqual([item], [item]).should.equal(true)
+    const other = { path: 'b', value: 2 }
+    deltaValuesEqual([item, other], [item, other]).should.equal(true)
+    done()
+  })
+
+  it('returns false when an element is falsy on one side only', (done) => {
+    // After the `x === y` fast-path fails, the `!x || !y` guard returns
+    // false when only one of the two is null/undefined/0/''.
+    deltaValuesEqual([{ path: 'a', value: 1 }], [null]).should.equal(false)
+    deltaValuesEqual([null], [{ path: 'a', value: 1 }]).should.equal(false)
+    deltaValuesEqual([{ path: 'a', value: 1 }], [undefined]).should.equal(false)
+    done()
+  })
+
+  it('returns false for complex {context, updates} deltas with fresh refs', (done) => {
+    // cpa_tcpa-style shape — not dedupped by the shallow compare.
+    // This is intentional: over-emitting is safer than dropping, and in
+    // practice cpa_tcpa does not set a TTL so this path is rarely hit.
+    const a = [
+      {
+        context: 'vessels.x',
+        updates: [{ values: [{ path: 'p', value: 1 }] }]
+      }
+    ]
+    const b = [
+      {
+        context: 'vessels.x',
+        updates: [{ values: [{ path: 'p', value: 1 }] }]
+      }
+    ]
+    deltaValuesEqual(a, b).should.equal(false)
+    done()
+  })
+})
+
+describe('index.js createSkipFunction', function () {
+  // Fast-path: the calc doesn't configure ttl and the plugin default is 0.
+  // The helper returns null to signal "don't chain skipDuplicates at all",
+  // saving one Bacon operator on the per-emit hot path.
+  it('returns null when no ttl is configured', (done) => {
+    expect(createSkipFunction({}, 0)).to.equal(null)
+    expect(createSkipFunction({}, undefined)).to.equal(null)
+    done()
+  })
+
+  it('returns null when calculation.ttl is 0 and default_ttl is 0', (done) => {
+    expect(createSkipFunction({ ttl: 0 }, 0)).to.equal(null)
+    done()
+  })
+
+  it('returns a function when calculation.ttl > 0', (done) => {
+    createSkipFunction({ ttl: 1 }, 0).should.be.a('function')
+    done()
+  })
+
+  it('returns a function when default_ttl > 0', (done) => {
+    createSkipFunction({}, 1).should.be.a('function')
+    done()
+  })
+
+  it('uses calculation.ttl when defined, suppressing repeats in the window', (done) => {
+    const calc = { ttl: 60 }
+    const skip = createSkipFunction(calc, 0)
+    const v = [{ path: 'a', value: 1 }]
+    // First call primes nextOutput and emits.
+    skip(v, v).should.equal(false)
+    // Same values, still inside the 60s window — should be skipped.
+    skip(v, v).should.equal(true)
+    done()
+  })
+
+  it('falls back to default_ttl when calculation.ttl is undefined', (done) => {
+    const calc = {}
+    const skip = createSkipFunction(calc, 60)
+    const v = [{ path: 'a', value: 1 }]
+    skip(v, v).should.equal(false)
+    skip(v, v).should.equal(true)
+    done()
+  })
+
+  it('emits (returns false) when values differ, even inside the window', (done) => {
+    const calc = { ttl: 60 }
+    const skip = createSkipFunction(calc, 0)
+    const a = [{ path: 'x', value: 1 }]
+    const b = [{ path: 'x', value: 2 }]
+    skip(a, a).should.equal(false) // prime window
+    skip(a, b).should.equal(false) // different values
+    done()
+  })
+
+  it('re-emits once the TTL window has expired', (done) => {
+    // 0.01 s = 10 ms window so the test stays fast.
+    const calc = { ttl: 0.01 }
+    const skip = createSkipFunction(calc, 0)
+    const v = [{ path: 'a', value: 1 }]
+    skip(v, v).should.equal(false) // prime
+    skip(v, v).should.equal(true) // inside window
+    setTimeout(() => {
+      skip(v, v).should.equal(false) // window expired, re-emit
+      done()
+    }, 25)
+  })
+
+  it('handles undefined before/after', (done) => {
+    const calc = { ttl: 60 }
+    const skip = createSkipFunction(calc, 0)
+    skip(undefined, undefined).should.equal(false) // prime window
+    skip(undefined, undefined).should.equal(true) // equal + inside window
+    done()
+  })
+
+  it('calculation.ttl takes precedence over default_ttl', (done) => {
+    // calc.ttl = 60 means the window is 60s, not 0.01s.
+    const calc = { ttl: 60 }
+    const skip = createSkipFunction(calc, 0.01)
+    const v = [{ path: 'a', value: 1 }]
+    skip(v, v).should.equal(false)
+    // If default_ttl were used, this would have expired by now.
+    // Assert we are still inside the 60s window.
+    skip(v, v).should.equal(true)
+    done()
+  })
+
+  it('handles arrays of complex delta objects (context/updates)', (done) => {
+    // cpa_tcpa returns this shape; if someone sets a TTL on a calc like
+    // that, the helper must still behave correctly.
+    const calc = { ttl: 60 }
+    const skip = createSkipFunction(calc, 0)
+    const v = [
+      {
+        context: 'vessels.x',
+        updates: [{ values: [{ path: 'p', value: 1 }] }]
+      }
+    ]
+    skip(v, v).should.equal(false)
+    skip(v, v).should.equal(true)
+    done()
+  })
+})
+
 describe('derived data converts', function () {
   const calcs = load_calcs()
 
