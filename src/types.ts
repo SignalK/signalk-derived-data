@@ -126,6 +126,7 @@ export interface PluginInstance {
   batteries?: string[]
   tanks?: string[]
   air?: string[]
+  vmgType?: 'wind' | 'ground' | 'both'
   properties?: PluginProperties
   [key: string]: unknown
 }
@@ -165,4 +166,5 @@ export interface PluginState extends SignalKPluginDefinition {
   batteries?: string[]
   tanks?: string[]
   air?: string[]
+  vmgType?: 'wind' | 'ground' | 'both'
 }

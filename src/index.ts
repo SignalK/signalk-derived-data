@@ -198,6 +198,23 @@ const createPlugin = function (app: ServerApp): PluginState {
       .map((e: string) => e.trim())
     calculations = flattenCalcs(load_calcs(app, plugin, 'calcs'))
 
+    // Determine which VMG variant(s) are enabled and expose as a
+    // plugin-wide flag so other calcs can branch on it.
+    const courseDataGroup = props['course data'] as
+      | Record<string, unknown>
+      | undefined
+    const vmgWindEnabled = !!courseDataGroup?.['vmg_Wind']
+    const vmgWindStwEnabled = !!courseDataGroup?.['vmg_Wind_STW']
+    if (vmgWindStwEnabled && vmgWindEnabled) {
+      plugin.vmgType = 'both'
+    } else if (vmgWindStwEnabled) {
+      plugin.vmgType = 'wind'
+    } else if (vmgWindEnabled) {
+      plugin.vmgType = 'ground'
+    } else {
+      plugin.vmgType = undefined
+    }
+
     calculations.forEach((calculation) => {
       if (calculation.group) {
         const group = props[calculation.group] as
