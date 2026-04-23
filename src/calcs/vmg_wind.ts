@@ -1,6 +1,6 @@
 import type { Calculation, CalculationFactory } from '../types'
 
-const factory: CalculationFactory = function (_app): Calculation {
+const factory: CalculationFactory = function (_app, plugin): Calculation {
   return {
     group: 'course data',
     optionKey: 'vmg_Wind',
@@ -12,7 +12,11 @@ const factory: CalculationFactory = function (_app): Calculation {
     debounceDelay: 200,
     calculator: function (trueWindAngle: number, speedOverGround: number) {
       const vmg_wind = Math.cos(trueWindAngle) * speedOverGround
-      return [{ path: 'performance.velocityMadeGood', value: vmg_wind }]
+      const vmgPath =
+        plugin.vmgType === 'both'
+          ? 'performance.velocityMadeGoodGround'
+          : 'performance.velocityMadeGood'
+      return [{ path: vmgPath, value: vmg_wind }]
     }
   }
 }
