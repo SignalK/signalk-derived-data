@@ -20,7 +20,7 @@ const factory: CalculationFactory = function (app): Calculation {
         return undefined
       }
 
-      const value = depthBelowTransducer + depthTransducerToKeel
+      const value = depthBelowTransducer - depthTransducerToKeel
 
       if (isNaN(value)) {
         return undefined

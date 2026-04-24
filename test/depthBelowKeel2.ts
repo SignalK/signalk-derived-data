@@ -8,9 +8,9 @@ describe('depthBelowKeel2', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const calc: any = require('../src/calcs/depthBelowKeel2')
 
-  it('adds belowTransducer + transducerToKeel', () => {
+  it('subtracts transducerToKeel from belowTransducer', () => {
     const app = makeApp({
-      selfPaths: { environment: { depth: { transducerToKeel: { value: -1 } } } }
+      selfPaths: { environment: { depth: { transducerToKeel: { value: 1 } } } }
     })
     const d = calc(app, makePlugin())
     const out = d.calculator(9)
