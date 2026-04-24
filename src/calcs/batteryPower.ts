@@ -9,7 +9,7 @@ const factory: CalculationFactory = function (_app, plugin): Calculation[] {
     ]
     return {
       group: 'electrical',
-      optionKey: 'batterPower' + instance,
+      optionKey: 'batteryPower' + instance,
       title: 'Battery ' + instance + ' Power ',
       derivedFrom: function () {
         return derivedFromList

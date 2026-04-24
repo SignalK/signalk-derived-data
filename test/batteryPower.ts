@@ -1,7 +1,3 @@
-// Tests marked with `// BUG: ...` lock the CURRENT (incorrect) behaviour
-// of the module so the suite stays green today. A follow-up pass flips
-// those assertions to the correct behaviour and fixes the implementations.
-
 import * as chai from 'chai'
 chai.should()
 
@@ -29,11 +25,9 @@ describe('batteryPower', () => {
     out.should.deep.equal([{ path: 'electrical.batteries.0.power', value: 50 }])
   })
 
-  // BUG: the option key is misspelled as 'batterPower' (missing 'y').
-  // Kept as-is because existing user configs depend on the spelling.
-  it('uses the current (misspelled) optionKey', () => {
+  it('uses a per-instance optionKey', () => {
     const arr = calc(makeApp(), makePlugin())
-    arr[0].optionKey.should.equal('batterPower0')
-    arr[1].optionKey.should.equal('batterPower1')
+    arr[0].optionKey.should.equal('batteryPower0')
+    arr[1].optionKey.should.equal('batteryPower1')
   })
 })
