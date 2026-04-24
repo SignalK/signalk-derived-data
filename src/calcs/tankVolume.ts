@@ -27,9 +27,11 @@ const factory: CalculationFactory = function (app, plugin): Calculation[] {
     // populated by plugin.start(), which runs after the factory. Once built,
     // the spline and the derived capacity are reused for every tick until
     // the plugin restarts (calibrations are static config, applied on
-    // restart).
+    // restart). When calibrations are missing or too sparse to form a
+    // spline, both stay null and the calculator short-circuits.
     let interpolator: Spline | null = null
     let capacity: number | null = null
+    let calibrationChecked = false
 
     return {
       group: 'tanks',
@@ -70,13 +72,25 @@ const factory: CalculationFactory = function (app, plugin): Calculation[] {
         }
       },
       calculator: function (level: number) {
-        if (interpolator === null) {
+        if (!Number.isFinite(level)) {
+          return undefined
+        }
+        if (!calibrationChecked) {
+          calibrationChecked = true
           const tankProps = plugin.properties?.['tanks'] as
             | Record<string, unknown>
             | undefined
           const cal =
             (tankProps?.[calibrationKey] as CalibrationEntry[] | undefined) ??
             []
+          // cubic-spline needs at least two knot points; anything fewer
+          // collapses to a constant or throws inside getNaturalKs. A user
+          // who enables a tank instance without configuring calibrations
+          // would otherwise see the calculator emit NaN volumes on every
+          // level update.
+          if (cal.length < 2) {
+            return undefined
+          }
           const unit = tankProps?.['volume_unit'] as string | undefined
           // Unknown unit falls back to 1 (m^3) — matches the pre-refactor
           // else branch.
@@ -96,6 +110,15 @@ const factory: CalculationFactory = function (app, plugin): Calculation[] {
           capacity = interpolator.at(1)
         }
 
+        if (interpolator === null) {
+          return undefined
+        }
+
+        const volume = interpolator.at(level)
+        if (!Number.isFinite(capacity) || !Number.isFinite(volume)) {
+          return undefined
+        }
+
         return [
           {
             path: capacityPath,
@@ -103,7 +126,7 @@ const factory: CalculationFactory = function (app, plugin): Calculation[] {
           },
           {
             path: volumePath,
-            value: interpolator.at(level)
+            value: volume
           }
         ]
       }

@@ -19,9 +19,12 @@ function makeApp(): {
   app: any
   streams: Record<string, any>
   handled: any[]
+  inputHandlers: Array<(delta: any, next: (delta: any) => void) => void>
 } {
   const streams: Record<string, any> = {}
   const handled: any[] = []
+  const inputHandlers: Array<(delta: any, next: (delta: any) => void) => void> =
+    []
   const app: any = {
     selfId: 'test',
     streambundle: {
@@ -42,10 +45,26 @@ function makeApp(): {
       if (path === 'design.draft.value.maximum') return 1.5
       return undefined
     },
-    registerDeltaInputHandler: () => {},
+    registerDeltaInputHandler: (
+      fn: (delta: any, next: (delta: any) => void) => void
+    ) => {
+      inputHandlers.push(fn)
+    },
     signalk: { self: 'vessels.test' }
   }
-  return { app, streams, handled }
+  return { app, streams, handled, inputHandlers }
+}
+
+// Fan a delta out to every registered input handler. The real signalk
+// server threads deltas through the handler chain; for our purposes a
+// no-op `next` is enough because the plugin's handler only observes
+// incoming deltas to harvest source timestamps.
+function pushInputDelta(
+  inputHandlers: Array<(delta: any, next: (delta: any) => void) => void>,
+  delta: any
+): void {
+  const next = (_: any): void => {}
+  inputHandlers.forEach((fn) => fn(delta, next))
 }
 
 describe('plugin.start() stream pipeline', function () {
@@ -271,6 +290,187 @@ describe('plugin.start() stream pipeline', function () {
       }
     }, 5100) // cpa_tcpa uses debounceDelay: 5000 ms
   }).timeout(10000)
+
+  it('stamps the derived delta with the source timestamp (single input)', (done) => {
+    // Derived deltas must not be left unstamped. The server would
+    // otherwise assign the current wall-clock time, which (a) makes
+    // derived values look fresh even when the source has gone stale,
+    // and (b) breaks filestream replay into InfluxDB because replayed
+    // historical data surfaces with present-time timestamps.
+    const { app, handled, inputHandlers } = makeApp()
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const plugin = require('../../src')(app)
+
+    plugin.start({
+      traffic: { notificationZones: [] },
+      depth: { belowKeel: true }
+    })
+
+    const ts = '2026-04-24T10:00:00.000Z'
+    pushInputDelta(inputHandlers, {
+      context: 'vessels.test',
+      updates: [
+        {
+          timestamp: ts,
+          values: [{ path: 'environment.depth.belowSurface', value: 10 }]
+        }
+      ]
+    })
+    app.streambundle.getSelfStream('environment.depth.belowSurface').push(10)
+
+    setTimeout(() => {
+      try {
+        handled.length.should.be.greaterThan(0)
+        handled[0].updates[0].timestamp.should.equal(ts)
+        plugin.stop()
+        done()
+      } catch (e) {
+        done(e as Error)
+      }
+    }, 100)
+  })
+
+  it('stamps the derived delta with min(source timestamps) (multi-input)', (done) => {
+    // When several sources contribute to one derived value and one of
+    // them has gone stale, the derived value must carry the oldest
+    // source timestamp so downstream staleness detection works.
+    const { app, handled, inputHandlers } = makeApp()
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const plugin = require('../../src')(app)
+
+    plugin.start({
+      traffic: { notificationZones: [] },
+      'course data': { setDrift: true }
+    })
+
+    const oldest = '2026-04-24T10:00:00.000Z'
+    const mid = '2026-04-24T10:00:05.000Z'
+    const newest = '2026-04-24T10:00:10.000Z'
+    pushInputDelta(inputHandlers, {
+      context: 'vessels.test',
+      updates: [
+        {
+          timestamp: newest,
+          values: [{ path: 'navigation.headingMagnetic', value: 0.6 }]
+        },
+        {
+          timestamp: mid,
+          values: [{ path: 'navigation.courseOverGroundTrue', value: 0.5 }]
+        },
+        {
+          timestamp: oldest,
+          values: [{ path: 'navigation.speedThroughWater', value: 4.8 }]
+        },
+        {
+          timestamp: newest,
+          values: [{ path: 'navigation.speedOverGround', value: 5.0 }]
+        }
+      ]
+    })
+    app.streambundle.getSelfStream('navigation.headingMagnetic').push(0.6)
+    app.streambundle.getSelfStream('navigation.courseOverGroundTrue').push(0.5)
+    app.streambundle.getSelfStream('navigation.speedThroughWater').push(4.8)
+    app.streambundle.getSelfStream('navigation.speedOverGround').push(5.0)
+
+    setTimeout(() => {
+      try {
+        handled.length.should.be.greaterThan(0)
+        handled[0].updates[0].timestamp.should.equal(oldest)
+        plugin.stop()
+        done()
+      } catch (e) {
+        done(e as Error)
+      }
+    }, 100)
+  })
+
+  it('falls back to per-value timestamp when update.timestamp is absent', (done) => {
+    // SignalK allows either update.timestamp or per-value timestamp.
+    // The plugin must observe both.
+    const { app, handled, inputHandlers } = makeApp()
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const plugin = require('../../src')(app)
+
+    plugin.start({
+      traffic: { notificationZones: [] },
+      depth: { belowKeel: true }
+    })
+
+    const ts = '2026-04-24T11:22:33.000Z'
+    pushInputDelta(inputHandlers, {
+      context: 'vessels.test',
+      updates: [
+        {
+          values: [
+            {
+              path: 'environment.depth.belowSurface',
+              value: 10,
+              timestamp: ts
+            }
+          ]
+        }
+      ]
+    })
+    app.streambundle.getSelfStream('environment.depth.belowSurface').push(10)
+
+    setTimeout(() => {
+      try {
+        handled.length.should.be.greaterThan(0)
+        handled[0].updates[0].timestamp.should.equal(ts)
+        plugin.stop()
+        done()
+      } catch (e) {
+        done(e as Error)
+      }
+    }, 100)
+  })
+
+  it('ignores deltas from other vessels when harvesting timestamps', (done) => {
+    // Source timestamps must come from the self vessel; an other-vessel
+    // delta on the same path must not leak into the emitted derived
+    // timestamp.
+    const { app, handled, inputHandlers } = makeApp()
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const plugin = require('../../src')(app)
+
+    plugin.start({
+      traffic: { notificationZones: [] },
+      depth: { belowKeel: true }
+    })
+
+    const otherTs = '2000-01-01T00:00:00.000Z'
+    const selfTs = '2026-04-24T12:00:00.000Z'
+    pushInputDelta(inputHandlers, {
+      context: 'vessels.other',
+      updates: [
+        {
+          timestamp: otherTs,
+          values: [{ path: 'environment.depth.belowSurface', value: 99 }]
+        }
+      ]
+    })
+    pushInputDelta(inputHandlers, {
+      context: 'vessels.test',
+      updates: [
+        {
+          timestamp: selfTs,
+          values: [{ path: 'environment.depth.belowSurface', value: 10 }]
+        }
+      ]
+    })
+    app.streambundle.getSelfStream('environment.depth.belowSurface').push(10)
+
+    setTimeout(() => {
+      try {
+        handled.length.should.be.greaterThan(0)
+        handled[0].updates[0].timestamp.should.equal(selfTs)
+        plugin.stop()
+        done()
+      } catch (e) {
+        done(e as Error)
+      }
+    }, 100)
+  })
 
   it('starts and emits for a single-input calc with dynamic derivedFrom (tankVolume)', (done) => {
     const { app, handled } = makeApp()

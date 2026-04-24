@@ -141,7 +141,13 @@ export interface ServerApp {
   savePluginOptions?: (props: PluginProperties) => void
   setPluginStatus?: (msg: string) => void
   setPluginError?: (msg: string) => void
-  registerDeltaInputHandler?: (fn: (delta: SignalKDelta) => void) => void
+  // The server threads each inbound delta through a chain of input
+  // handlers. A handler must call `next(delta)` (possibly with a
+  // mutated copy) to forward it to the next handler in the chain;
+  // skipping the call drops the delta.
+  registerDeltaInputHandler?: (
+    fn: (delta: SignalKDelta, next: (delta: SignalKDelta) => void) => void
+  ) => void
   signalk?: { self?: unknown }
 }
 

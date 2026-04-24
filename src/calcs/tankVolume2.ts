@@ -18,6 +18,12 @@ const factory: CalculationFactory = function (_app, plugin): Calculation[] {
         return derivedFromList
       },
       calculator: function (level: number, capacity: number) {
+        // Guard non-finite sensor inputs so the calculator doesn't
+        // surface NaN volumes, matching the pattern used by
+        // depthBelowKeel and propslip.
+        if (!Number.isFinite(level) || !Number.isFinite(capacity)) {
+          return undefined
+        }
         return [
           {
             path: volumePath,
