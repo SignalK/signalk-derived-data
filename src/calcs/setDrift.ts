@@ -60,7 +60,21 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation {
         ]
       }
 
-      const delta = courseOverGroundTrue - headingMagnetic
+      // The heading input is magnetic but COG is true. Convert heading
+      // to true before the vector math so all decompositions share a
+      // frame; without magneticVariation we cannot make that conversion
+      // and therefore cannot compute drift correctly.
+      if (magneticVariation == null) {
+        return [
+          { path: 'environment.current.drift', value: null },
+          { path: 'environment.current.setTrue', value: null },
+          { path: 'environment.current.setMagnetic', value: null },
+          { path: 'environment.current.driftImpact', value: null }
+        ]
+      }
+
+      const headingTrue = headingMagnetic + magneticVariation
+      const delta = courseOverGroundTrue - headingTrue
       const cosDelta = Math.cos(delta)
       const sinDelta = Math.sin(delta)
 
@@ -74,18 +88,26 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation {
         )
       )
 
-      // Set (magnetic direction of current)
-      let setMagnetic: number | null = Math.atan2(
-        speedOverGround * sinDelta,
-        speedThroughWater - speedOverGround * cosDelta
+      // Set direction in the true frame. The atan2 returns the current
+      // direction relative to heading; shift by π (the "set" convention
+      // names the direction the current comes FROM) and by headingTrue
+      // (to translate heading-relative into the north-referenced true
+      // frame).
+      const setTrue = normalizeAngle(
+        Math.atan2(
+          speedOverGround * sinDelta,
+          speedThroughWater - speedOverGround * cosDelta
+        ) +
+          Math.PI +
+          headingTrue
       )
-      setMagnetic = normalizeAngle(setMagnetic + Math.PI)
+      const setMagnetic = normalizeAngle((setTrue ?? 0) - magneticVariation)
 
-      // Drift vector components
+      // Drift vector components — both in the true frame.
       const cogX = speedOverGround * Math.cos(courseOverGroundTrue)
       const cogY = speedOverGround * Math.sin(courseOverGroundTrue)
-      const swX = speedThroughWater * Math.cos(headingMagnetic)
-      const swY = speedThroughWater * Math.sin(headingMagnetic)
+      const swX = speedThroughWater * Math.cos(headingTrue)
+      const swY = speedThroughWater * Math.sin(headingTrue)
 
       const driftX = cogX - swX
       const driftY = cogY - swY
@@ -98,12 +120,6 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation {
         driftImpact = (cogX * driftX + cogY * driftY) / speedOverGround
       }
 
-      // Convert to true direction
-      const setTrue =
-        magneticVariation == null
-          ? null
-          : normalizeAngle((setMagnetic ?? 0) + magneticVariation)
-
       return [
         { path: 'environment.current.drift', value: drift },
         { path: 'environment.current.setTrue', value: setTrue },
@@ -114,39 +130,44 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation {
 
     tests: [
       {
-        input: [0.1, 0.2, 5, 4.5, null], // no magnetic variation
+        // No magneticVariation — drift cannot be resolved to the true
+        // frame, so every output is null.
+        input: [0.1, 0.2, 5, 4.5, null],
         expected: [
-          { path: 'environment.current.drift', value: 0.6890664427243886 },
+          { path: 'environment.current.drift', value: null },
           { path: 'environment.current.setTrue', value: null },
-          {
-            path: 'environment.current.setMagnetic',
-            value: 3.8517717793619464
-          },
-          {
-            path: 'environment.current.driftImpact',
-            value: -0.4750208263901283
-          }
+          { path: 'environment.current.setMagnetic', value: null },
+          { path: 'environment.current.driftImpact', value: null }
         ]
       },
       {
         input: [0.5, 0.7, 6, 5.5, 0.1],
         expected: [
-          { path: 'environment.current.drift', value: 1.251241728235616 },
-          { path: 'environment.current.setTrue', value: 4.303481965647525 },
+          { path: 'environment.current.drift', value: 0.761396803020796 },
+          { path: 'environment.current.setTrue', value: 4.547058237706402 },
           {
             path: 'environment.current.setMagnetic',
-            value: 4.2034819656475255
+            value: 4.447058237706402
           },
-          { path: 'environment.current.driftImpact', value: -0.38039946704745 } // negative drift
+          {
+            path: 'environment.current.driftImpact',
+            value: -0.470024991668155
+          } // negative drift
         ]
       },
       {
         input: [0.2, 0.2, 4, 5, 0.05],
         expected: [
-          { path: 'environment.current.drift', value: 1.0 },
-          { path: 'environment.current.setTrue', value: 0.05 },
-          { path: 'environment.current.setMagnetic', value: 0 },
-          { path: 'environment.current.driftImpact', value: 0.9999999999999998 } // positive drift
+          { path: 'environment.current.drift', value: 1.024689994194024 },
+          {
+            path: 'environment.current.setTrue',
+            value: 0.49635906935637264
+          },
+          {
+            path: 'environment.current.setMagnetic',
+            value: 0.44635906935637265
+          },
+          { path: 'environment.current.driftImpact', value: 1.0049989584201349 } // positive drift
         ]
       },
       {
