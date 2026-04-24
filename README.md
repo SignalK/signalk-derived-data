@@ -121,6 +121,12 @@ the plugin feeds their latest values into `calculator` in the same
 order. Return a `{ path, value }` list (or `[]` / `undefined` to skip
 emission this tick).
 
+Each emitted delta is stamped with the minimum timestamp observed
+across the source paths, so staleness on any input propagates to the
+derived value and filestream replay preserves original timing. Calcs
+that author their own `{ context, updates }` deltas (`cpa_tcpa`) are
+responsible for their own timestamps.
+
 ## Contributing
 
 Issues and pull requests welcome at

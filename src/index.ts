@@ -107,6 +107,32 @@ function deltaValuesEqual(a: unknown, b: unknown): boolean {
   return true
 }
 
+// Returns the oldest timestamp among the source paths that have
+// actually produced a value, or undefined if none have. Lex comparison
+// of ISO-8601 UTC strings gives the same ordering as chronological
+// comparison without allocating a Date per call — SignalK servers
+// always emit Z-suffixed timestamps, so the assumption holds for
+// real traffic; edge cases with offset-bearing timestamps would still
+// sort stably, just not correctly against Z-suffixed ones.
+//
+// Paths not present in the map are skipped: a calculator whose source
+// was seeded from `defaults` but has never received a real delta
+// shouldn't drag the derived timestamp back to the Unix epoch.
+function minTimestampFor(
+  paths: string[],
+  lastTimestampByPath: Map<string, string>
+): string | undefined {
+  let min: string | undefined
+  for (const p of paths) {
+    const ts = lastTimestampByPath.get(p)
+    if (ts === undefined) continue
+    if (min === undefined || ts < min) {
+      min = ts
+    }
+  }
+  return min
+}
+
 // Builds the skipDuplicates callback used for every calculation emission.
 // Extracted to module scope so it can be unit-tested directly and so the
 // hot per-emit path is not re-closured per calc at plugin.start time.
@@ -162,6 +188,23 @@ const createPlugin = function (app: ServerApp): PluginState {
   let uiSchema: Record<string, unknown> | undefined
   let calculations: Calculation[] | undefined
 
+  // Source-timestamp tracking. The server's `registerDeltaInputHandler`
+  // hook runs before the streambundle is updated, so by the time a
+  // calculator fires we already have the timestamp of every source
+  // value that contributed to its inputs. Storing them here lets the
+  // emit path stamp derived deltas with `min(source timestamps)` so
+  // downstream staleness detection works and filestream replay lands
+  // at the replayed time rather than wall-clock now.
+  //
+  // Kept at createPlugin closure scope (not inside plugin.start) so
+  // that plugin restarts reuse the same handler registration — the
+  // server exposes no unregister hook — and so that the map outlives
+  // any transient stop/start cycle the user triggers from the config
+  // UI. The map is cleared on stop to drop stale entries before the
+  // next session.
+  const lastTimestampByPath = new Map<string, string>()
+  let inputHandlerRegistered = false
+
   plugin.start = function (props: PluginProperties) {
     plugin.properties = props
 
@@ -197,6 +240,30 @@ const createPlugin = function (app: ServerApp): PluginState {
       .split(',')
       .map((e: string) => e.trim())
     calculations = flattenCalcs(load_calcs(app, plugin, 'calcs'))
+
+    if (!inputHandlerRegistered && app.registerDeltaInputHandler) {
+      // Observe inbound self deltas and record the latest timestamp
+      // per source path. `value.timestamp` wins over `update.timestamp`
+      // because SignalK lets per-value timestamps override the update
+      // default, and we always forward the delta unchanged via next().
+      const selfContext = 'vessels.' + app.selfId
+      app.registerDeltaInputHandler((delta, next) => {
+        const ctx = delta.context || selfContext
+        if (ctx === selfContext || ctx === 'vessels.self') {
+          for (const update of delta.updates || []) {
+            const updateTs = update.timestamp
+            for (const v of update.values || []) {
+              const ts = v.timestamp || updateTs
+              if (typeof ts === 'string' && typeof v.path === 'string') {
+                lastTimestampByPath.set(v.path, ts)
+              }
+            }
+          }
+        }
+        next(delta)
+      })
+      inputHandlerRegistered = true
+    }
 
     calculations.forEach((calculation) => {
       if (calculation.group) {
@@ -255,17 +322,23 @@ const createPlugin = function (app: ServerApp): PluginState {
         ) {
           const first = values[0] as { context?: string } | SignalKValue
           if ((first as { context?: string }).context) {
+            // Calculator-authored deltas (cpa_tcpa) carry their own
+            // context and manage their own timestamps per emission;
+            // stamping them here would overwrite those.
             ;(values as SignalKDelta[]).forEach((delta) => {
               app.handleMessage(plugin.id, delta)
             })
           } else {
+            const update: SignalKDelta['updates'][number] = {
+              values: values as SignalKValue[]
+            }
+            const derivedTs = minTimestampFor(derivedFrom, lastTimestampByPath)
+            if (derivedTs) {
+              update.timestamp = derivedTs
+            }
             const delta: SignalKDelta = {
               context: 'vessels.' + app.selfId,
-              updates: [
-                {
-                  values: values as SignalKValue[]
-                }
-              ]
+              updates: [update]
             }
 
             // app.debug("got delta: " + JSON.stringify(delta))
@@ -280,6 +353,7 @@ const createPlugin = function (app: ServerApp): PluginState {
   plugin.stop = function () {
     unsubscribes.forEach((f) => f())
     unsubscribes = []
+    lastTimestampByPath.clear()
 
     if (calculations) {
       calculations.forEach((calc) => {
@@ -580,5 +654,6 @@ namespace createPlugin {
 // tsc emits at the bottom of the file.
 ;(createPlugin as any).createSkipFunction = createSkipFunction
 ;(createPlugin as any).deltaValuesEqual = deltaValuesEqual
+;(createPlugin as any).minTimestampFor = minTimestampFor
 
 export = createPlugin

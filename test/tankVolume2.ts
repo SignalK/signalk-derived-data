@@ -1,5 +1,6 @@
 import * as chai from 'chai'
 chai.should()
+const expect = chai.expect
 
 import { makeApp, makePlugin } from './helpers'
 
@@ -20,5 +21,21 @@ describe('tankVolume2', () => {
     const arr = calc(makeApp(), makePlugin())
     const out = arr[0].calculator(0.5, 0.1)
     out.should.deep.equal([{ path: 'tanks.fuel.0.currentVolume', value: 0.05 }])
+  })
+
+  it('returns undefined when level is non-finite', () => {
+    // Upstream sensor NaN would otherwise propagate as NaN * capacity
+    // and surface in the server log.
+    const arr = calc(makeApp(), makePlugin())
+    expect(arr[0].calculator(NaN, 0.1)).to.be.undefined
+    expect(arr[0].calculator(undefined as unknown as number, 0.1)).to.be
+      .undefined
+  })
+
+  it('returns undefined when capacity is non-finite', () => {
+    const arr = calc(makeApp(), makePlugin())
+    expect(arr[0].calculator(0.5, NaN)).to.be.undefined
+    expect(arr[0].calculator(0.5, undefined as unknown as number)).to.be
+      .undefined
   })
 })

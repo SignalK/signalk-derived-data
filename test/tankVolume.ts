@@ -128,6 +128,34 @@ describe('tankVolume', () => {
     a[0].value.should.equal(b[0].value)
   })
 
+  it('returns undefined when the sensor reports a non-finite level', () => {
+    // A sensor reporting NaN used to propagate through the
+    // cubic-spline interpolator and surface in the server log as
+    // "tanks.fuel.0.currentLevel:NaN => Number". Suppress the
+    // emission instead so downstream consumers don't see a NaN volume.
+    const plugin = makePlugin('fuel.0', 'litres', linearCalLitres)
+    const calc = tankVolume(app, plugin)[0]
+    expect(calc.calculator(NaN)).to.be.undefined
+    expect(calc.calculator(undefined as unknown as number)).to.be.undefined
+    expect(calc.calculator(Infinity)).to.be.undefined
+  })
+
+  it('returns undefined when no calibration pairs are configured', () => {
+    // A user who enables a tank instance without adding calibration
+    // rows would otherwise get NaN volumes out of the empty spline.
+    const plugin = makePlugin('fuel.0', 'litres', [])
+    const calc = tankVolume(app, plugin)[0]
+    expect(calc.calculator(0.5)).to.be.undefined
+  })
+
+  it('returns undefined when only one calibration pair is configured', () => {
+    // A single knot point cannot span a spline; accepting it would
+    // produce a constant output that misleads consumers.
+    const plugin = makePlugin('fuel.0', 'litres', [{ level: 0, volume: 0 }])
+    const calc = tankVolume(app, plugin)[0]
+    expect(calc.calculator(0.5)).to.be.undefined
+  })
+
   it('falls back to the m^3 factor for an unknown volume unit', () => {
     // Matches the pre-refactor `else` branch: any unit we don't recognise
     // is treated as already-in-m^3 so configured calibration values are

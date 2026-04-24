@@ -10,21 +10,21 @@ describe('moon (covers the calculator path with valid inputs)', () => {
 
   // The moon tests pin exact suncalc outputs for one reference date so
   // that arithmetic, rounding, and phase-name drift all get caught.
-  // 2024-06-21T12:00Z @ 10N 20E was chosen because both moon-rise and
-  // moon-set fall within the day, exercising both of those fields.
+  // 2024-01-01T12:00Z @ 10N 20E is used because both moon-rise and
+  // moon-set fall within the same UTC day, exercising both fields.
   it('returns exact phase/times for a known datetime + position', () => {
     const d = calc(makeApp(), makePlugin())
-    const out = d.calculator('2024-06-21T12:00:00Z', {
+    const out = d.calculator('2024-01-01T12:00:00Z', {
       latitude: 10,
       longitude: 20
     })
     const byPath: Record<string, any> = Object.fromEntries(
       out.map((x: any) => [x.path, x.value])
     )
-    byPath['environment.moon.fraction'].should.be.closeTo(0.99, 1e-9)
-    byPath['environment.moon.phase'].should.be.closeTo(0.47, 1e-9)
-    byPath['environment.moon.phaseName'].should.equal('Waxing Gibbous')
-    byPath['environment.moon.angle'].should.be.closeTo(-2.1, 1e-9)
+    byPath['environment.moon.fraction'].should.be.closeTo(0.73, 1e-9)
+    byPath['environment.moon.phase'].should.be.closeTo(0.67, 1e-9)
+    byPath['environment.moon.phaseName'].should.equal('Waning Gibbous')
+    byPath['environment.moon.angle'].should.be.closeTo(1.94, 1e-9)
     byPath['environment.moon.times.rise'].should.be.an.instanceof(Date)
     byPath['environment.moon.times.set'].should.be.an.instanceof(Date)
     byPath['environment.moon.times.alwaysUp'].should.equal(false)
