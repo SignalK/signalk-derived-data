@@ -4,9 +4,9 @@ const expect = chai.expect
 
 import { makeApp, makePlugin } from './helpers'
 
-describe('fuelConsumtion', () => {
+describe('fuelConsumption', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const calc: any = require('../src/calcs/fuelConsumtion')
+  const calc: any = require('../src/calcs/fuelConsumption')
 
   it('produces one descriptor per configured engine', () => {
     const arr = calc(makeApp(), makePlugin())
