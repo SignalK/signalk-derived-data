@@ -75,22 +75,23 @@ const factory: CalculationFactory = function (app, plugin): Calculation {
       'navigation.speedOverGround'
     ],
     properties: {
+      distanceToSelf: {
+        type: 'boolean',
+        title:
+          'Calculate distance to self for all vessels within RANGE and TIME limit',
+        default: true
+      },
       range: {
         type: 'number',
         title:
           'Calculate for all vessels within this range (m), negative to disable filter',
-        default: 1852
-      },
-      distanceToSelf: {
-        type: 'boolean',
-        title: 'Calculate distance to self for all vessels',
-        default: true
+        default: -1
       },
       timelimit: {
         type: 'number',
         title:
           'Discard other vessel data if older than this (in seconds), negative to disable filter',
-        default: 30
+        default: 1800
       },
       sendNotifications: {
         type: 'boolean',
