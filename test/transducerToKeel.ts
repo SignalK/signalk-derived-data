@@ -1,7 +1,3 @@
-// Tests marked with `// BUG: ...` lock the CURRENT (incorrect) behaviour
-// of the module so the suite stays green today. A follow-up pass flips
-// those assertions to the correct behaviour and fixes the implementations.
-
 import * as chai from 'chai'
 chai.should()
 const expect = chai.expect
@@ -12,20 +8,14 @@ describe('transducerToKeel', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const calc: any = require('../src/calcs/transducerToKeel')
 
-  // BUG: the formula `surfaceToTransducer - draft` produces a negative
-  // result when draft > surfaceToTransducer, which contradicts the
-  // SignalK spec (transducerToKeel should be positive when the keel is
-  // below the transducer). depthBelowKeel2.js then compensates with an
-  // addition. Both files are internally consistent but inconsistent
-  // with the spec.
-  it('returns surfaceToTransducer - draft (current sign convention)', () => {
+  it('returns draft - surfaceToTransducer (positive when keel is below transducer)', () => {
     const app = makeApp({
       selfPaths: { design: { draft: { value: { maximum: 1.5 } } } }
     })
     const d = calc(app, makePlugin())
     const out = d.calculator(0.5)
     out.should.deep.equal([
-      { path: 'environment.depth.transducerToKeel', value: -1 }
+      { path: 'environment.depth.transducerToKeel', value: 1 }
     ])
   })
 
