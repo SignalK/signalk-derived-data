@@ -7,26 +7,36 @@ chai.should()
 
 import { makeApp, makePlugin } from './helpers'
 
-describe('setDrift — frame mismatch regression', () => {
+describe('setDrift', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const calc: any = require('../src/calcs/setDrift')
 
-  // BUG: setDrift takes navigation.headingMagnetic (magnetic frame) and
-  // navigation.courseOverGroundTrue (true frame) as inputs, then mixes
-  // them directly via `delta = courseOverGroundTrue - headingMagnetic`
-  // and via vector decomposition that uses cos(headingMagnetic) next to
-  // cos(courseOverGroundTrue). When magnetic variation is non-zero this
-  // introduces an error equal to that variation. The assertions below
-  // pin the values the current (frame-mixing) implementation produces.
-  it('produces the current (frame-mixed) drift/setTrue for a non-zero variation', () => {
+  // Heading is converted to the true frame before the vector math so
+  // the cos/sin decompositions share a frame with courseOverGroundTrue.
+  // The values below come from the corrected implementation.
+  it('resolves drift in the true frame when magneticVariation is non-zero', () => {
     const d = calc(makeApp(), makePlugin())
     const out = d.calculator(0.5, 0.7, 6, 5.5, 0.1)
     const drift = out.find((x: any) => x.path === 'environment.current.drift')
     const setTrue = out.find(
       (x: any) => x.path === 'environment.current.setTrue'
     )
-    drift.value.should.be.closeTo(1.251241728235616, 1e-9)
-    setTrue.value.should.be.closeTo(4.303481965647525, 1e-9)
+    drift.value.should.be.closeTo(0.761396803020796, 1e-9)
+    setTrue.value.should.be.closeTo(4.547058237706402, 1e-9)
+  })
+
+  it('returns null outputs when magneticVariation is missing', () => {
+    const d = calc(makeApp(), makePlugin())
+    const out = d.calculator(0.5, 0.7, 6, 5.5, null)
+    for (const field of [
+      'environment.current.drift',
+      'environment.current.setTrue',
+      'environment.current.setMagnetic',
+      'environment.current.driftImpact'
+    ]) {
+      const row = out.find((x: any) => x.path === field)
+      ;(row.value === null).should.equal(true)
+    }
   })
 
   // BUG: environment.current.driftImpact is not a SignalK spec path.
