@@ -46,6 +46,17 @@ describe('cpa_tcpa', () => {
     return new Date(Date.now() + (offsetSec || 0) * 1000).toISOString()
   }
 
+  it('exposes the plug-and-play defaults (distanceToSelf on, range off, 30 min timelimit)', () => {
+    const d = calcFactory(cpaApp({ vessels: {} }), cpaPlugin())
+    const props = d.properties
+    props.distanceToSelf.default.should.equal(true)
+    props.range.default.should.equal(-1)
+    props.timelimit.default.should.equal(1800)
+    Object.keys(props)
+      .slice(0, 3)
+      .should.deep.equal(['distanceToSelf', 'range', 'timelimit'])
+  })
+
   it('returns [] and emits nothing when no vessels are tracked', () => {
     const handled: any[] = []
     const app = cpaApp({ vessels: {}, handled })
