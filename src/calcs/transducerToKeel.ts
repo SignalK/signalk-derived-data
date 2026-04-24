@@ -24,7 +24,7 @@ const factory: CalculationFactory = function (app): Calculation {
         return undefined
       }
 
-      const transducerToKeel = surfaceToTransducer - cachedDraft
+      const transducerToKeel = cachedDraft - surfaceToTransducer
 
       if (isNaN(transducerToKeel)) {
         return undefined
