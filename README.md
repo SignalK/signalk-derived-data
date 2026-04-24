@@ -48,7 +48,6 @@ paths and emits on one or more output paths.
   through water, speed over ground, and magnetic variation
 - **True course over ground** from magnetic COG + magnetic variation
 - **Magnetic course over ground** from true COG + magnetic variation
-- **ETA** to the active waypoint
 
 ### Depth
 
