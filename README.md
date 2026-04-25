@@ -45,7 +45,10 @@ paths and emits on one or more output paths.
 
 - **Distance to go** from `courseGreatCircle.nextPoint.position`
 - **Set and drift** from heading, course over ground, speed
-  through water, speed over ground, and magnetic variation
+  through water, speed over ground, and magnetic variation. Writes
+  `environment.current.drift`, `setTrue`, `setMagnetic`, plus
+  `environment.current.driftImpact` — the last of these is a
+  plugin-specific extension, not part of the Signal K spec.
 - **True course over ground** from magnetic COG + magnetic variation
 - **Magnetic course over ground** from true COG + magnetic variation
 
