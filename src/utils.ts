@@ -4,6 +4,10 @@
  * them without pulling in lodash or geolib.
  */
 
+import type { Position } from '@signalk/server-api'
+
+export type { Position }
+
 /**
  * @description Tests that supplied value is a number
  * @param value Value to test
@@ -42,11 +46,6 @@ export const formatCompassAngle = (value: unknown): number | null => {
   } else {
     return null
   }
-}
-
-export interface Position {
-  latitude: number
-  longitude: number
 }
 
 /**

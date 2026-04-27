@@ -557,7 +557,7 @@ const createPlugin = function (app: ServerApp): PluginState {
       })
       delete traffic.notificationRange
       delete traffic.notificationTimeLimit
-      app.savePluginOptions?.(plugin.properties!)
+      app.savePluginOptions(plugin.properties!, () => undefined)
     }
   }
 
