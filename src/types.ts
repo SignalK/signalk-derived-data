@@ -1,12 +1,18 @@
 /**
  * Shared types for the signalk-derived-data plugin.
  *
- * `ServerApp` is the minimal shape of the Signal K server instance the
- * plugin actually touches at runtime (streambundle, logging helpers,
- * plugin hooks). The real server passes in a much larger object; we
- * only type what this plugin reads so the types stay honest without
- * taking a dependency on the server's full API.
+ * `ServerApp` extends `ServerAPI` from `@signalk/server-api`, overriding
+ * `streambundle`, `handleMessage`, and `registerDeltaInputHandler` to
+ * use the plugin's local `SignalKDelta` shape and the reduced
+ * `BaconStream`/`StreamBundle` types. The local delta types use
+ * unbranded path strings and per-value timestamps, which the server-api
+ * branded `Delta`/`PathValue` types do not model. The reduced bacon
+ * shape keeps the plugin runnable against both baconjs 1.x and 3.x.
  */
+
+import type { ServerAPI } from '@signalk/server-api'
+
+export type { Position } from '@signalk/server-api'
 
 // Bacon.js stream shape reduced to the methods the plugin uses. Both
 // baconjs 1.x and 3.x expose these, which is why the plugin avoids
@@ -130,25 +136,18 @@ export interface PluginInstance {
   [key: string]: unknown
 }
 
-export interface ServerApp {
-  selfId: string
-  debug: (msg: string, ...args: unknown[]) => void
-  error: (msg: string, ...args: unknown[]) => void
-  getSelfPath: (path: string) => unknown
-  getPath: (path: string) => unknown
-  handleMessage: (pluginId: string, delta: SignalKDelta) => void
+export interface ServerApp extends Omit<
+  ServerAPI,
+  'streambundle' | 'handleMessage' | 'registerDeltaInputHandler'
+> {
+  // Local overrides keep the plugin working with the unbranded path
+  // strings the calculators emit and with the reduced StreamBundle
+  // shape that abstracts over baconjs versions.
   streambundle: StreamBundle
-  savePluginOptions?: (props: PluginProperties) => void
-  setPluginStatus?: (msg: string) => void
-  setPluginError?: (msg: string) => void
-  // The server threads each inbound delta through a chain of input
-  // handlers. A handler must call `next(delta)` (possibly with a
-  // mutated copy) to forward it to the next handler in the chain;
-  // skipping the call drops the delta.
+  handleMessage: (pluginId: string, delta: SignalKDelta) => void
   registerDeltaInputHandler?: (
     fn: (delta: SignalKDelta, next: (delta: SignalKDelta) => void) => void
   ) => void
-  signalk?: { self?: unknown }
 }
 
 export interface SignalKPluginDefinition {
