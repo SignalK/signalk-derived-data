@@ -83,7 +83,7 @@
     "@signalk/server-api": "^2.24.0",
     "@stryker-mutator/core": "^9.6.1",
     "@stryker-mutator/mocha-runner": "^9.6.1",
-    "@types/chai": "^4.3.20",
+    "@types/chai": "^5.2.3",
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.19.17",
     "@types/suncalc": "^1.9.2",
