@@ -49,7 +49,7 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation[] {
         }
 
         return [
-          { path: 'environment.wind.directionTrue', value: dir },
+          { path: 'environment.wind.directionGround', value: dir },
           { path: 'environment.wind.angleTrueGround', value: angle },
           { path: 'environment.wind.speedOverGround', value: speed }
         ]
@@ -59,7 +59,7 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation[] {
           input: [3, 2, null, null],
           selfData,
           expected: [
-            { path: 'environment.wind.directionTrue', value: null },
+            { path: 'environment.wind.directionGround', value: null },
             { path: 'environment.wind.angleTrueGround', value: null },
             { path: 'environment.wind.speedOverGround', value: null }
           ]
