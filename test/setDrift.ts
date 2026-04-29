@@ -29,7 +29,7 @@ describe('setDrift — frame mismatch regression', () => {
     setTrue.value.should.be.closeTo(4.303481965647525, 1e-9)
   })
 
-  // BUG: environment.current.driftImpact is not a SignalK spec path.
+  // environment.current.driftImpact is not a SignalK spec path.
   // The other three outputs are valid spec paths.
   it('emits the non-spec environment.current.driftImpact path', () => {
     const d = calc(makeApp(), makePlugin())
