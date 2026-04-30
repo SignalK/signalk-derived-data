@@ -285,26 +285,167 @@ describe('cpa_tcpa', () => {
     expect(dist.updates[0].values[0].value).to.be.greaterThan(100000)
   })
 
-  it('emits null distanceToSelf + null CPA when the position timestamp is stale', () => {
+  it('emits null distanceToSelf + null CPA when the position is older than distanceToSelfTimelimit', () => {
+    // Vessel position is 2 min old AND distanceToSelfTimelimit is 30s, so
+    // it's past the long "vessel disappeared" window. Both CPA and the
+    // previously-emitted distanceToSelf get nulled out.
     const vessels = {
       other: {
         navigation: {
           position: {
             value: { latitude: 0.0001, longitude: 0 },
-            timestamp: iso(-120) // 2 min ago, stale
+            timestamp: iso(-120) // 2 min ago
           },
           distanceToSelf: { value: 10 }
         }
       }
     }
     const app = cpaApp({ vessels })
-    const d = calcFactory(app, cpaPlugin({ timelimit: 30 }))
+    const d = calcFactory(
+      app,
+      cpaPlugin({ timelimit: 30, distanceToSelfTimelimit: 30 })
+    )
     const out = d.calculator({ latitude: 0, longitude: 0 }, 0, 0)
     const nullCpa = out.find(
       (x: any) => x.updates[0].values[0].path === 'navigation.closestApproach'
     )
     expect(nullCpa).to.exist
     expect(nullCpa.updates[0].values[0].value).to.equal(null)
+  })
+
+  it('keeps emitting distanceToSelf for an anchored vessel whose position is past timelimit but within distanceToSelfTimelimit', () => {
+    // Position is 5 min old — past the 30s CPA freshness window but well
+    // inside the 1 hour distanceToSelf window. Distance is still emitted
+    // (so Freeboard SK keeps showing the boat) and CPA is nulled out
+    // because the position is too old to project forward safely.
+    const handled: any[] = []
+    const vessels = {
+      other: {
+        navigation: {
+          position: {
+            value: { latitude: 0.0001, longitude: 0 },
+            timestamp: iso(-300)
+          },
+          courseOverGroundTrue: { value: 0, timestamp: iso(-300) },
+          speedOverGround: { value: 0, timestamp: iso(-300) }
+        }
+      }
+    }
+    const app = cpaApp({ vessels, handled })
+    const d = calcFactory(
+      app,
+      cpaPlugin({ timelimit: 30, distanceToSelfTimelimit: 3600 })
+    )
+    const out = d.calculator({ latitude: 0, longitude: 0 }, 0, 0)
+    const distDelta = handled.find(
+      (x: any) =>
+        x.updates[0].values[0].path === 'navigation.distanceToSelf' &&
+        typeof x.updates[0].values[0].value === 'number'
+    )
+    expect(distDelta).to.exist
+    // 0.0001 deg of latitude is ~11.1 m; pin a tight range so a regression
+    // that emits a stale or zero value (instead of recomputing) is caught.
+    expect(distDelta.updates[0].values[0].value).to.be.within(10, 13)
+    const cpaDelta = out.find(
+      (x: any) => x.updates[0].values[0].path === 'navigation.closestApproach'
+    )
+    expect(cpaDelta).to.exist
+    expect(cpaDelta.updates[0].values[0].value).to.equal(null)
+  })
+
+  it('emits distanceToSelf for a long-stale vessel when distanceToSelfTimelimit is negative', () => {
+    // distanceToSelfTimelimit: -1 disables the long cleanup gate, so a
+    // 1-day-old position still produces a distance. CPA is still nulled
+    // because timelimit (30s) governs CPA freshness independently.
+    const handled: any[] = []
+    const vessels = {
+      other: {
+        navigation: {
+          position: {
+            value: { latitude: 0.0005, longitude: 0 },
+            timestamp: iso(-86400)
+          },
+          courseOverGroundTrue: { value: 0, timestamp: iso(-86400) },
+          speedOverGround: { value: 0, timestamp: iso(-86400) }
+        }
+      }
+    }
+    const app = cpaApp({ vessels, handled })
+    const d = calcFactory(
+      app,
+      cpaPlugin({ timelimit: 30, distanceToSelfTimelimit: -1, range: -1 })
+    )
+    const out = d.calculator({ latitude: 0, longitude: 0 }, 0, 0)
+    const distDelta = handled.find(
+      (x: any) => x.updates[0].values[0].path === 'navigation.distanceToSelf'
+    )
+    expect(distDelta).to.exist
+    // 0.0005 deg of latitude is ~55.6 m.
+    expect(distDelta.updates[0].values[0].value).to.be.within(50, 60)
+    const cpaDelta = out.find(
+      (x: any) => x.updates[0].values[0].path === 'navigation.closestApproach'
+    )
+    expect(cpaDelta).to.exist
+    expect(cpaDelta.updates[0].values[0].value).to.equal(null)
+  })
+
+  it('prunes lastDistanceToSelf for vessels that drop out of the vessel tree', () => {
+    // The post-loop sweep must clear cached entries for vessels no longer
+    // in `vesselList`, otherwise a long-running plugin process accumulates
+    // entries indefinitely on busy AIS feeds. The proof is that a vessel
+    // re-appearing at the same position re-emits the distance (which would
+    // be skipped by the epsilon dedupe if the cache had survived).
+    const handled: any[] = []
+    let vessels: any = {
+      other: {
+        navigation: {
+          position: {
+            value: { latitude: 0.001, longitude: 0 },
+            timestamp: iso()
+          },
+          courseOverGroundTrue: { value: 0, timestamp: iso() },
+          speedOverGround: { value: 0, timestamp: iso() }
+        }
+      }
+    }
+    const app: any = {
+      debug: () => {},
+      error: () => {},
+      selfId: 'self',
+      handleMessage: (_: unknown, delta: unknown) => handled.push(delta),
+      getPath: (p: string) => getPath({ vessels }, p),
+      getSelfPath: () => undefined
+    }
+    const d = calcFactory(app, cpaPlugin({ distanceToSelf: true, range: -1 }))
+    d.calculator({ latitude: 0, longitude: 0 }, 0, 0)
+    handled
+      .filter(
+        (x: any) => x.updates[0].values[0].path === 'navigation.distanceToSelf'
+      )
+      .should.have.length(1)
+    // Vessel disappears entirely (e.g. dropped from AIS subscription).
+    vessels = {}
+    d.calculator({ latitude: 0, longitude: 0 }, 0, 0)
+    // Re-appears at the SAME position. With the cache pruned by the
+    // post-loop sweep, the epsilon dedupe sees a fresh entry and re-emits.
+    vessels = {
+      other: {
+        navigation: {
+          position: {
+            value: { latitude: 0.001, longitude: 0 },
+            timestamp: iso()
+          },
+          courseOverGroundTrue: { value: 0, timestamp: iso() },
+          speedOverGround: { value: 0, timestamp: iso() }
+        }
+      }
+    }
+    d.calculator({ latitude: 0, longitude: 0 }, 0, 0)
+    handled
+      .filter(
+        (x: any) => x.updates[0].values[0].path === 'navigation.distanceToSelf'
+      )
+      .should.have.length(2)
   })
 
   it('pushes a null CPA delta when course/speed timestamps are older than the timelimit', () => {
