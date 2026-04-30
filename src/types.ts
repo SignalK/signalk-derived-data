@@ -119,6 +119,7 @@ export interface PluginProperties {
     }>
     range?: number
     distanceToSelf?: boolean
+    distanceToSelfTimelimit?: number
     timelimit?: number
   }
   [key: string]: unknown

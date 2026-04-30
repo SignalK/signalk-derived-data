@@ -20,6 +20,11 @@ const METERS_PER_DEG = 111319
 // every visible AIS target.
 const DISTANCE_TO_SELF_EPSILON = 1
 
+// Default cleanup window (seconds) after which an AIS vessel's
+// distanceToSelf is dropped. 1h survives normal Class A/B reporting gaps
+// for anchored/moored vessels while still pruning truly-disappeared ones.
+const DEFAULT_DISTANCE_TO_SELF_TIMELIMIT_SEC = 3600
+
 interface VesselLike {
   location: { lon: number; lat: number }
   speed: number
@@ -92,6 +97,12 @@ const factory: CalculationFactory = function (app, plugin): Calculation {
         title:
           'Discard other vessel data if older than this (in seconds), negative to disable filter',
         default: 1800
+      },
+      distanceToSelfTimelimit: {
+        type: 'number',
+        title:
+          'Discard distanceToSelf if vessel position is older than this (in seconds), negative to disable filter. Lets anchored/moored vessels keep a distance even when their AIS reports are minutes apart.',
+        default: DEFAULT_DISTANCE_TO_SELF_TIMELIMIT_SEC
       },
       sendNotifications: {
         type: 'boolean',
@@ -166,6 +177,7 @@ const factory: CalculationFactory = function (app, plugin): Calculation {
         range: number
         timelimit: number
         distanceToSelf?: boolean
+        distanceToSelfTimelimit?: number
         sendNotifications?: boolean
         notificationZones: Array<{
           range: number
@@ -178,6 +190,17 @@ const factory: CalculationFactory = function (app, plugin): Calculation {
       const rangeActive = range >= 0
       const timelimit = traffic.timelimit
       const distanceToSelfEnabled = traffic.distanceToSelf
+      // distanceToSelfTimelimit decouples "vessel disappeared" cleanup from
+      // the (much shorter) CPA freshness window. An anchored or moored
+      // vessel may only emit an AIS position every few minutes, well past
+      // `timelimit`, but we still want to show its distance until the boat
+      // genuinely drops off the network. Negative disables the time-based
+      // cleanup; the post-loop sweep below still prunes vessels that drop
+      // out of the vessel list, which keeps `lastDistanceToSelf` bounded.
+      const distanceToSelfTimelimit =
+        traffic.distanceToSelfTimelimit ??
+        DEFAULT_DISTANCE_TO_SELF_TIMELIMIT_SEC
+      const distanceToSelfStaleActive = distanceToSelfTimelimit >= 0
       const sendNotifications =
         traffic.sendNotifications === undefined || traffic.sendNotifications
       const notificationZones = traffic.notificationZones
@@ -241,7 +264,18 @@ const factory: CalculationFactory = function (app, plugin): Calculation {
         const posNode = nav.position
         const posTimestamp = posNode && posNode.timestamp
 
-        if (isStale(currentMs, posTimestamp, timelimit)) {
+        // Two-tier staleness on position:
+        //   1) `distanceToSelfTimelimit` (long, default 1h) is the
+        //      "vessel disappeared" gate — if the position is older than
+        //      that, drop both distanceToSelf and CPA.
+        //   2) `timelimit` (short, default 30s) is the CPA freshness gate
+        //      — if the position is older than that but still within the
+        //      long window, we keep emitting distanceToSelf (so anchored/
+        //      moored vessels stay visible) and null out CPA.
+        if (
+          distanceToSelfStaleActive &&
+          isStale(currentMs, posTimestamp, distanceToSelfTimelimit)
+        ) {
           app.debug('old position of vessel, not calculating')
           const currentDistanceToSelf =
             nav.distanceToSelf && nav.distanceToSelf.value
@@ -264,6 +298,8 @@ const factory: CalculationFactory = function (app, plugin): Calculation {
           }
           continue
         } // old data from vessel, not calculating
+
+        const positionStaleForCpa = isStale(currentMs, posTimestamp, timelimit)
 
         const vesselPos = posNode && posNode.value
         if (typeof vesselPos !== 'undefined') {
@@ -324,6 +360,7 @@ const factory: CalculationFactory = function (app, plugin): Calculation {
           } // if distance outside range, don't calculate
 
           if (
+            positionStaleForCpa ||
             isStale(
               currentMs,
               nav.courseOverGroundTrue?.timestamp,
@@ -449,6 +486,20 @@ const factory: CalculationFactory = function (app, plugin): Calculation {
           deltas.push(normalAlarmDelta(selfId, vessel))
           delete alarmSent[vessel]
         })
+
+      // Drop dedupe-cache entries for vessels that have dropped out of
+      // the vessel tree entirely. The time-based stale gate above also
+      // does this when it fires, but it's gated by
+      // `distanceToSelfStaleActive`; this sweep keeps the cache bounded
+      // even when the operator sets `distanceToSelfTimelimit < 0` and on
+      // busy AIS feeds where transient targets accumulate over time.
+      if (vesselList) {
+        for (const vessel of Object.keys(lastDistanceToSelf)) {
+          if (!(vessel in vesselList)) {
+            delete lastDistanceToSelf[vessel]
+          }
+        }
+      }
 
       return deltas
     }
