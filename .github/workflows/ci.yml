@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [22.x, 24.x]
+        node-version: [20.x, 22.x, 24.x]
         # Dual baconjs matrix exists because Cerbo GX / Venus OS still
         # bundles an older signalk-server that pins baconjs 1.x in
         # `node_modules`, while upstream signalk-server is on baconjs
