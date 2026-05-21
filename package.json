@@ -19,9 +19,18 @@
   },
   "files": [
     "dist",
+    "logo.svg",
+    "docs/screenshots",
     "README.md",
     "LICENSE"
   ],
+  "signalk": {
+    "displayName": "SK Derived Data",
+    "appIcon": "./logo.svg",
+    "screenshots": [
+      "./docs/screenshots/1_placeholder.png"
+    ]
+  },
   "scripts": {
     "precommit": "lint-staged",
     "prettier:check": "prettier --check .",
