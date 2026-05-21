@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="SK Derived Data">
+  <defs>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1b6ea8"/>
+      <stop offset="1" stop-color="#0b3a5e"/>
+    </linearGradient>
+    <clipPath id="card">
+      <rect x="0" y="0" width="128" height="128" rx="22"/>
+    </clipPath>
+  </defs>
+
+  <rect x="0" y="0" width="128" height="128" fill="#fff"/>
+
+  <g clip-path="url(#card)">
+    <rect width="128" height="128" fill="url(#sea)"/>
+
+    <g stroke="#bee3f4" stroke-opacity="0.25" stroke-width="1" fill="none">
+      <path d="M0 24 H128 M0 48 H128 M0 72 H128 M0 96 H128"/>
+      <path d="M24 0 V128 M48 0 V128 M72 0 V128 M96 0 V128"/>
+    </g>
+
+    <g fill="#bee3f4" fill-opacity="0.6">
+      <circle cx="22" cy="34" r="3"/>
+      <circle cx="22" cy="50" r="3"/>
+      <circle cx="22" cy="66" r="3"/>
+      <circle cx="22" cy="82" r="3"/>
+      <circle cx="22" cy="98" r="3"/>
+    </g>
+
+    <g stroke="#bee3f4" stroke-opacity="0.45" stroke-width="1.4" fill="none" stroke-linecap="round">
+      <line x1="26" y1="34" x2="44" y2="62"/>
+      <line x1="26" y1="50" x2="44" y2="62"/>
+      <line x1="26" y1="66" x2="44" y2="66"/>
+      <line x1="26" y1="82" x2="44" y2="70"/>
+      <line x1="26" y1="98" x2="44" y2="70"/>
+    </g>
+
+    <text x="52" y="84" font-family="Georgia, 'Times New Roman', serif"
+          font-size="52" font-weight="700" fill="#e63946">&#x03A3;</text>
+
+    <g stroke="#e63946" stroke-width="2.5" stroke-linecap="round" fill="none">
+      <line x1="92" y1="66" x2="106" y2="66"/>
+      <polyline points="100,60 108,66 100,72"/>
+    </g>
+    <circle cx="114" cy="66" r="3" fill="#e2e8f0"/>
+
+    <g transform="translate(108 108)">
+      <circle r="10" fill="#0b3a5e" fill-opacity="0.7" stroke="#bee3f4" stroke-width="0.8"/>
+      <polygon points="0,-8 2,0 0,0" fill="#e63946"/>
+      <polygon points="0,-8 -2,0 0,0" fill="#b5232f"/>
+      <polygon points="0,8 2,0 0,0" fill="#e2e8f0"/>
+      <polygon points="0,8 -2,0 0,0" fill="#cbd5e1"/>
+      <circle r="1" fill="#e2e8f0"/>
+    </g>
+  </g>
+</svg>
