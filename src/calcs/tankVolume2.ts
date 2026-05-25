@@ -7,27 +7,12 @@ const factory: CalculationFactory = function (app, plugin): Calculation[] {
     const volumePath = 'tanks.' + instance + '.currentVolume'
     const derivedFromList = [levelPath, capacityPath]
 
-    // Seed `capacity` from the data tree at start. Two real-world sources
-    // of capacity need to both work:
-    //   (a) `defaults.json`: admin-edited static config. Populates the
-    //       data tree at server boot but does not push deltas through
-    //       the streambundle to plugins that subscribe later, so the
-    //       combined stream would block forever waiting on the capacity
-    //       input.
-    //   (b) A tank-sender plugin / sensor that publishes capacity as a
-    //       real delta. The combined stream would fire on its own.
-    // Seeding the capacity slot via the `defaults` array (consumed in
-    // index.ts at the `.toProperty(seed)` step) unblocks case (a)
-    // without disabling case (b): a subsequent real capacity delta
-    // supersedes the seed under Bacon's `toProperty` semantics, so
-    // mid-runtime capacity updates still flow through.
-    //
-    // `currentLevel` is intentionally not seeded; an unstreamed level
-    // isn't meaningful as a volume reading.
-    //
-    // Convention matches depthBelowKeel.ts / propslip.ts: append
-    // `.value` to the path so `getSelfPath` returns the raw value
-    // rather than the surrounding node object.
+    // Seed `capacity` from the data tree so the calc works whether
+    // capacity comes from `defaults.json` (static; would otherwise
+    // leave the combine blocked, since defaults aren't replayed as
+    // deltas to late subscribers) or from a tank sender (real deltas
+    // supersede the seed via Bacon's `toProperty`, so live updates
+    // still flow).
     const rawCapacity = app.getSelfPath(capacityPath + '.value') as
       | number
       | undefined
