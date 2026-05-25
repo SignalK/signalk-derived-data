@@ -12,6 +12,7 @@
     "coverage",
     "reports",
     ".stryker-tmp",
-    "test"
+    "test",
+    "src/configpanel"
   ]
 }
