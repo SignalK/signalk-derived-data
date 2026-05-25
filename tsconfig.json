@@ -3,7 +3,12 @@
     "target": "ES2022",
     "module": "commonjs",
     "moduleResolution": "bundler",
-    "lib": ["ES2022"],
+    "lib": ["ES2022", "DOM"],
+    // `react-jsx` uses the modern jsx-runtime entry. The webpack
+    // bundle for `src/configpanel/` compiles with a sibling tsconfig
+    // that flips to ESM + bundler resolution; only the JSX transform
+    // is shared. Non-TSX files are unaffected by this setting.
+    "jsx": "react-jsx",
 
     "strict": true,
     "noImplicitOverride": true,

@@ -8,6 +8,10 @@ node_modules
 
 # Build output
 dist
+public
+
+# Local docker-based test harness (mirrors signalk-to-nmea0183 PR 154)
+docker-test
 
 # Test coverage
 coverage
