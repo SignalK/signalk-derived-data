@@ -68,6 +68,7 @@ paths and emits on one or more output paths.
 - **Magnetic wind direction** (two variants: from AWA + magnetic
   heading, or from true wind direction + magnetic variation)
 - **Wind shift** (experimental)
+- **Wind Force** Beaufort Scale value and description from true wind speed
 
 ### Performance
 
