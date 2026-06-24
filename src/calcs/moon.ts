@@ -1,5 +1,5 @@
 import * as suncalc from 'suncalc'
-import { isPosition } from '../utils'
+import { isPosition, degreesToRadians } from '../utils'
 import type { Calculation, CalculationFactory } from '../types'
 
 const factory: CalculationFactory = function (app, plugin): Calculation {
@@ -64,18 +64,20 @@ const factory: CalculationFactory = function (app, plugin): Calculation {
         const targetDate = new Date(date)
         targetDate.setDate(targetDate.getDate() + day)
 
-        const illumination = suncalc.getMoonIllumination(
-          targetDate
-        ) as unknown as Record<string, number>
-        Object.keys(illumination).forEach((key) => {
-          illumination[key] = Math.round(illumination[key]! * 100) / 100
-        })
+        const illumination = suncalc.getMoonIllumination(targetDate)
+        // suncalc v2 returns the bright-limb angle in degrees; SignalK
+        // expects angles in radians, so convert it. fraction and phase are
+        // unitless ratios and pass through unchanged.
+        const fraction = Math.round(illumination.fraction * 100) / 100
+        const phase = Math.round(illumination.phase * 100) / 100
+        const angle =
+          Math.round(degreesToRadians(illumination.angle) * 100) / 100
         app.debug(
-          `moon illumination day ${day}:` +
-            JSON.stringify(illumination, null, 2)
+          `moon illumination day ${day}: ` +
+            JSON.stringify({ fraction, phase, angle }, null, 2)
         )
 
-        const phaseName = getPhaseName(illumination['phase']!)
+        const phaseName = getPhaseName(phase)
         app.debug(`Phase Name day ${day}: ${phaseName}`)
 
         const times = suncalc.getMoonTimes(
@@ -89,20 +91,14 @@ const factory: CalculationFactory = function (app, plugin): Calculation {
           day === 0 ? 'environment.moon' : `environment.moon.${day}`
 
         results.push(
-          { path: `${prefix}.fraction`, value: illumination['fraction'] },
-          { path: `${prefix}.phase`, value: illumination['phase'] },
+          { path: `${prefix}.fraction`, value: fraction },
+          { path: `${prefix}.phase`, value: phase },
           { path: `${prefix}.phaseName`, value: phaseName },
-          { path: `${prefix}.angle`, value: illumination['angle'] },
+          { path: `${prefix}.angle`, value: angle },
           { path: `${prefix}.times.rise`, value: times.rise || null },
           { path: `${prefix}.times.set`, value: times.set || null },
-          {
-            path: `${prefix}.times.alwaysUp`,
-            value: !!(times as { alwaysUp?: boolean }).alwaysUp
-          },
-          {
-            path: `${prefix}.times.alwaysDown`,
-            value: !!(times as { alwaysDown?: boolean }).alwaysDown
-          }
+          { path: `${prefix}.times.alwaysUp`, value: !!times.alwaysUp },
+          { path: `${prefix}.times.alwaysDown`, value: !!times.alwaysDown }
         )
       }
 

@@ -21,10 +21,12 @@ describe('moon (covers the calculator path with valid inputs)', () => {
     const byPath: Record<string, any> = Object.fromEntries(
       out.map((x: any) => [x.path, x.value])
     )
-    byPath['environment.moon.fraction'].should.be.closeTo(0.73, 1e-9)
+    byPath['environment.moon.fraction'].should.be.closeTo(0.74, 1e-9)
     byPath['environment.moon.phase'].should.be.closeTo(0.67, 1e-9)
     byPath['environment.moon.phaseName'].should.equal('Waning Gibbous')
-    byPath['environment.moon.angle'].should.be.closeTo(1.94, 1e-9)
+    // suncalc v2 reports the bright-limb angle in degrees (110.84°); the
+    // calculator converts it to radians and rounds to 1.93.
+    byPath['environment.moon.angle'].should.be.closeTo(1.93, 1e-9)
     byPath['environment.moon.times.rise'].should.be.an.instanceof(Date)
     byPath['environment.moon.times.set'].should.be.an.instanceof(Date)
     byPath['environment.moon.times.alwaysUp'].should.equal(false)

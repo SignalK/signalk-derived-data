@@ -23,22 +23,22 @@ describe('suntime', () => {
       ])
     )
     byPath['environment.sunlight.times.sunrise'].should.equal(
-      '2024-06-21T05:59:28.185Z'
+      '2024-06-21T05:58:14.441Z'
     )
     byPath['environment.sunlight.times.solarNoon'].should.equal(
-      '2024-06-21T12:03:06.088Z'
+      '2024-06-21T12:01:55.638Z'
     )
     byPath['environment.sunlight.times.sunset'].should.equal(
-      '2024-06-21T18:06:43.990Z'
+      '2024-06-21T18:05:36.827Z'
     )
     byPath['environment.sunlight.times.nauticalDawn'].should.equal(
-      '2024-06-21T05:10:42.648Z'
+      '2024-06-21T05:09:28.494Z'
     )
     byPath['environment.sunlight.times.dawn'].should.equal(
-      '2024-06-21T05:36:56.029Z'
+      '2024-06-21T05:35:42.096Z'
     )
     byPath['environment.sunlight.times.night'].should.equal(
-      '2024-06-21T19:21:49.929Z'
+      '2024-06-21T19:20:43.293Z'
     )
   })
 
