@@ -87,7 +87,7 @@
     "geolib": "^3.3.1",
     "geolocation-utils": "^1.2.3",
     "geomagnetism": "^0.2.0",
-    "suncalc": "^1.8.0"
+    "suncalc": "^2.0.0"
   },
   "devDependencies": {
     "@signalk/server-api": "^2.24.0",
@@ -96,7 +96,6 @@
     "@types/chai": "^5.2.3",
     "@types/mocha": "^10.0.10",
     "@types/node": "^26.0.0",
-    "@types/suncalc": "^1.9.2",
     "baconjs": "^3.0.0",
     "c8": "^11.0.0",
     "chai": "^6.2.2",

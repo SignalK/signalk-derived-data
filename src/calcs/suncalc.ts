@@ -90,9 +90,9 @@ const factory: CalculationFactory = function (app, _plugin): Calculation {
         input: ['2024-06-21T12:00:00Z', { latitude: null, longitude: null }]
       },
       // Day-side branches. All datetimes are on 2024-06-21 at lat/lon 0,0,
-      // which gives this fixed schedule (UTC):
-      //   nauticalDawn 05:10 | dawn 05:37 | sunrise 05:59 | sunriseEnd 06:02
-      //   sunsetStart 18:04 | sunset 18:07 | dusk 18:29 | nauticalDusk 18:55 | night 19:22
+      // which gives this fixed schedule (UTC, suncalc v2):
+      //   nauticalDawn 05:09 | dawn 05:35 | sunrise 05:58 | sunriseEnd 06:00
+      //   sunsetStart 18:03 | sunset 18:05 | dusk 18:28 | nauticalDusk 18:54 | night 19:20
       {
         input: ['2024-06-21T06:00:00Z', { latitude: 0, longitude: 0 }],
         expected: [
