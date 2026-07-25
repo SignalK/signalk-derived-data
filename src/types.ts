@@ -58,11 +58,7 @@ export interface SignalKDelta {
 }
 
 export type CalculatorOutput =
-  | SignalKValue[]
-  | SignalKDelta[]
-  | undefined
-  | null
-  | void
+  SignalKValue[] | SignalKDelta[] | undefined | null | void
 
 export type CalculatorFn = (...args: any[]) => CalculatorOutput
 

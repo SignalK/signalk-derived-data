@@ -215,8 +215,7 @@ const factory: CalculationFactory = function (app, plugin): Calculation {
         heading: selfCourseDeg // degrees
       }
       const vesselList = app.getPath('vessels') as
-        | Record<string, unknown>
-        | undefined
+        Record<string, unknown> | undefined
       const deltas: SignalKDelta[] = []
       const currentlyActiveNotifications: Record<string, boolean> = {}
       const currentMs = currentTimeMs()
