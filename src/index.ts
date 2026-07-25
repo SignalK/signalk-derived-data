@@ -268,8 +268,7 @@ const createPlugin = function (app: ServerApp): PluginState {
     calculations.forEach((calculation) => {
       if (calculation.group) {
         const group = props[calculation.group] as
-          | Record<string, unknown>
-          | undefined
+          Record<string, unknown> | undefined
         if (!group || !group[calculation.optionKey]) {
           return
         }
@@ -463,9 +462,7 @@ const createPlugin = function (app: ServerApp): PluginState {
       title += derivedFrom
         .map((p) => {
           const node = app.getSelfPath(p) as
-            | { value?: unknown }
-            | null
-            | undefined
+            { value?: unknown } | null | undefined
           return `${p}${node ? (node.value === null ? '(❎)' : '(👍)') : '(❌)'}`
         })
         .join(', ')

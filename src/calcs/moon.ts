@@ -56,8 +56,7 @@ const factory: CalculationFactory = function (app, plugin): Calculation {
 
       const results: Array<{ path: string; value: unknown }> = []
       const moonProps = plugin.properties?.['moon'] as
-        | { forecastDays?: number }
-        | undefined
+        { forecastDays?: number } | undefined
       const forecastDays = moonProps?.forecastDays || 1
 
       for (let day = 0; day <= forecastDays; day++) {

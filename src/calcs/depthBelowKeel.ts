@@ -15,8 +15,7 @@ const factory: CalculationFactory = function (app): Calculation {
     calculator: function (depthBelowSurface: number) {
       if (cachedDraft === undefined) {
         cachedDraft = app.getSelfPath('design.draft.value.maximum') as
-          | number
-          | undefined
+          number | undefined
       }
 
       if (

@@ -35,8 +35,7 @@ const factory: CalculationFactory = function (app, plugin): Calculation {
 
       const results: Array<{ path: string; value: unknown }> = []
       const sunProps = plugin.properties?.['sun'] as
-        | { forecastDays?: number }
-        | undefined
+        { forecastDays?: number } | undefined
       const forecastDays = sunProps?.forecastDays || 1
 
       for (let day = 0; day <= forecastDays; day++) {

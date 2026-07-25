@@ -18,8 +18,7 @@ const factory: CalculationFactory = function (_app, plugin): Calculation {
     },
     calculator: function (attitude: { roll: number }, stw: number) {
       const headingProps = plugin.properties?.['heading'] as
-        | { kFactor?: number }
-        | undefined
+        { kFactor?: number } | undefined
       const kFactor = headingProps?.kFactor ?? 12
       const rollDegrees = (attitude.roll / Math.PI) * 360
       const stwKnots = stw * 1.94384

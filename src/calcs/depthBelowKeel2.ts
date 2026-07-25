@@ -9,8 +9,7 @@ const factory: CalculationFactory = function (app): Calculation {
     calculator: function (depthBelowTransducer: unknown) {
       const depthTransducerToKeel =
         (app.getSelfPath('environment.depth.transducerToKeel.value') as
-          | number
-          | undefined) || 0
+          number | undefined) || 0
 
       // Need to check if number, because 0 is a valid value but also falsy
       if (

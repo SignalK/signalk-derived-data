@@ -78,8 +78,7 @@ const factory: CalculationFactory = function (app, plugin): Calculation[] {
         if (!calibrationChecked) {
           calibrationChecked = true
           const tankProps = plugin.properties?.['tanks'] as
-            | Record<string, unknown>
-            | undefined
+            Record<string, unknown> | undefined
           const cal =
             (tankProps?.[calibrationKey] as CalibrationEntry[] | undefined) ??
             []
