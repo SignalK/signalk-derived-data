@@ -1,7 +1,3 @@
-// Tests marked with `// BUG: ...` lock the CURRENT (incorrect) behaviour
-// of the module so the suite stays green today. A follow-up pass flips
-// those assertions to the correct behaviour and fixes the implementations.
-
 import * as chai from 'chai'
 chai.should()
 
@@ -16,23 +12,12 @@ describe('windGround (extra branches)', () => {
     const ground = arr[0]
     const out = ground.calculator(1.0, 3.0, 5.0, 0.5)
     out.should.have.lengthOf(3)
-    out[0].path.should.equal('environment.wind.directionTrue')
+    out[0].path.should.equal('environment.wind.directionGround')
     out[1].path.should.equal('environment.wind.angleTrueGround')
     out[2].path.should.equal('environment.wind.speedOverGround')
     out[0].value.should.be.closeTo(2.0459686742419585, 1e-9)
     out[1].value.should.be.closeTo(1.0459686742419587, 1e-9)
     out[2].value.should.be.closeTo(2.769931974487608, 1e-9)
-  })
-
-  // BUG: the path for ground-frame wind direction should be
-  // environment.wind.directionGround, but this calculator writes to
-  // environment.wind.directionTrue (water frame per the SK spec). The
-  // deprecated sister calc uses the correct directionGround path.
-  it('writes ground-frame direction to environment.wind.directionTrue (wrong path)', () => {
-    const arr = calcs(makeApp(), makePlugin())
-    const ground = arr[0]
-    const out = ground.calculator(1.0, 3.0, 5.0, 0.5)
-    out[0].path.should.equal('environment.wind.directionTrue')
   })
 
   it('uses awa as the angle when aws is effectively zero', () => {
