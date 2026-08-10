@@ -15,7 +15,7 @@ import * as chai from 'chai'
 import { getPath } from '../helpers'
 chai.should()
 
-function makeApp(): {
+function makeApp(selfPathOverrides: Record<string, unknown> = {}): {
   app: any
   streams: Record<string, any>
   handled: any[]
@@ -25,6 +25,15 @@ function makeApp(): {
   const handled: any[] = []
   const inputHandlers: Array<(delta: any, next: (delta: any) => void) => void> =
     []
+  // depthBelowKeel uses app.getSelfPath('design.draft.value.maximum') to
+  // get the boat's draft. Seed it by default so the existing depth tests
+  // keep working without having to pass overrides. Callers can add other
+  // paths (e.g. 'tanks.fuel.0.capacity.value' for tankVolume2 seeding)
+  // by passing selfPathOverrides.
+  const selfPaths: Record<string, unknown> = {
+    'design.draft.value.maximum': 1.5,
+    ...selfPathOverrides
+  }
   const app: any = {
     selfId: 'test',
     streambundle: {
@@ -38,13 +47,7 @@ function makeApp(): {
     error: () => {},
     setPluginStatus: () => {},
     setPluginError: () => {},
-    // depthBelowKeel uses app.getSelfPath('design.draft.value.maximum')
-    // to get the boat's draft. Return a fixed value so the calc has the
-    // input it needs without having to push it through a stream.
-    getSelfPath: (path: string) => {
-      if (path === 'design.draft.value.maximum') return 1.5
-      return undefined
-    },
+    getSelfPath: (path: string) => selfPaths[path],
     registerDeltaInputHandler: (
       fn: (delta: any, next: (delta: any) => void) => void
     ) => {
@@ -511,6 +514,92 @@ describe('plugin.start() stream pipeline', function () {
         cur.value.should.be.closeTo(0.05, 1e-3)
         done()
       } catch (e) {
+        done(e as Error)
+      }
+    }, 100)
+  })
+
+  it('emits currentVolume for tankVolume2 when capacity comes from defaults.json (seeded, no capacity delta)', (done) => {
+    // This is the regression test for the original bug: capacity that
+    // lives only in defaults.json populates the data tree at server
+    // boot but never pushes a delta through the streambundle. The
+    // plugin's combine over [currentLevel, capacity] would block
+    // forever waiting for capacity to emit. The fix seeds the capacity
+    // slot via the calculation's `defaults` array from
+    // app.getSelfPath at factory time; pushing only currentLevel here
+    // (and never capacity) proves the seed unblocks the combine.
+    const { app, handled } = makeApp({
+      // 50 L expressed in m^3, which is the canonical SignalK unit
+      'tanks.fuel.0.capacity.value': 0.05
+    })
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const plugin = require('../../src')(app)
+
+    plugin.start({
+      traffic: { notificationZones: [] },
+      tank_instances: 'fuel.0',
+      tanks: {
+        'tankVolume2_fuel.0': true
+      }
+    })
+
+    // Deliberately push only currentLevel. If the capacity slot weren't
+    // seeded, the combined stream would never fire.
+    app.streambundle.getSelfStream('tanks.fuel.0.currentLevel').push(0.5)
+
+    setTimeout(() => {
+      try {
+        handled.length.should.be.greaterThan(0)
+        const values = handled[0].updates[0].values
+        const cur = values.find(
+          (v: any) => v.path === 'tanks.fuel.0.currentVolume'
+        )
+        cur.should.exist
+        // 0.5 * 0.05 m^3 = 0.025 m^3
+        cur.value.should.be.closeTo(0.025, 1e-9)
+        plugin.stop()
+        done()
+      } catch (e) {
+        plugin.stop()
+        done(e as Error)
+      }
+    }, 100)
+  })
+
+  it('emits currentVolume for tankVolume2 when capacity is streamed (no defaults seed)', (done) => {
+    // Companion to the seeded case: confirms that the streamed
+    // capacity path still works after the patch: a tank sender or a
+    // separate plugin pushing capacity should drive the combine
+    // exactly as it did before.
+    const { app, handled } = makeApp()
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const plugin = require('../../src')(app)
+
+    plugin.start({
+      traffic: { notificationZones: [] },
+      tank_instances: 'fuel.0',
+      tanks: {
+        'tankVolume2_fuel.0': true
+      }
+    })
+
+    app.streambundle.getSelfStream('tanks.fuel.0.capacity').push(0.1)
+    app.streambundle.getSelfStream('tanks.fuel.0.currentLevel').push(0.5)
+
+    setTimeout(() => {
+      try {
+        handled.length.should.be.greaterThan(0)
+        const values = handled[handled.length - 1].updates[0].values
+        const cur = values.find(
+          (v: any) => v.path === 'tanks.fuel.0.currentVolume'
+        )
+        cur.should.exist
+        // 0.5 * 0.1 m^3 = 0.05 m^3
+        cur.value.should.be.closeTo(0.05, 1e-9)
+        plugin.stop()
+        done()
+      } catch (e) {
+        plugin.stop()
         done(e as Error)
       }
     }, 100)
