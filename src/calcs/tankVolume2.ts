@@ -14,8 +14,7 @@ const factory: CalculationFactory = function (app, plugin): Calculation[] {
     // supersede the seed via Bacon's `toProperty`, so live updates
     // still flow).
     const rawCapacity = app.getSelfPath(capacityPath + '.value') as
-      | number
-      | undefined
+      number | undefined
     const seededCapacity =
       Number.isFinite(rawCapacity) && (rawCapacity as number) > 0
         ? rawCapacity
