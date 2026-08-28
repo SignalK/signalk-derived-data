@@ -12,12 +12,17 @@ module.exports = {
   module: {
     rules: [
       {
+        // babel-loader strips types and compiles JSX; the standalone
+        // `typecheck` script still enforces types via tsc. ts-loader was
+        // dropped because its compiler-API calls broke under TypeScript 7.
         test: /\.tsx?$/,
-        loader: 'ts-loader',
+        loader: 'babel-loader',
         exclude: /node_modules/,
         options: {
-          configFile: path.resolve(__dirname, 'src/configpanel/tsconfig.json'),
-          transpileOnly: true
+          presets: [
+            '@babel/preset-typescript',
+            ['@babel/preset-react', { runtime: 'automatic' }]
+          ]
         }
       }
     ]
