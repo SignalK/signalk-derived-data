@@ -3,10 +3,11 @@ import {
   moonOrientation,
   moonEvents,
   moonAltAz,
-  moonPosition
+  moonPosition,
+  degreesToRadians,
+  radiansToDegrees
 } from '@openwaters/almanac'
 import { astronomyInput, isAstronomyDate, solarDay } from '../astronomy'
-import { degreesToRadians, radiansToDegrees } from '../utils'
 import type { Calculation, CalculationFactory } from '../types'
 
 const factory: CalculationFactory = function (app, plugin): Calculation {

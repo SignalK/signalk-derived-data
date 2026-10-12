@@ -1,6 +1,10 @@
-import { sunAltAz, moonAltAz, planetAltAz } from '@openwaters/almanac'
+import {
+  sunAltAz,
+  moonAltAz,
+  planetAltAz,
+  degreesToRadians
+} from '@openwaters/almanac'
 import { astronomyInput } from '../astronomy'
-import { degreesToRadians } from '../utils'
 import type { Calculation, CalculationFactory } from '../types'
 
 const factory: CalculationFactory = function (app, _plugin): Calculation {
