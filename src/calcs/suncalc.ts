@@ -1,5 +1,5 @@
-import * as suncalc from 'suncalc'
-import { isPosition } from '../utils'
+import { sunAltAz } from '@openwaters/almanac'
+import { astronomyInput, sunTimes } from '../astronomy'
 import type { Calculation, CalculationFactory } from '../types'
 
 const factory: CalculationFactory = function (app, _plugin): Calculation {
@@ -12,64 +12,31 @@ const factory: CalculationFactory = function (app, _plugin): Calculation {
     defaults: ['', undefined],
     debounceDelay: 60 * 1000,
     calculator: function (datetime: string | undefined, position: unknown) {
-      let value: string
-      let mode: string
-      let date: Date
-
-      if (!isPosition(position)) {
-        return
-      }
-
-      if (datetime && datetime.length > 0) {
-        date = new Date(datetime)
-      } else {
-        date = new Date()
-      }
-
-      app.debug(`Using datetime: ${date} position: ${JSON.stringify(position)}`)
-
-      const times = suncalc.getTimes(
-        date,
-        position.latitude,
-        position.longitude
-      ) as unknown as Record<string, Date>
-      const now = date.getTime()
-
-      const timesMs: Record<string, number> = {}
-      Object.keys(times).forEach((key) => {
-        timesMs[key] = new Date(times[key]!).getTime()
-      })
-
-      if (now >= timesMs['sunrise']!) {
-        if (now < timesMs['sunriseEnd']!) {
-          value = 'sunrise'
-          mode = 'day'
-        } else if (now <= timesMs['sunsetStart']!) {
-          value = 'day'
-          mode = 'day'
-        } else if (now >= timesMs['sunsetStart']! && now < timesMs['dusk']!) {
-          value = 'sunset'
-          mode = 'night'
-        } else if (now < timesMs['nauticalDusk']!) {
-          value = 'dusk'
-          mode = 'night'
-        } else if (now < timesMs['night']!) {
-          value = 'nauticalDusk'
-          mode = 'night'
-        } else {
-          value = 'night'
-          mode = 'night'
-        }
-      } else {
-        mode = 'night'
-        if (now >= timesMs['dawn']!) {
-          value = 'dawn'
-        } else if (now >= timesMs['nauticalDawn']!) {
-          value = 'nauticalDawn'
-        } else {
-          value = 'night'
-        }
-      }
+      const input = astronomyInput(datetime, position)
+      if (!input) return
+      const { date, observer } = input
+      const times = sunTimes(date, observer)
+      const transitions = [
+        ['nauticalDawn', 'nauticalDawn', 'night'],
+        ['dawn', 'dawn', 'night'],
+        ['sunrise', 'sunrise', 'day'],
+        ['sunriseEnd', 'day', 'day'],
+        ['sunsetStart', 'sunset', 'night'],
+        ['sunset', 'sunset', 'night'],
+        ['dusk', 'dusk', 'night'],
+        ['nauticalDusk', 'nauticalDusk', 'night'],
+        ['night', 'night', 'night']
+      ] as const
+      const latest = transitions
+        .filter(([name]) => times[name] !== null && times[name]! <= date)
+        .sort(([a], [b]) => times[a]!.getTime() - times[b]!.getTime())
+        .at(-1)
+      const polarDay =
+        times.sunrise === null &&
+        times.sunset === null &&
+        sunAltAz(times.solarNoon!, observer).altDeg > 0
+      const value = polarDay ? 'day' : (latest?.[1] ?? 'night')
+      const mode = polarDay ? 'day' : (latest?.[2] ?? 'night')
 
       app.debug(`Setting sun to ${value} and mode to ${mode}`)
 
@@ -90,7 +57,7 @@ const factory: CalculationFactory = function (app, _plugin): Calculation {
         input: ['2024-06-21T12:00:00Z', { latitude: null, longitude: null }]
       },
       // Day-side branches. All datetimes are on 2024-06-21 at lat/lon 0,0,
-      // which gives this fixed schedule (UTC, suncalc v2):
+      // which gives this approximate schedule (UTC):
       //   nauticalDawn 05:09 | dawn 05:35 | sunrise 05:58 | sunriseEnd 06:00
       //   sunsetStart 18:03 | sunset 18:05 | dusk 18:28 | nauticalDusk 18:54 | night 19:20
       {
