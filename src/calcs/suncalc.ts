@@ -1,4 +1,4 @@
-import { sunAltAz } from '@openwaters/almanac'
+import { sunIsUp } from '@openwaters/almanac'
 import { astronomyInput, sunTimes } from '../astronomy'
 import type { Calculation, CalculationFactory } from '../types'
 
@@ -17,26 +17,24 @@ const factory: CalculationFactory = function (app, _plugin): Calculation {
       const { date, observer } = input
       const times = sunTimes(date, observer)
       const transitions = [
-        ['nauticalDawn', 'nauticalDawn', 'night'],
-        ['dawn', 'dawn', 'night'],
-        ['sunrise', 'sunrise', 'day'],
-        ['sunriseEnd', 'day', 'day'],
-        ['sunsetStart', 'sunset', 'night'],
-        ['sunset', 'sunset', 'night'],
-        ['dusk', 'dusk', 'night'],
-        ['nauticalDusk', 'nauticalDusk', 'night'],
-        ['night', 'night', 'night']
+        ['nauticalDawn', 'nauticalDawn'],
+        ['dawn', 'dawn'],
+        ['sunrise', 'sunrise'],
+        ['sunriseEnd', 'day'],
+        ['sunsetStart', 'sunset'],
+        ['sunset', 'sunset'],
+        ['dusk', 'dusk'],
+        ['nauticalDusk', 'nauticalDusk'],
+        ['night', 'night']
       ] as const
       const latest = transitions
         .filter(([name]) => times[name] !== null && times[name]! <= date)
         .sort(([a], [b]) => times[a]!.getTime() - times[b]!.getTime())
         .at(-1)
-      const polarDay =
-        times.sunrise === null &&
-        times.sunset === null &&
-        sunAltAz(times.solarNoon!, observer).altDeg > 0
+      const isUp = sunIsUp(date, observer)
+      const polarDay = times.sunrise === null && times.sunset === null && isUp
       const value = polarDay ? 'day' : (latest?.[1] ?? 'night')
-      const mode = polarDay ? 'day' : (latest?.[2] ?? 'night')
+      const mode = isUp ? 'day' : 'night'
 
       app.debug(`Setting sun to ${value} and mode to ${mode}`)
 

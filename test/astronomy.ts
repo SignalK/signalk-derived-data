@@ -41,6 +41,21 @@ describe('astronomy input and forecast contract', () => {
     ])
   })
 
+  it('keeps day mode until the Sun sets, including during sunset', () => {
+    const calc = require('../src/calcs/suncalc')(makeApp(), makePlugin())
+    for (const [date, mode] of [
+      ['2024-06-21T18:04Z', 'day'],
+      ['2024-06-21T18:06Z', 'night']
+    ]) {
+      expect(
+        calc.calculator(date, { latitude: 0, longitude: 0 })
+      ).to.deep.equal([
+        { path: 'environment.sun', value: 'sunset' },
+        { path: 'environment.mode', value: mode }
+      ])
+    }
+  })
+
   it('keeps midnight sun in day mode even when the whole disc dips below the horizon', () => {
     const calc = require('../src/calcs/suncalc')(makeApp(), makePlugin())
     for (const latitude of [65.8, 66, 80]) {
