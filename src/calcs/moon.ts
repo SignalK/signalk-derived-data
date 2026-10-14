@@ -1,5 +1,13 @@
-import * as suncalc from 'suncalc'
-import { isPosition, degreesToRadians } from '../utils'
+import {
+  moonIllumination,
+  moonOrientation,
+  moonEvents,
+  moonAltAz,
+  moonPosition,
+  degreesToRadians,
+  radiansToDegrees
+} from '@openwaters/almanac'
+import { astronomyInput, isAstronomyDate, solarDay } from '../astronomy'
 import type { Calculation, CalculationFactory } from '../types'
 
 const factory: CalculationFactory = function (app, plugin): Calculation {
@@ -19,17 +27,9 @@ const factory: CalculationFactory = function (app, plugin): Calculation {
     },
     debounceDelay: 60 * 1000,
     calculator: function (datetime: string | undefined, position: unknown) {
-      let date: Date
-
-      if (!isPosition(position)) {
-        return
-      }
-
-      if (datetime !== undefined && datetime.length > 0) {
-        date = new Date(datetime)
-      } else {
-        date = new Date()
-      }
+      const input = astronomyInput(datetime, position)
+      if (!input) return
+      const { date, observer } = input
 
       app.debug(`Using datetime: ${date} position: ${JSON.stringify(position)}`)
 
@@ -57,20 +57,23 @@ const factory: CalculationFactory = function (app, plugin): Calculation {
       const results: Array<{ path: string; value: unknown }> = []
       const moonProps = plugin.properties?.['moon'] as
         { forecastDays?: number } | undefined
-      const forecastDays = moonProps?.forecastDays || 1
+      const forecastDays = moonProps?.forecastDays ?? 1
 
       for (let day = 0; day <= forecastDays; day++) {
         const targetDate = new Date(date)
         targetDate.setDate(targetDate.getDate() + day)
+        if (!isAstronomyDate(targetDate)) break
 
-        const illumination = suncalc.getMoonIllumination(targetDate)
-        // suncalc v2 returns the bright-limb angle in degrees; SignalK
-        // expects angles in radians, so convert it. fraction and phase are
-        // unitless ratios and pass through unchanged.
+        const illumination = moonIllumination(targetDate)
+        const orientation = moonOrientation(targetDate, observer)
         const fraction = Math.round(illumination.fraction * 100) / 100
         const phase = Math.round(illumination.phase * 100) / 100
-        const angle =
-          Math.round(degreesToRadians(illumination.angle) * 100) / 100
+        // Signal K clients use a signed bright-limb angle.
+        const signedAngle =
+          orientation.brightLimbAngleDeg > 180
+            ? orientation.brightLimbAngleDeg - 360
+            : orientation.brightLimbAngleDeg
+        const angle = Math.round(degreesToRadians(signedAngle) * 100) / 100
         app.debug(
           `moon illumination day ${day}: ` +
             JSON.stringify({ fraction, phase, angle }, null, 2)
@@ -79,11 +82,22 @@ const factory: CalculationFactory = function (app, plugin): Calculation {
         const phaseName = getPhaseName(phase)
         app.debug(`Phase Name day ${day}: ${phaseName}`)
 
-        const times = suncalc.getMoonTimes(
-          targetDate,
-          position.latitude,
-          position.longitude
-        )
+        const { start, end } = solarDay(targetDate, observer)
+        const events = moonEvents(start, end, observer)
+        const rise = events.find((event) => event.kind === 'rise')?.time ?? null
+        const set = events.find((event) => event.kind === 'set')?.time ?? null
+        // Upper-limb visibility includes the Moon's semidiameter (Almanac's mean radius).
+        const limbAltitude =
+          moonAltAz(targetDate, observer).altDeg +
+          radiansToDegrees(
+            Math.asin(1737.4 / moonPosition(targetDate).distanceKm)
+          )
+        const times = {
+          rise,
+          set,
+          alwaysUp: events.length === 0 && limbAltitude > 0,
+          alwaysDown: events.length === 0 && limbAltitude <= 0
+        }
         app.debug(`moon times day ${day}:` + JSON.stringify(times, null, 2))
 
         const prefix =

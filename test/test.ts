@@ -7,12 +7,8 @@ chai.should()
 chai.use(require('chai-json-equal'))
 const expect = chai.expect
 
-import {
-  isCompassAngle,
-  isPosition,
-  formatCompassAngle,
-  degreesToRadians
-} from '../src/utils'
+import { isCompassAngle, isPosition, formatCompassAngle } from '../src/utils'
+import { degreesToRadians } from '@openwaters/almanac'
 
 let selfData: Record<string, unknown> = {}
 
