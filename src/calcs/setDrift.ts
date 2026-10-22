@@ -30,6 +30,30 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation {
       undefined,
       DEFAULT_MAGNETIC_VARIATION
     ],
+    meta: {
+      // The specification describes these as properties of the
+      // environment.current object, which the path metadata does not map
+      // to these separate paths; its text is reused unchanged.
+      'environment.current.setTrue': {
+        units: 'rad',
+        description:
+          'The direction component of the water current vector referenced to true (geographic) north'
+      },
+      'environment.current.setMagnetic': {
+        units: 'rad',
+        description:
+          'The direction component of the water current vector referenced to magnetic north'
+      },
+      'environment.current.drift': {
+        units: 'm/s',
+        description: 'The speed component of the water current vector'
+      },
+      'environment.current.driftImpact': {
+        units: 'm/s',
+        description:
+          'Component of the current along the course over ground: positive when the current adds to the speed over ground, negative when it reduces it.'
+      }
+    },
     debounceDelay: 200,
 
     /**

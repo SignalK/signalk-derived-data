@@ -42,7 +42,13 @@ function makeApp(selfPathOverrides: Record<string, unknown> = {}): {
         return streams[path]
       }
     },
-    handleMessage: (_id: string, delta: unknown) => handled.push(delta),
+    // The meta delta plugin.start() sends for calcs with meta is covered
+    // in plugin-meta.ts; these tests look at value deltas only.
+    handleMessage: (_id: string, delta: any) => {
+      if (!delta.updates?.every((update: any) => update.meta)) {
+        handled.push(delta)
+      }
+    },
     debug: () => {},
     error: () => {},
     setPluginStatus: () => {},

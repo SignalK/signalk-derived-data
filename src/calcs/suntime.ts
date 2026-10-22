@@ -1,8 +1,45 @@
 import * as suncalc from 'suncalc'
-import { isPosition } from '../utils'
-import type { Calculation, CalculationFactory } from '../types'
+import { daysAfterToday, isPosition } from '../utils'
+import type { Calculation, CalculationFactory, PathMeta } from '../types'
+
+const SUN_EVENTS = [
+  'sunrise',
+  'sunriseEnd',
+  'goldenHourEnd',
+  'solarNoon',
+  'goldenHour',
+  'sunsetStart',
+  'sunset',
+  'dusk',
+  'nauticalDusk',
+  'night',
+  'nadir',
+  'nightEnd',
+  'nauticalDawn',
+  'dawn'
+]
+
+function sunTimesMeta(forecastDays: number): Record<string, PathMeta> {
+  const meta: Record<string, PathMeta> = {}
+  for (let day = 0; day <= forecastDays; day++) {
+    const prefix =
+      day === 0
+        ? 'environment.sunlight.times'
+        : `environment.sunlight.times.${day}`
+    const description =
+      day === 0
+        ? "Time today of this sun event (sunrise, sunset, dawn, dusk and others) at the vessel's position."
+        : `Time of this sun event (sunrise, sunset, dawn, dusk and others) at the vessel's position, ${daysAfterToday(day)}.`
+    for (const event of SUN_EVENTS) {
+      meta[`${prefix}.${event}`] = { units: 'RFC 3339 (UTC)', description }
+    }
+  }
+  return meta
+}
 
 const factory: CalculationFactory = function (app, plugin): Calculation {
+  const sunProps = plugin.properties?.['sun'] as
+    { forecastDays?: number } | undefined
   return {
     group: 'sun',
     optionKey: 'Sun Time',
@@ -17,6 +54,7 @@ const factory: CalculationFactory = function (app, plugin): Calculation {
         enum: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
       }
     },
+    meta: sunTimesMeta(sunProps?.forecastDays || 1),
     debounceDelay: 60 * 1000,
     calculator: function (datetime: string | undefined, position: unknown) {
       let date: Date
