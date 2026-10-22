@@ -283,6 +283,46 @@ describe('plugin index.js — nogroup and function-properties calcs', () => {
     }
   })
 
+  it('puts the note of a disabled retired nogroup calc in the schema description', () => {
+    const cleanup = installFakeCalc({
+      optionKey: '__fakeRetiredNogroup',
+      title: 'Fake Retired Calc',
+      retiredNote: 'Fake retired note',
+      derivedFrom: ['environment.outside.temperature'],
+      calculator: () => null
+    })
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const plugin = require('../../src')(makeApp())
+      const schema = plugin.schema()
+      schema.description.should.include('Fake retired note')
+      schema.properties.should.not.have.property('__fakeRetiredNogroup')
+      plugin.uiSchema()['ui:order'].should.not.include('__fakeRetiredNogroup')
+    } finally {
+      cleanup()
+    }
+  })
+
+  it('joins the notes of several disabled retired calcs in one group', () => {
+    const cleanup = installFakeCalc({
+      group: 'traffic',
+      optionKey: '__fakeRetiredTraffic',
+      title: 'Fake Retired Traffic Calc',
+      retiredNote: 'Second retired note',
+      derivedFrom: ['navigation.position'],
+      calculator: () => null
+    })
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const plugin = require('../../src')(makeApp())
+      const description = plugin.schema().properties.traffic.description
+      description.should.include('Collision Alerts plugin')
+      description.should.include('Second retired note')
+    } finally {
+      cleanup()
+    }
+  })
+
   it('resolves function-valued properties on grouped calcs too', () => {
     const cleanup = installFakeCalc(
       {

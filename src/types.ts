@@ -78,6 +78,10 @@ export interface Calculation {
   debounceDelay?: number
   ttl?: number
   properties?: Record<string, unknown> | (() => Record<string, unknown>)
+  // Set on a calc that is being phased out. Where it is still enabled
+  // it keeps running; otherwise its option is replaced in the config
+  // schema by this note, so it can no longer be turned on.
+  retiredNote?: string
   calculator: CalculatorFn
   stop?: () => void
   tests?: CalculationTest[]

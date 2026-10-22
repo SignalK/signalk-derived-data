@@ -88,7 +88,11 @@ paths and emits on one or more output paths.
 ### AIS
 
 - **CPA / TCPA** (closest-point-of-approach / time-to-CPA) for
-  nearby vessels, with configurable notification zones
+  nearby vessels, with configurable notification zones. Deprecated:
+  collision alarms are now provided by the
+  [Collision Alerts](https://www.npmjs.com/package/signalk-collision-alerts)
+  plugin. Where CPA / TCPA is already enabled it keeps working; turn it
+  off once Collision Alerts is installed. It can no longer be enabled.
 
 ## Writing a new calculator
 
