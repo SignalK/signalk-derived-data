@@ -28,6 +28,9 @@
     "appIcon": "./logo.svg",
     "screenshots": [
       "./docs/screenshots/1_placeholder.png"
+    ],
+    "recommends": [
+      "signalk-collision-alerts"
     ]
   },
   "scripts": {
