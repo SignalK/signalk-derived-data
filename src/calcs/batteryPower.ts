@@ -11,6 +11,13 @@ const factory: CalculationFactory = function (_app, plugin): Calculation[] {
       group: 'electrical',
       optionKey: 'batterPower' + instance,
       title: 'Battery ' + instance + ' Power ',
+      meta: {
+        [powerPath]: {
+          units: 'W',
+          description:
+            'Power flowing into (positive) or out of (negative) the battery, computed from its voltage and current.'
+        }
+      },
       derivedFrom: function () {
         return derivedFromList
       },

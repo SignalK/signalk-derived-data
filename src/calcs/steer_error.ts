@@ -9,6 +9,23 @@ const factory: CalculationFactory = function (app): Calculation {
       'navigation.courseOverGroundTrue',
       'navigation.course.calcValues.bearingTrue'
     ],
+    meta: {
+      'navigation.courseGreatCircle.nextPoint.steerError': {
+        units: 'rad',
+        description:
+          'Deprecated path: the Course API (navigation.course.*) replaces navigation.courseGreatCircle and has no steer error path. Difference between the course over ground and the bearing to the next point (navigation.course.calcValues.bearingTrue): positive means steer left, negative means steer right.'
+      },
+      'navigation.courseGreatCircle.nextPoint.leftSteerError': {
+        units: 'rad',
+        description:
+          'Deprecated path: the Course API (navigation.course.*) replaces navigation.courseGreatCircle and has no steer error path. How far to steer left (to port) to bring the course over ground onto the bearing to the next point; 0 when the correction is to the right.'
+      },
+      'navigation.courseGreatCircle.nextPoint.rightSteerError': {
+        units: 'rad',
+        description:
+          'Deprecated path: the Course API (navigation.course.*) replaces navigation.courseGreatCircle and has no steer error path. How far to steer right (to starboard) to bring the course over ground onto the bearing to the next point; 0 when the correction is to the left.'
+      }
+    },
     debounceDelay: 200,
     calculator: function (
       courseOverGroundTrue: number,

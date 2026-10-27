@@ -130,6 +130,24 @@ derived value and filestream replay preserves original timing. Calcs
 that author their own `{ context, updates }` deltas (`cpa_tcpa`) are
 responsible for their own timestamps.
 
+A calculator that writes paths the Signal K specification does not
+define can describe them with `meta`, keyed by path; the plugin sends
+the meta of the enabled calculators once at start:
+
+```ts
+    meta: {
+      'environment.sun': {
+        description:
+          "Phase of the sun at the vessel's position, such as dawn, day, dusk or night."
+      }
+    },
+```
+
+Leave out the paths the specification defines (for example
+`performance.velocityMadeGood` above): the server already gives their
+description and units from its path metadata (`@signalk/path-metadata`),
+and meta sent by a plugin would override it. A test checks this rule.
+
 ## Contributing
 
 Issues and pull requests welcome at

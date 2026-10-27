@@ -72,6 +72,10 @@ export const isPosition = (value: unknown): value is Position => {
   }
 }
 
+// '1 day after today', '2 days after today'... for forecast descriptions
+export const daysAfterToday = (day: number): string =>
+  day === 1 ? '1 day after today' : `${day} days after today`
+
 export const degreesToRadians = (value: number): number =>
   (Math.PI / 180) * value
 export const radiansToDegrees = (value: number): number =>

@@ -57,6 +57,17 @@ export interface SignalKDelta {
   updates: SignalKUpdate[]
 }
 
+// Description and units of a path, published once as `meta`.
+export interface PathMeta {
+  description?: string
+  units?: string
+}
+
+export interface SignalKMetaDelta {
+  context: string
+  updates: Array<{ meta: Array<{ path: string; value: PathMeta }> }>
+}
+
 export type CalculatorOutput =
   SignalKValue[] | SignalKDelta[] | undefined | null | void
 
@@ -81,6 +92,12 @@ export interface Calculation {
   calculator: CalculatorFn
   stop?: () => void
   tests?: CalculationTest[]
+  // Metadata for paths this calculation writes that the Signal K
+  // specification does not define. Paths the specification defines get
+  // their description and units from the server's path metadata
+  // (@signalk/path-metadata); meta sent by a plugin overrides it, so
+  // leave those paths out instead of publishing a second copy.
+  meta?: Record<string, PathMeta>
   // Mutated at runtime by plugin.start() to carry the next allowed
   // emit timestamp for the ttl-throttled skip_function.
   nextOutput?: number
@@ -141,7 +158,10 @@ export interface ServerApp extends Omit<
   // strings the calculators emit and with the reduced StreamBundle
   // shape that abstracts over baconjs versions.
   streambundle: StreamBundle
-  handleMessage: (pluginId: string, delta: SignalKDelta) => void
+  handleMessage: (
+    pluginId: string,
+    delta: SignalKDelta | SignalKMetaDelta
+  ) => void
   registerDeltaInputHandler?: (
     fn: (delta: SignalKDelta, next: (delta: SignalKDelta) => void) => void
   ) => void
