@@ -266,13 +266,7 @@ const createPlugin = function (app: ServerApp): PluginState {
     }
 
     calculations.forEach((calculation) => {
-      if (calculation.group) {
-        const group = props[calculation.group] as
-          Record<string, unknown> | undefined
-        if (!group || !group[calculation.optionKey]) {
-          return
-        }
-      } else if (!props[calculation.optionKey]) {
+      if (!isCalcEnabled(calculation, props)) {
         return
       }
 
@@ -475,6 +469,10 @@ const createPlugin = function (app: ServerApp): PluginState {
 
     if (groups['nogroup']) {
       groups['nogroup'].forEach((calc) => {
+        if (isRetiredAndDisabled(calc)) {
+          schema!.description = `${schema!.description}\n\n${calc.retiredNote}`
+          return
+        }
         uiOrder.push(calc.optionKey)
         schemaProps[calc.optionKey] = {
           title: calc.title,
@@ -505,6 +503,7 @@ const createPlugin = function (app: ServerApp): PluginState {
         const group: {
           title: string
           type: string
+          description?: string
           properties: Record<string, unknown>
         } = {
           title: groupName.charAt(0).toUpperCase() + groupName.slice(1),
@@ -512,6 +511,12 @@ const createPlugin = function (app: ServerApp): PluginState {
           properties: {}
         }
         groups[groupName]!.forEach((calc) => {
+          if (isRetiredAndDisabled(calc)) {
+            group.description = group.description
+              ? `${group.description}\n\n${calc.retiredNote}`
+              : calc.retiredNote
+            return
+          }
           const order = (uiSchema as Record<string, Record<string, unknown>>)[
             groupName
           ]!['ui:order'] as string[]
@@ -540,6 +545,15 @@ const createPlugin = function (app: ServerApp): PluginState {
     // app.debug('uiSchema: ' + JSON.stringify(uiSchema, null, 2))
   }
 
+  // plugin.properties is only known once the plugin has started; before
+  // that a retired calc is treated as disabled.
+  function isRetiredAndDisabled(calc: Calculation): boolean {
+    return (
+      calc.retiredNote !== undefined &&
+      !isCalcEnabled(calc, plugin.properties ?? {})
+    )
+  }
+
   function updateOldTrafficConfig() {
     const traffic = plugin.properties!.traffic!
     if (
@@ -559,6 +573,14 @@ const createPlugin = function (app: ServerApp): PluginState {
   }
 
   return plugin
+}
+
+function isCalcEnabled(calc: Calculation, props: PluginProperties): boolean {
+  if (calc.group) {
+    const group = props[calc.group] as Record<string, unknown> | undefined
+    return !!group?.[calc.optionKey]
+  }
+  return !!props[calc.optionKey]
 }
 
 function flattenCalcs(

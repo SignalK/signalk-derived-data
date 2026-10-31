@@ -605,3 +605,39 @@ describe('plugin.start() stream pipeline', function () {
     }, 100)
   })
 })
+
+describe('retired calcs in the config schema', function () {
+  it('replaces a retired calc that is not enabled with its note', () => {
+    const { app } = makeApp()
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const plugin = require('../../src')(app)
+    plugin.start({ depth: { belowKeel: true } })
+    const traffic = plugin.schema().properties.traffic
+    traffic.description.should.include('Collision Alerts plugin')
+    traffic.properties.should.not.have.property('CPA')
+    traffic.properties.should.not.have.property('notificationZones')
+    plugin.uiSchema().traffic['ui:order'].should.not.include('CPA')
+    plugin.stop()
+  })
+
+  it('treats a retired calc as not enabled before start()', () => {
+    const { app } = makeApp()
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const plugin = require('../../src')(app)
+    const traffic = plugin.schema().properties.traffic
+    traffic.properties.should.not.have.property('CPA')
+  })
+
+  it('keeps a retired calc that is enabled, marked deprecated', () => {
+    const { app } = makeApp()
+    app.getPath = () => undefined
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const plugin = require('../../src')(app)
+    plugin.start({ traffic: { CPA: true, notificationZones: [] } })
+    const traffic = plugin.schema().properties.traffic
+    traffic.should.not.have.property('description')
+    traffic.properties.CPA.title.should.match(/^❗DEPRECATED/)
+    traffic.properties.should.have.property('notificationZones')
+    plugin.stop()
+  })
+})
