@@ -30,7 +30,7 @@
       "./docs/screenshots/1_placeholder.png"
     ],
     "recommends": [
-      "signalk-collision-alerts"
+      "@signalk/collision-alerts"
     ]
   },
   "scripts": {
