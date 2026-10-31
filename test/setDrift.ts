@@ -22,7 +22,19 @@ describe('setDrift', () => {
       (x: any) => x.path === 'environment.current.setTrue'
     )
     drift.value.should.be.closeTo(0.761396803020796, 1e-9)
-    setTrue.value.should.be.closeTo(4.547058237706402, 1e-9)
+    setTrue.value.should.be.closeTo(2.936127069473184, 1e-9)
+  })
+
+  // Set is the direction the current flows toward: a vessel making no way
+  // through the water while moving east over ground is in a current
+  // setting east (090°), whatever its heading.
+  it('gives the direction the current flows toward', () => {
+    const d = calc(makeApp(), makePlugin())
+    const out = d.calculator(0, Math.PI / 2, 0.0001, 1, 0)
+    const setTrue = out.find(
+      (x: any) => x.path === 'environment.current.setTrue'
+    )
+    setTrue.value.should.be.closeTo(Math.PI / 2, 1e-3)
   })
 
   it('returns null outputs when magneticVariation is missing', () => {
