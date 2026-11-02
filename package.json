@@ -82,7 +82,7 @@
     "*.ts": "prettier --write"
   },
   "dependencies": {
-    "@openwaters/almanac": "^0.10.0",
+    "@openwaters/almanac": "^0.12.2",
     "cubic-spline": "^3.0.3",
     "geolib": "^4.0.0",
     "geolocation-utils": "^1.2.3",
