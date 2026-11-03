@@ -112,6 +112,7 @@ describe('plugin index.js — schema/uiSchema', () => {
         return undefined
       },
       registerDeltaInputHandler: () => {},
+      readPluginOptions: () => ({}),
       signalk: { self: 'vessels.self' }
     }
   }
@@ -161,6 +162,7 @@ describe('plugin index.js — updateOldTrafficConfig', () => {
       setPluginError: () => {},
       getSelfPath: () => undefined,
       registerDeltaInputHandler: () => {},
+      readPluginOptions: () => ({}),
       signalk: { self: 'vessels.self' },
       savePluginOptions: (props: any) => saved.push(props)
     }
@@ -202,6 +204,7 @@ describe('plugin index.js — updateOldTrafficConfig', () => {
       setPluginError: () => {},
       getSelfPath: () => undefined,
       registerDeltaInputHandler: () => {},
+      readPluginOptions: () => ({}),
       signalk: { self: 'vessels.self' },
       savePluginOptions: (props: any) => saved.push(props)
     }
@@ -245,6 +248,7 @@ describe('plugin index.js — nogroup and function-properties calcs', () => {
     setPluginError: () => {},
     getSelfPath: () => undefined,
     registerDeltaInputHandler: () => {},
+    readPluginOptions: () => ({}),
     signalk: { self: 'vessels.self' }
   })
 
@@ -405,6 +409,7 @@ describe('plugin index.js — nogroup and function-properties calcs', () => {
       setPluginError: () => {},
       getSelfPath: () => undefined,
       registerDeltaInputHandler: () => {},
+      readPluginOptions: () => ({}),
       signalk: { self: 'vessels.self' }
     }
     // eslint-disable-next-line @typescript-eslint/no-require-imports

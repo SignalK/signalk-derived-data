@@ -37,6 +37,19 @@ import type {
   SignalKDelta,
   SignalKValue
 } from './types'
+import {
+  AUTO_DEFAULT_TTL,
+  AUTO_POLL_INTERVAL_MS,
+  AUTO_START_DELAY_MS,
+  calculationKey,
+  derivedFromOf,
+  describeStatus,
+  discoverInstances,
+  hasForeignSource,
+  resolveMode,
+  selectCalculations
+} from './auto'
+import type { AutoStatus, Instances, Mode } from './auto'
 
 // Combine N streams into a single Property whose values are fn(v1, v2, ...vN),
 // using only the instance-method .combine(other, fn) that exists on both
@@ -205,7 +218,16 @@ const createPlugin = function (app: ServerApp): PluginState {
   const lastTimestampByPath = new Map<string, string>()
   let inputHandlerRegistered = false
 
+  // Set while the plugin runs; undefined when stopped.
+  let mode: Mode | undefined
+  let autoStatus: Map<string, AutoStatus> | undefined
+  let autoTimer: ReturnType<typeof setTimeout> | undefined
+  let autoInterval: ReturnType<typeof setInterval> | undefined
+  let autoInstances = ''
+  const autoActive = new Map<string, () => void>()
+
   plugin.start = function (props: PluginProperties) {
+    mode = resolveMode(props)
     plugin.properties = props
 
     if (!plugin.properties.engine_instances) {
@@ -239,6 +261,9 @@ const createPlugin = function (app: ServerApp): PluginState {
     plugin.air = plugin.properties.air_instances
       .split(',')
       .map((e: string) => e.trim())
+    if (mode === 'auto') {
+      applyInstances(discoverInstances(app.getSelfPath))
+    }
     calculations = flattenCalcs(load_calcs(app, plugin, 'calcs'))
 
     if (!inputHandlerRegistered && app.registerDeltaInputHandler) {
@@ -265,6 +290,11 @@ const createPlugin = function (app: ServerApp): PluginState {
       inputHandlerRegistered = true
     }
 
+    if (mode === 'auto') {
+      startAuto()
+      return
+    }
+
     calculations.forEach((calculation) => {
       if (calculation.group) {
         const group = props[calculation.group] as
@@ -275,85 +305,167 @@ const createPlugin = function (app: ServerApp): PluginState {
       } else if (!props[calculation.optionKey]) {
         return
       }
-
-      let derivedFrom: string[]
-
-      if (typeof calculation.derivedFrom === 'function') {
-        derivedFrom = calculation.derivedFrom()
-      } else derivedFrom = calculation.derivedFrom
-
-      const skip_function = createSkipFunction(calculation, props.default_ttl)
-
-      const selfStreams = derivedFrom.map((key: string, index: number) => {
-        let stream: BaconStream<unknown> | BaconProperty<unknown>
-        /*
-        if ( !_.isUndefined(calculation.allContexts) && calculation.allContexts ) {
-          stream = app.streambundle.getBus(key)
-        } else {
-        */
-        stream = app.streambundle.getSelfStream(key)
-        /* } */
-        if (calculation.defaults && calculation.defaults[index] !== undefined) {
-          stream = stream.toProperty(calculation.defaults[index])
-        }
-        return stream
-      })
-
-      const combined = combineStreamsWith(
-        selfStreams,
-        calculation.calculator as (...args: unknown[]) => unknown
-      )
-      const changes = combined.changes!()
-      const debounced = changes.debounceImmediate!(
-        calculation.debounceDelay || 20
-      )
-      // Only chain .skipDuplicates when there is actually a TTL to enforce;
-      // createSkipFunction returns null when no TTL is configured, and a
-      // no-op skipDuplicates is wasted work on the per-emit path.
-      const deduped = skip_function
-        ? debounced.skipDuplicates!(skip_function)
-        : debounced
-      const unsubscribe = deduped.onValue!((values: unknown) => {
-        if (
-          typeof values !== 'undefined' &&
-          Array.isArray(values) &&
-          values.length > 0
-        ) {
-          const first = values[0] as { context?: string } | SignalKValue
-          if ((first as { context?: string }).context) {
-            // Calculator-authored deltas (cpa_tcpa) carry their own
-            // context and manage their own timestamps per emission;
-            // stamping them here would overwrite those.
-            ;(values as SignalKDelta[]).forEach((delta) => {
-              app.handleMessage(plugin.id, delta)
-            })
-          } else {
-            const update: SignalKDelta['updates'][number] = {
-              values: values as SignalKValue[]
-            }
-            const derivedTs = minTimestampFor(derivedFrom, lastTimestampByPath)
-            if (derivedTs) {
-              update.timestamp = derivedTs
-            }
-            const delta: SignalKDelta = {
-              context: 'vessels.' + app.selfId,
-              updates: [update]
-            }
-
-            // app.debug("got delta: " + JSON.stringify(delta))
-            app.handleMessage(plugin.id, delta)
-          }
-        }
-      })
-      unsubscribes.push(unsubscribe)
+      unsubscribes.push(activate(calculation, props.default_ttl))
     })
   }
 
-  plugin.stop = function () {
-    unsubscribes.forEach((f) => f())
-    unsubscribes = []
-    lastTimestampByPath.clear()
+  // Wires one calculation's input streams to app.handleMessage and
+  // returns the function that disconnects it.
+  function activate(
+    calculation: Calculation,
+    defaultTtl: number | undefined
+  ): () => void {
+    const derivedFrom = derivedFromOf(calculation)
 
+    const skip_function = createSkipFunction(calculation, defaultTtl)
+
+    const selfStreams = derivedFrom.map((key: string, index: number) => {
+      let stream: BaconStream<unknown> | BaconProperty<unknown>
+      /*
+      if ( !_.isUndefined(calculation.allContexts) && calculation.allContexts ) {
+        stream = app.streambundle.getBus(key)
+      } else {
+      */
+      stream = app.streambundle.getSelfStream(key)
+      /* } */
+      if (calculation.defaults && calculation.defaults[index] !== undefined) {
+        stream = stream.toProperty(calculation.defaults[index])
+      }
+      return stream
+    })
+
+    const combined = combineStreamsWith(
+      selfStreams,
+      calculation.calculator as (...args: unknown[]) => unknown
+    )
+    const changes = combined.changes!()
+    const debounced = changes.debounceImmediate!(
+      calculation.debounceDelay || 20
+    )
+    // Only chain .skipDuplicates when there is actually a TTL to enforce;
+    // createSkipFunction returns null when no TTL is configured, and a
+    // no-op skipDuplicates is wasted work on the per-emit path.
+    const deduped = skip_function
+      ? debounced.skipDuplicates!(skip_function)
+      : debounced
+    const unsubscribe = deduped.onValue!((values: unknown) => {
+      if (
+        typeof values !== 'undefined' &&
+        Array.isArray(values) &&
+        values.length > 0
+      ) {
+        const first = values[0] as { context?: string } | SignalKValue
+        if ((first as { context?: string }).context) {
+          // Calculator-authored deltas (cpa_tcpa) carry their own
+          // context and manage their own timestamps per emission;
+          // stamping them here would overwrite those.
+          ;(values as SignalKDelta[]).forEach((delta) => {
+            app.handleMessage(plugin.id, delta)
+          })
+        } else {
+          const update: SignalKDelta['updates'][number] = {
+            values: values as SignalKValue[]
+          }
+          const derivedTs = minTimestampFor(derivedFrom, lastTimestampByPath)
+          if (derivedTs) {
+            update.timestamp = derivedTs
+          }
+          const delta: SignalKDelta = {
+            context: 'vessels.' + app.selfId,
+            updates: [update]
+          }
+
+          // app.debug("got delta: " + JSON.stringify(delta))
+          app.handleMessage(plugin.id, delta)
+        }
+      }
+    })
+    return unsubscribe
+  }
+
+  function applyInstances(instances: Instances) {
+    plugin.engines = instances.engines
+    plugin.batteries = instances.batteries
+    plugin.tanks = instances.tanks
+    autoInstances = JSON.stringify(instances)
+  }
+
+  function startAuto() {
+    app.setPluginStatus(
+      'Auto mode: waiting for sensors before choosing calculations'
+    )
+    // Only the first start after boot waits for sensors; a restart from a
+    // config save finds them reporting already.
+    const delay = AUTO_START_DELAY_MS - process.uptime() * 1000
+    autoTimer = setTimeout(
+      () => {
+        autoTimer = undefined
+        updateAuto()
+        autoInterval = setInterval(updateAuto, AUTO_POLL_INTERVAL_MS)
+      },
+      Math.max(delay, 0)
+    )
+  }
+
+  // Path presence is read from the data model on a timer rather than
+  // from every delta, which keeps auto mode off the per-delta path.
+  // Runs from a timer, so an exception would reach the server's
+  // uncaughtException handler instead of this plugin's status.
+  function updateAuto() {
+    try {
+      reconcileAuto()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      app.error(`auto mode: ${msg}`)
+      app.setPluginError(`Auto mode: ${msg}`)
+    }
+  }
+
+  function reconcileAuto() {
+    const instances = discoverInstances(app.getSelfPath)
+    if (JSON.stringify(instances) !== autoInstances) {
+      applyInstances(instances)
+      const previous = calculations!
+      calculations = flattenCalcs(load_calcs(app, plugin, 'calcs'))
+      // Running calculations keep their subscriptions, so their combined
+      // streams keep the input values already seen; only those whose
+      // instance is gone are stopped.
+      const current = new Set(calculations.map(calculationKey))
+      previous
+        .filter((calc) => !current.has(calculationKey(calc)))
+        .forEach((calc) => calc.stop?.())
+    }
+
+    autoStatus = selectCalculations(calculations!, {
+      hasForeignValue: (p) => hasForeignSource(app.getSelfPath(p), plugin.id),
+      hasValue: (p) => app.getSelfPath(p) != null
+    })
+    for (const [key, unsubscribe] of autoActive) {
+      if (autoStatus.get(key)?.state !== 'active') {
+        unsubscribe()
+        autoActive.delete(key)
+      }
+    }
+    const defaultTtl = plugin.properties!.default_ttl ?? AUTO_DEFAULT_TTL
+    for (const calc of calculations!) {
+      const key = calculationKey(calc)
+      if (autoStatus.get(key)?.state === 'active' && !autoActive.has(key)) {
+        autoActive.set(key, activate(calc, defaultTtl))
+      }
+    }
+    app.setPluginStatus(
+      `Auto mode: ${autoActive.size} calculation${
+        autoActive.size === 1 ? '' : 's'
+      } active`
+    )
+  }
+
+  function deactivateAuto() {
+    autoActive.forEach((unsubscribe) => unsubscribe())
+    autoActive.clear()
+  }
+
+  function stopCalculations() {
     if (calculations) {
       calculations.forEach((calc) => {
         if (calc.stop) {
@@ -361,6 +473,20 @@ const createPlugin = function (app: ServerApp): PluginState {
         }
       })
     }
+  }
+
+  plugin.stop = function () {
+    clearTimeout(autoTimer)
+    clearInterval(autoInterval)
+    autoTimer = undefined
+    autoInterval = undefined
+    deactivateAuto()
+    autoStatus = undefined
+    mode = undefined
+    unsubscribes.forEach((f) => f())
+    unsubscribes = []
+    lastTimestampByPath.clear()
+    stopCalculations()
   }
 
   plugin.id = 'derived-data'
@@ -387,35 +513,60 @@ const createPlugin = function (app: ServerApp): PluginState {
       calculations = flattenCalcs(load_calcs(app, plugin, 'calcs'))
     }
 
+    const schemaMode =
+      mode ??
+      resolveMode(
+        (app.readPluginOptions() as { configuration?: object }).configuration
+      )
+
     schema = {
       title: 'Derived Data',
       description:
         'Legend: 👍 Path is present, ❎ Path value = `null`, ❌ Path not present',
       type: 'object',
       properties: {
+        mode: {
+          title: 'Mode',
+          type: 'string',
+          oneOf: [
+            {
+              const: 'auto',
+              title: 'Auto: run every calculation whose inputs are available'
+            },
+            {
+              const: 'manual',
+              title: 'Manual: run the calculations ticked below'
+            }
+          ],
+          description:
+            'Auto mode leaves out a calculation whose result already comes from a sensor, and finds engines, batteries and tanks in the data model. The ticks below are kept for manual mode.',
+          default: schemaMode
+        },
         default_ttl: {
           title: 'Default TTL',
           type: 'number',
           description:
             "The plugin won't send out duplicate calculation values for this time period (s) (0=no ttl check)",
-          default: 0
+          default: schemaMode === 'auto' ? AUTO_DEFAULT_TTL : 0
         },
         engine_instances: {
           title: 'Engines',
           type: 'string',
-          description: 'Comma delimited list of available engines',
+          description:
+            'Comma delimited list of available engines (manual mode)',
           default: defaultEngines
         },
         battery_instances: {
           title: 'Batteries',
           type: 'string',
-          description: 'Comma delimited list of available batteries',
+          description:
+            'Comma delimited list of available batteries (manual mode)',
           default: defaultBatteries
         },
         tank_instances: {
           title: 'Tanks',
           type: 'string',
-          description: 'Comma delimited list of available tanks',
+          description: 'Comma delimited list of available tanks (manual mode)',
           default: defaultTanks
         },
         air_instances: {
@@ -429,6 +580,7 @@ const createPlugin = function (app: ServerApp): PluginState {
 
     uiSchema = {
       'ui:order': [
+        'mode',
         'default_ttl',
         'engine_instances',
         'battery_instances',
@@ -455,11 +607,7 @@ const createPlugin = function (app: ServerApp): PluginState {
         calc.title
       }`
       title += ' ['
-      const derivedFrom =
-        typeof calc.derivedFrom === 'function'
-          ? calc.derivedFrom()
-          : calc.derivedFrom
-      title += derivedFrom
+      title += derivedFromOf(calc)
         .map((p) => {
           const node = app.getSelfPath(p) as
             { value?: unknown } | null | undefined
@@ -467,6 +615,10 @@ const createPlugin = function (app: ServerApp): PluginState {
         })
         .join(', ')
       title += ']'
+      const status = autoStatus?.get(calculationKey(calc))
+      if (status) {
+        title += ` (${describeStatus(status)})`
+      }
       groups[groupName]!.push({ ...calc, title })
     })
 

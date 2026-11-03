@@ -22,11 +22,37 @@ npm install signalk-derived-data
 Requires [signalk-server](https://github.com/SignalK/signalk-server)
 with Node `>=22`.
 
+## Auto and manual mode
+
+On a fresh install the plugin starts by itself in **auto mode**: it
+runs every calculation whose inputs are available and adds more as
+new sensors start reporting.
+
+- A minute after the server starts (at once when only the plugin
+  restarts), and every 15 s after that, it looks at the data
+  model. A calculation runs when its inputs come from a sensor or from
+  another running calculation, and the vessel data it needs (such as
+  `design.draft` for depth below keel) is set.
+- It leaves out any calculation whose result already comes from another
+  source, and stops one when such a source appears, so it never
+  competes with a sensor on the same path. Where two calculations
+  produce the same path, only the first one runs.
+- Engines, batteries and tanks are found in the data model.
+- Wind Shift, the calibrated tank volume and deprecated calculations
+  are never enabled automatically.
+- Duplicate values are held back for 5 s unless you set another TTL.
+- The config screen shows the state of each calculation: active,
+  waiting for a path, or skipped because another source provides it.
+
+**Manual mode** runs exactly the calculations ticked in the config
+screen. An existing configuration from before auto mode stays in
+manual mode, and switching from auto back to manual brings back the
+ticks you had.
+
 ## What it calculates
 
-Every calculator here is optional and enabled individually in the
-plugin's config screen. Each has a `derivedFrom` list of Signal K
-paths and emits on one or more output paths.
+Each calculation has a `derivedFrom` list of Signal K paths and emits
+on one or more output paths.
 
 ### Environment
 
@@ -108,6 +134,7 @@ const factory: CalculationFactory = function (_app): Calculation {
       'environment.wind.angleTrueWater',
       'navigation.speedOverGround'
     ],
+    outputs: ['performance.velocityMadeGood'],
     debounceDelay: 200,
     calculator: function (trueWindAngle: number, speedOverGround: number) {
       const vmg_wind = Math.cos(trueWindAngle) * speedOverGround
@@ -123,6 +150,18 @@ module.exports = factory
 the plugin feeds their latest values into `calculator` in the same
 order. Return a `{ path, value }` list (or `[]` / `undefined` to skip
 emission this tick).
+
+Auto mode needs three more fields:
+
+- `outputs` lists the paths the calculator writes (a branch such as
+  `environment.moon` covers everything below it). A calculation without
+  `outputs` never runs in auto mode, and a test fails when a path in
+  `tests[].expected` is missing from it.
+- `requires` lists vessel data the calculator reads with `getSelfPath`
+  rather than from a stream, as the exact `getSelfPath` argument (for
+  example `design.draft.value.maximum`).
+- `auto: false` keeps a calculation out of auto mode, for example when
+  it needs settings only the user can give.
 
 Each emitted delta is stamped with the minimum timestamp observed
 across the source paths, so staleness on any input propagates to the
