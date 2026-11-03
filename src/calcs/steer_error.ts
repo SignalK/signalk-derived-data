@@ -10,6 +10,11 @@ const factory: CalculationFactory = function (app): Calculation {
       'navigation.course.calcValues.bearingTrue'
     ],
     debounceDelay: 200,
+    outputs: [
+      'navigation.courseGreatCircle.nextPoint.steerError',
+      'navigation.courseGreatCircle.nextPoint.leftSteerError',
+      'navigation.courseGreatCircle.nextPoint.rightSteerError'
+    ],
     calculator: function (
       courseOverGroundTrue: number,
       bearingToDestinationTrue: number

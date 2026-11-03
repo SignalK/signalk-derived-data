@@ -49,6 +49,8 @@ const factory: CalculationFactory = function (app, plugin): Calculation[] {
       derivedFrom: function () {
         return derivedFromList
       },
+      outputs: [slipPath],
+      requires: [gearRatioPath, pitchPath],
       calculator: function (revolutions: number, stw: number) {
         if (cachedGearRatio === undefined) {
           cachedGearRatio = app.getSelfPath(gearRatioPath) as number | undefined

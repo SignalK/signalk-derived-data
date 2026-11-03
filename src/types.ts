@@ -79,6 +79,15 @@ export interface Calculation {
   ttl?: number
   properties?: Record<string, unknown> | (() => Record<string, unknown>)
   calculator: CalculatorFn
+  // Paths the calculator writes. An entry may also be a branch (such as
+  // `environment.moon`) that covers every path below it.
+  outputs?: string[]
+  // Vessel data the calculator reads with getSelfPath rather than from
+  // a stream, given as the exact getSelfPath argument. Without it the
+  // calculation produces no value, or a wrong one.
+  requires?: string[]
+  // false keeps the calculation out of auto mode.
+  auto?: false
   stop?: () => void
   tests?: CalculationTest[]
   // Mutated at runtime by plugin.start() to carry the next allowed

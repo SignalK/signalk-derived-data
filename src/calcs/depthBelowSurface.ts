@@ -10,6 +10,8 @@ const factory: CalculationFactory = function (app): Calculation {
     optionKey: 'belowSurface',
     title: 'Depth Below Surface (design.draft.maximum)',
     derivedFrom: ['environment.depth.belowKeel'],
+    outputs: ['environment.depth.belowSurface'],
+    requires: ['design.draft.value.maximum'],
     calculator: function (depthBelowKeel: number) {
       if (cachedDraft === undefined) {
         cachedDraft = app.getSelfPath('design.draft.value.maximum') as

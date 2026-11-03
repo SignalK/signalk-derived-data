@@ -16,6 +16,11 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation[] {
         'environment.wind.angleApparent'
       ],
       debounceDelay: 200,
+      outputs: [
+        'environment.wind.directionTrue',
+        'environment.wind.angleTrueGround',
+        'environment.wind.speedOverGround'
+      ],
       calculator: function (
         headTrue: number,
         sog: number,
@@ -75,6 +80,7 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation[] {
         'environment.wind.angleTrueGround'
       ],
       debounceDelay: 200,
+      outputs: ['environment.wind.directionGround'],
       calculator: function (headingTrue: number, gwa: number) {
         if (!Number.isFinite(headingTrue) || !Number.isFinite(gwa)) {
           return [{ path: 'environment.wind.directionGround', value: null }]

@@ -18,6 +18,7 @@ const factory: CalculationFactory = function (app, plugin): Calculation {
       }
     },
     debounceDelay: 60 * 1000,
+    outputs: ['environment.sunlight.times'],
     calculator: function (datetime: string | undefined, position: unknown) {
       let date: Date
 

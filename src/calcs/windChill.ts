@@ -10,6 +10,7 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation {
       'environment.wind.speedApparent'
     ],
     debounceDelay: 200,
+    outputs: ['environment.outside.apparentWindChillTemperature'],
     calculator: function (temp: number, windSpeed: number) {
       // standard Wind Chill formula for Environment Canada. Inputs are
       // SignalK: temperature in Kelvin, wind speed in m/s. The

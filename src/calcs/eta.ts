@@ -11,6 +11,7 @@ const factory: CalculationFactory = function (_app): Calculation {
       'navigation.courseRhumbline.nextPoint.distance',
       'navigation.courseRhumbline.nextPoint.velocityMadeGood'
     ],
+    outputs: ['navigation.courseGreatCircle.nextPoint.eta'],
     calculator: function (
       datetime: string | undefined,
       distance: number,

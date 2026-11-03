@@ -10,6 +10,7 @@ const factory: CalculationFactory = function (_app): Calculation {
       'navigation.speedThroughWater'
     ],
     debounceDelay: 200,
+    outputs: ['performance.velocityMadeGood'],
     calculator: function (angleTrueWater: number, speedThroughWater: number) {
       return [
         {

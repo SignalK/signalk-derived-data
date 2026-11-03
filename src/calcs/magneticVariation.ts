@@ -51,6 +51,10 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation {
     // a 10-second debounce, and it further cuts the emit path on the hot
     // position stream.
     debounceDelay: 10 * 1000,
+    outputs: [
+      'navigation.magneticVariation',
+      'navigation.magneticVariation.source'
+    ],
     calculator: function (position: unknown) {
       if (!isPosition(position)) return
       const m = getModel()

@@ -18,6 +18,7 @@ const factory: CalculationFactory = function (app, plugin): Calculation[] {
       derivedFrom: function () {
         return derivedFromList
       },
+      outputs: [economyPath],
       calculator: function (rate: number, speed: number) {
         // Fuel rate is strictly positive (an injector can't un-burn
         // fuel); SOG is a magnitude so it can't be negative. Treat

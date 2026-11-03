@@ -16,6 +16,7 @@ const factory: CalculationFactory = function (_app, plugin): Calculation[] {
       derivedFrom: function () {
         return derivedFromList
       },
+      outputs: [dewPointPath],
       calculator: function (temp: number, hum: number) {
         let dewPoint: number | null = null
         if (Number.isFinite(temp) && Number.isFinite(hum)) {

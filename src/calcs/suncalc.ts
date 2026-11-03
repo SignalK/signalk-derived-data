@@ -11,6 +11,7 @@ const factory: CalculationFactory = function (app, _plugin): Calculation {
     derivedFrom: ['navigation.datetime', 'navigation.position'],
     defaults: ['', undefined],
     debounceDelay: 60 * 1000,
+    outputs: ['environment.sun', 'environment.mode'],
     calculator: function (datetime: string | undefined, position: unknown) {
       let value: string
       let mode: string

@@ -10,6 +10,8 @@ const factory: CalculationFactory = function (app): Calculation {
     optionKey: 'transducerToKeel',
     title: 'Transducer to keel (design.draft.maximum),',
     derivedFrom: ['environment.depth.surfaceToTransducer'],
+    outputs: ['environment.depth.transducerToKeel'],
+    requires: ['design.draft.value.maximum'],
     calculator: function (surfaceToTransducer: unknown) {
       if (cachedDraft === undefined) {
         cachedDraft = app.getSelfPath('design.draft.value.maximum') as
