@@ -1,6 +1,6 @@
 {
   "name": "signalk-derived-data",
-  "version": "1.46.0",
+  "version": "1.46.1",
   "description": "Plugin that derives signalk data from other signalk data",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -82,13 +82,14 @@
     "*.ts": "prettier --write"
   },
   "dependencies": {
+    "@openwaters/almanac": "^0.12.2",
     "cubic-spline": "^3.0.3",
-    "geolib": "^3.3.1",
+    "geolib": "^4.0.0",
     "geolocation-utils": "^1.2.3",
-    "geomagnetism": "^0.2.0",
-    "suncalc": "^2.0.0"
+    "geomagnetism": "^0.2.0"
   },
   "devDependencies": {
+    "@signalk/path-metadata": "^1.0.2",
     "@signalk/server-api": "^2.24.0",
     "@stryker-mutator/core": "^10.0.0",
     "@stryker-mutator/mocha-runner": "^10.0.0",

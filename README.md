@@ -40,6 +40,23 @@ paths and emits on one or more output paths.
 - **Sun times** — `sunrise`, `sunriseEnd`, `goldenHourEnd`,
   `solarNoon`, `goldenHour`, `sunsetStart`, `sunset`, `dusk`,
   `nauticalDusk`, `night`, `nadir`, `nightEnd`, `nauticalDawn`, `dawn`
+- **Celestial positions** — apparent altitude and true azimuth of the Sun, Moon, Mercury, Venus, Mars, Jupiter, and Saturn
+
+### Astronomy
+
+Sun and Moon calculations use [@openwaters/almanac](https://github.com/openwatersio/almanac), an offline astronomy library with no runtime dependencies or data downloads. Its [accuracy contract](https://github.com/openwatersio/almanac/blob/main/docs/CONTRACT.md#fixture-corpus-and-accuracy) is checked against JPL Horizons and USNO fixtures, with one-arcminute Sun/Moon position and 60-second event-time tolerances.
+
+The **Sun**, **Sun Time**, and **Moon** options retain their output paths and forecast prefixes. Forecast day zero is the solar day around the local noon nearest `navigation.datetime`; later days advance by calendar date in the server's timezone. Missing rise/set or twilight crossings are `null`, and the Moon reports `times.alwaysUp` / `times.alwaysDown` when it has no crossing that day. `forecastDays: 0` emits only day zero. Invalid dates and dates outside 1950–2100 skip calculation; forecasts stop at the supported boundary.
+
+Enable **Celestial positions** in the **celestial** config group to publish these plugin extension paths:
+
+| Body    | Altitude path                         | Azimuth path                         |
+| ------- | ------------------------------------- | ------------------------------------ |
+| Sun     | `environment.sunlight.altitude`       | `environment.sunlight.azimuth`       |
+| Moon    | `environment.moon.altitude`           | `environment.moon.azimuth`           |
+| Planets | `environment.planets.<name>.altitude` | `environment.planets.<name>.azimuth` |
+
+Planet names are `mercury`, `venus`, `mars`, `jupiter`, and `saturn`. All angles are radians. Azimuth is clockwise from true north in `[0, 2π)`; altitude is relative to the horizontal plane and includes standard atmospheric refraction. Positions use sea-level observer elevation. The calculator suggests `rad` path metadata on servers with `setDefaultMetadata`, updates at most once per minute, and uses the existing source timestamp handling for replay. These values can drive a sky display or help identify a bright object above the horizon.
 
 ### Navigation
 
@@ -133,6 +150,24 @@ across the source paths, so staleness on any input propagates to the
 derived value and filestream replay preserves original timing. Calcs
 that author their own `{ context, updates }` deltas (`cpa_tcpa`) are
 responsible for their own timestamps.
+
+A calculator that writes paths the Signal K specification does not
+define can describe them with `meta`, keyed by path; the plugin sends
+the meta of the enabled calculators once at start:
+
+```ts
+    meta: {
+      'environment.sun': {
+        description:
+          "Phase of the sun at the vessel's position, such as dawn, day, dusk or night."
+      }
+    },
+```
+
+Leave out the paths the specification defines (for example
+`performance.velocityMadeGood` above): the server already gives their
+description and units from its path metadata (`@signalk/path-metadata`),
+and meta sent by a plugin would override it. A test checks this rule.
 
 ## Contributing
 

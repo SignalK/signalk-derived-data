@@ -32,6 +32,7 @@ import type {
   CalculationFactory,
   PluginInstance,
   PluginProperties,
+  PathMeta,
   PluginState,
   ServerApp,
   SignalKDelta,
@@ -265,9 +266,15 @@ const createPlugin = function (app: ServerApp): PluginState {
       inputHandlerRegistered = true
     }
 
+    const metas: Array<{ path: string; value: PathMeta }> = []
+
     calculations.forEach((calculation) => {
       if (!isCalcEnabled(calculation, props)) {
         return
+      }
+
+      for (const [metaPath, value] of Object.entries(calculation.meta ?? {})) {
+        metas.push({ path: metaPath, value })
       }
 
       let derivedFrom: string[]
@@ -341,6 +348,15 @@ const createPlugin = function (app: ServerApp): PluginState {
       })
       unsubscribes.push(unsubscribe)
     })
+
+    // Only paths outside the Signal K specification carry meta here; see
+    // Calculation.meta.
+    if (metas.length > 0) {
+      app.handleMessage(plugin.id, {
+        context: 'vessels.' + app.selfId,
+        updates: [{ meta: metas }]
+      })
+    }
   }
 
   plugin.stop = function () {

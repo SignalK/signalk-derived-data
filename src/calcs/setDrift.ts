@@ -30,6 +30,30 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation {
       undefined,
       DEFAULT_MAGNETIC_VARIATION
     ],
+    meta: {
+      // The specification describes these as properties of the
+      // environment.current object, which the path metadata does not map
+      // to these separate paths; its text is reused unchanged.
+      'environment.current.setTrue': {
+        units: 'rad',
+        description:
+          'The direction component of the water current vector referenced to true (geographic) north'
+      },
+      'environment.current.setMagnetic': {
+        units: 'rad',
+        description:
+          'The direction component of the water current vector referenced to magnetic north'
+      },
+      'environment.current.drift': {
+        units: 'm/s',
+        description: 'The speed component of the water current vector'
+      },
+      'environment.current.driftImpact': {
+        units: 'm/s',
+        description:
+          'Component of the current along the course over ground: positive when the current adds to the speed over ground, negative when it reduces it.'
+      }
+    },
     debounceDelay: 200,
 
     /**
@@ -88,18 +112,16 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation {
         )
       )
 
-      // Set direction in the true frame. The atan2 returns the current
-      // direction relative to heading; shift by π (the "set" convention
-      // names the direction the current comes FROM) and by headingTrue
-      // (to translate heading-relative into the north-referenced true
-      // frame).
+      // Set direction in the true frame. "Set" names the direction the
+      // current flows TOWARD, the direction of the water current vector.
+      // The atan2 returns the bearing of the ground velocity minus the
+      // water velocity relative to heading; headingTrue translates it into
+      // the north-referenced true frame.
       const setTrue = normalizeAngle(
         Math.atan2(
           speedOverGround * sinDelta,
-          speedThroughWater - speedOverGround * cosDelta
-        ) +
-          Math.PI +
-          headingTrue
+          speedOverGround * cosDelta - speedThroughWater
+        ) + headingTrue
       )
       const setMagnetic = normalizeAngle((setTrue ?? 0) - magneticVariation)
 
@@ -144,10 +166,10 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation {
         input: [0.5, 0.7, 6, 5.5, 0.1],
         expected: [
           { path: 'environment.current.drift', value: 0.761396803020796 },
-          { path: 'environment.current.setTrue', value: 4.547058237706402 },
+          { path: 'environment.current.setTrue', value: 2.936127069473184 },
           {
             path: 'environment.current.setMagnetic',
-            value: 4.447058237706402
+            value: 2.836127069473184
           },
           {
             path: 'environment.current.driftImpact',
@@ -161,11 +183,11 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation {
           { path: 'environment.current.drift', value: 1.024689994194024 },
           {
             path: 'environment.current.setTrue',
-            value: 0.49635906935637264
+            value: 0.0036409306436272493
           },
           {
             path: 'environment.current.setMagnetic',
-            value: 0.44635906935637265
+            value: 6.236826237823213
           },
           { path: 'environment.current.driftImpact', value: 1.0049989584201349 } // positive drift
         ]
@@ -183,8 +205,11 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation {
         input: [0.0, 1.5708, 1.28611, 2.57222, 0.0], // 0 degrees, 90 degrees, 1.28611 m/s, 2.57222 m/s
         expected: [
           { path: 'environment.current.drift', value: 2.875833611943622 },
-          { path: 'environment.current.setTrue', value: 4.24873843282142 },
-          { path: 'environment.current.setMagnetic', value: 4.24873843282142 },
+          { path: 'environment.current.setTrue', value: 2.0344468743581663 },
+          {
+            path: 'environment.current.setMagnetic',
+            value: 2.0344468743581663
+          },
           { path: 'environment.current.driftImpact', value: 2.5722247241458156 }
         ]
       },
@@ -192,10 +217,10 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation {
         input: [0.0, 0.7854, 1.28611, 2.57222, 0.0], // headingMagnetic = 0°, COG = 45°
         expected: [
           { path: 'environment.current.drift', value: 1.8952470907306618 },
-          { path: 'environment.current.setTrue', value: 4.9973109200855905 },
+          { path: 'environment.current.setTrue', value: 1.2858743870939957 },
           {
             path: 'environment.current.setMagnetic',
-            value: 4.9973109200855905
+            value: 1.2858743870939957
           },
           { path: 'environment.current.driftImpact', value: 1.6628045678874737 }
         ]
