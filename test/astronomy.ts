@@ -56,9 +56,11 @@ describe('astronomy input and forecast contract', () => {
     }
   })
 
+  // A fresh calculator per case: environment.mode is only published when
+  // it changes, so a reused one would leave it out after the first case.
   it('keeps midnight sun in day mode even when the whole disc dips below the horizon', () => {
-    const calc = require('../src/calcs/suncalc')(makeApp(), makePlugin())
     for (const latitude of [65.8, 66, 80]) {
+      const calc = require('../src/calcs/suncalc')(makeApp(), makePlugin())
       expect(
         calc.calculator('2024-06-21T00:10Z', { latitude, longitude: 0 })
       ).to.deep.equal([
@@ -69,8 +71,8 @@ describe('astronomy input and forecast contract', () => {
   })
 
   it('ends a short winter sunrise when the Sun never fully clears the horizon', () => {
-    const calc = require('../src/calcs/suncalc')(makeApp(), makePlugin())
     for (const date of ['2024-12-21T13:00Z', '2024-12-21T14:30Z']) {
+      const calc = require('../src/calcs/suncalc')(makeApp(), makePlugin())
       expect(
         calc.calculator(date, { latitude: 67, longitude: 0 })
       ).to.deep.equal([
