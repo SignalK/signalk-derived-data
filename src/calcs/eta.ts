@@ -11,6 +11,13 @@ const factory: CalculationFactory = function (_app): Calculation {
       'navigation.courseRhumbline.nextPoint.distance',
       'navigation.courseRhumbline.nextPoint.velocityMadeGood'
     ],
+    meta: {
+      'navigation.courseGreatCircle.nextPoint.eta': {
+        units: 'RFC 3339 (UTC)',
+        description:
+          'Deprecated: use navigation.course.calcValues.estimatedTimeOfArrival (Course API). Estimated time of arrival at the next point, from the distance and velocity made good in navigation.courseRhumbline.nextPoint; null when the vessel is not closing on the point.'
+      }
+    },
     calculator: function (
       datetime: string | undefined,
       distance: number,

@@ -2,13 +2,7 @@ import * as chai from 'chai'
 chai.should()
 const expect = chai.expect
 
-import {
-  formatCompassAngle,
-  isCompassAngle,
-  isPosition,
-  degreesToRadians,
-  radiansToDegrees
-} from '../src/utils'
+import { formatCompassAngle, isCompassAngle, isPosition } from '../src/utils'
 
 // Unit tests for ../src/utils. The older "Test Utility functions"
 // suite lives in test/test.ts and covers the happy paths; the cases
@@ -47,18 +41,6 @@ describe('utils.js', () => {
     isPosition({ latitude: 90.0001, longitude: 0 }).should.equal(false)
     isPosition({ latitude: 0, longitude: -180.0001 }).should.equal(false)
     isPosition({ latitude: 0, longitude: 180.0001 }).should.equal(false)
-  })
-
-  it('degreesToRadians converts correctly', () => {
-    degreesToRadians(180).should.be.closeTo(Math.PI, 1e-9)
-    degreesToRadians(0).should.equal(0)
-    degreesToRadians(90).should.be.closeTo(Math.PI / 2, 1e-9)
-  })
-
-  it('radiansToDegrees converts correctly', () => {
-    radiansToDegrees(Math.PI).should.be.closeTo(180, 1e-9)
-    radiansToDegrees(0).should.equal(0)
-    radiansToDegrees(Math.PI / 2).should.be.closeTo(90, 1e-9)
   })
 
   it('formatCompassAngle folds values above 2*PI back into [0, 2*PI)', () => {

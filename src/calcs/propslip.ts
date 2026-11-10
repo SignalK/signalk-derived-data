@@ -49,6 +49,13 @@ const factory: CalculationFactory = function (app, plugin): Calculation[] {
       derivedFrom: function () {
         return derivedFromList
       },
+      meta: {
+        [slipPath]: {
+          units: 'ratio',
+          description:
+            "Propeller slip: the share of the propeller's theoretical advance (pitch × shaft revolutions) not achieved through the water, from engine revolutions, gear ratio, propeller pitch and speed through water."
+        }
+      },
       calculator: function (revolutions: number, stw: number) {
         if (cachedGearRatio === undefined) {
           cachedGearRatio = app.getSelfPath(gearRatioPath) as number | undefined

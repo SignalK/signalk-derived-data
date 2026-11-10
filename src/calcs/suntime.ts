@@ -1,8 +1,33 @@
-import * as suncalc from 'suncalc'
-import { isPosition } from '../utils'
-import type { Calculation, CalculationFactory } from '../types'
+import {
+  astronomyInput,
+  isAstronomyDate,
+  sunTimes,
+  sunTimeNames
+} from '../astronomy'
+import { daysAfterToday } from '../utils'
+import type { Calculation, CalculationFactory, PathMeta } from '../types'
+
+function sunTimesMeta(forecastDays: number): Record<string, PathMeta> {
+  const meta: Record<string, PathMeta> = {}
+  for (let day = 0; day <= forecastDays; day++) {
+    const prefix =
+      day === 0
+        ? 'environment.sunlight.times'
+        : `environment.sunlight.times.${day}`
+    const description =
+      day === 0
+        ? "Time today of this sun event (sunrise, sunset, dawn, dusk and others) at the vessel's position."
+        : `Time of this sun event (sunrise, sunset, dawn, dusk and others) at the vessel's position, ${daysAfterToday(day)}.`
+    for (const event of sunTimeNames) {
+      meta[`${prefix}.${event}`] = { units: 'RFC 3339 (UTC)', description }
+    }
+  }
+  return meta
+}
 
 const factory: CalculationFactory = function (app, plugin): Calculation {
+  const sunProps = plugin.properties?.['sun'] as
+    { forecastDays?: number } | undefined
   return {
     group: 'sun',
     optionKey: 'Sun Time',
@@ -17,35 +42,25 @@ const factory: CalculationFactory = function (app, plugin): Calculation {
         enum: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
       }
     },
+    meta: sunTimesMeta(sunProps?.forecastDays ?? 1),
     debounceDelay: 60 * 1000,
     calculator: function (datetime: string | undefined, position: unknown) {
-      let date: Date
-
-      if (!isPosition(position)) {
-        return
-      }
-
-      if (datetime && datetime.length > 0) {
-        date = new Date(datetime)
-      } else {
-        date = new Date()
-      }
+      const input = astronomyInput(datetime, position)
+      if (!input) return
+      const { date, observer } = input
 
       app.debug(`Using datetime: ${date} position: ${JSON.stringify(position)}`)
 
       const results: Array<{ path: string; value: unknown }> = []
       const sunProps = plugin.properties?.['sun'] as
         { forecastDays?: number } | undefined
-      const forecastDays = sunProps?.forecastDays || 1
+      const forecastDays = sunProps?.forecastDays ?? 1
 
       for (let day = 0; day <= forecastDays; day++) {
         const targetDate = new Date(date)
         targetDate.setDate(targetDate.getDate() + day)
-        const times = suncalc.getTimes(
-          targetDate,
-          position.latitude,
-          position.longitude
-        )
+        if (!isAstronomyDate(targetDate)) break
+        const times = sunTimes(targetDate, observer)
 
         const prefix =
           day === 0
@@ -53,20 +68,10 @@ const factory: CalculationFactory = function (app, plugin): Calculation {
             : `environment.sunlight.times.${day}`
 
         results.push(
-          { path: `${prefix}.sunrise`, value: times.sunrise },
-          { path: `${prefix}.sunriseEnd`, value: times.sunriseEnd },
-          { path: `${prefix}.goldenHourEnd`, value: times.goldenHourEnd },
-          { path: `${prefix}.solarNoon`, value: times.solarNoon },
-          { path: `${prefix}.goldenHour`, value: times.goldenHour },
-          { path: `${prefix}.sunsetStart`, value: times.sunsetStart },
-          { path: `${prefix}.sunset`, value: times.sunset },
-          { path: `${prefix}.dusk`, value: times.dusk },
-          { path: `${prefix}.nauticalDusk`, value: times.nauticalDusk },
-          { path: `${prefix}.night`, value: times.night },
-          { path: `${prefix}.nadir`, value: times.nadir },
-          { path: `${prefix}.nightEnd`, value: times.nightEnd },
-          { path: `${prefix}.nauticalDawn`, value: times.nauticalDawn },
-          { path: `${prefix}.dawn`, value: times.dawn }
+          ...sunTimeNames.map((name) => ({
+            path: `${prefix}.${name}`,
+            value: times[name]
+          }))
         )
       }
 
