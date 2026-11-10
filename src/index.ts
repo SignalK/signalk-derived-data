@@ -32,6 +32,7 @@ import type {
   CalculationFactory,
   PluginInstance,
   PluginProperties,
+  PathMeta,
   PluginState,
   ServerApp,
   SignalKDelta,
@@ -295,6 +296,8 @@ const createPlugin = function (app: ServerApp): PluginState {
       return
     }
 
+    const enabled: Calculation[] = []
+
     calculations.forEach((calculation) => {
       if (calculation.group) {
         const group = props[calculation.group] as
@@ -305,8 +308,30 @@ const createPlugin = function (app: ServerApp): PluginState {
       } else if (!props[calculation.optionKey]) {
         return
       }
+      enabled.push(calculation)
       unsubscribes.push(activate(calculation, props.default_ttl))
     })
+
+    sendMeta(enabled)
+  }
+
+  // Publishes the meta of calculations that just started, in one delta.
+  // Only paths outside the Signal K specification carry meta here; see
+  // Calculation.meta.
+  function sendMeta(started: Calculation[]) {
+    const metas: Array<{ path: string; value: PathMeta }> = started.flatMap(
+      (calculation) =>
+        Object.entries(calculation.meta ?? {}).map(([path, value]) => ({
+          path,
+          value
+        }))
+    )
+    if (metas.length > 0) {
+      app.handleMessage(plugin.id, {
+        context: 'vessels.' + app.selfId,
+        updates: [{ meta: metas }]
+      })
+    }
   }
 
   // Wires one calculation's input streams to app.handleMessage and

@@ -5,9 +5,12 @@ const selfData: Record<string, unknown> = {}
 const factory: CalculationFactory = function (_app, plugin): Calculation[] {
   return (plugin.air ?? []).map((instance): Calculation => {
     const dewPointPath = 'environment.' + instance + '.dewPointTemperature'
+    // The spec names it `humidity` outside and `relativeHumidity` in the
+    // inside zones, which is also what n2k-signalk publishes.
+    const humidityKey = instance === 'outside' ? 'humidity' : 'relativeHumidity'
     const derivedFromList = [
       'environment.' + instance + '.temperature',
-      'environment.' + instance + '.humidity'
+      'environment.' + instance + '.' + humidityKey
     ]
     return {
       group: 'air',

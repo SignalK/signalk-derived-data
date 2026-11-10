@@ -17,4 +17,23 @@ describe('dewPoint', () => {
         'environment.outside.humidity'
       ])
   })
+
+  it('reads relativeHumidity for inside air areas', () => {
+    const plugin = makePlugin()
+    plugin.air = ['outside', 'inside', 'inside.engineRoom']
+    const arr = calc(makeApp(), plugin)
+    arr
+      .map((c: any) => c.derivedFrom())
+      .should.deep.equal([
+        ['environment.outside.temperature', 'environment.outside.humidity'],
+        [
+          'environment.inside.temperature',
+          'environment.inside.relativeHumidity'
+        ],
+        [
+          'environment.inside.engineRoom.temperature',
+          'environment.inside.engineRoom.relativeHumidity'
+        ]
+      ])
+  })
 })
