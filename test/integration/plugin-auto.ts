@@ -74,9 +74,15 @@ function makeApp(self: Record<string, unknown>, saved: object = {}) {
 
 function emitted(handled: any[], path: string): unknown[] {
   return handled.flatMap((delta) =>
-    delta.updates[0].values
+    (delta.updates[0].values ?? [])
       .filter((v: any) => v.path === path)
       .map((v: any) => v.value)
+  )
+}
+
+function metaPaths(handled: any[]): string[] {
+  return handled.flatMap((delta) =>
+    (delta.updates[0].meta ?? []).map((m: any) => m.path)
   )
 }
 
@@ -195,12 +201,15 @@ describe('plugin auto mode', function () {
     self['electrical'] = {
       batteries: { house: { voltage: node(12.5), current: node(2) } }
     }
+    metaPaths(handled).should.not.include('electrical.batteries.house.power')
     pollTimers[0]!.fn()
     plugin
       .schema()
       .properties.electrical.properties.batterPowerhouse.title.should.contain(
         '(auto: active)'
       )
+    // A calculation auto mode starts publishes its meta, as in manual mode.
+    metaPaths(handled).should.include('electrical.batteries.house.power')
     // The heading calculation kept its subscription and the variation it
     // had seen, so a new heading alone produces a value.
     const before = emitted(handled, 'navigation.headingTrue').length

@@ -472,12 +472,15 @@ const createPlugin = function (app: ServerApp): PluginState {
       }
     }
     const defaultTtl = plugin.properties!.default_ttl ?? AUTO_DEFAULT_TTL
+    const started: Calculation[] = []
     for (const calc of calculations!) {
       const key = calculationKey(calc)
       if (autoStatus.get(key)?.state === 'active' && !autoActive.has(key)) {
         autoActive.set(key, activate(calc, defaultTtl))
+        started.push(calc)
       }
     }
+    sendMeta(started)
     app.setPluginStatus(
       `Auto mode: ${autoActive.size} calculation${
         autoActive.size === 1 ? '' : 's'
