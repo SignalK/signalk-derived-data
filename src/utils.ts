@@ -71,3 +71,7 @@ export const isPosition = (value: unknown): value is Position => {
     return false
   }
 }
+
+// '1 day after today', '2 days after today'... for forecast descriptions
+export const daysAfterToday = (day: number): string =>
+  day === 1 ? '1 day after today' : `${day} days after today`

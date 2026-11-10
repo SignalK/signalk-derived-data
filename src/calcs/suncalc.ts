@@ -14,6 +14,12 @@ const factory: CalculationFactory = function (app, _plugin): Calculation {
       'Sets environment.sun to nauticalDawn, dawn, sunrise, day, sunset, dusk, nauticalDusk or night. Sets environment.mode to day or night at sunrise and sunset.',
     derivedFrom: ['navigation.datetime', 'navigation.position'],
     defaults: ['', undefined],
+    meta: {
+      'environment.sun': {
+        description:
+          "Phase of the sun at the vessel's position, such as dawn, day, dusk or night."
+      }
+    },
     debounceDelay: 60 * 1000,
     calculator: function (datetime: string | undefined, position: unknown) {
       const input = astronomyInput(datetime, position)

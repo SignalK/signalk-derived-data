@@ -18,6 +18,13 @@ const factory: CalculationFactory = function (app, plugin): Calculation[] {
       derivedFrom: function () {
         return derivedFromList
       },
+      meta: {
+        [economyPath]: {
+          units: 'm/m3',
+          description:
+            'Fuel economy: distance over ground per volume of fuel, from the speed over ground divided by the fuel rate.'
+        }
+      },
       calculator: function (rate: number, speed: number) {
         // Fuel rate is strictly positive (an injector can't un-burn
         // fuel); SOG is a magnitude so it can't be negative. Treat

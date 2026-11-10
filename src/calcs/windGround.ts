@@ -74,6 +74,13 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation[] {
         'navigation.headingTrue',
         'environment.wind.angleTrueGround'
       ],
+      meta: {
+        'environment.wind.directionGround': {
+          units: 'rad',
+          description:
+            'Deprecated: use environment.wind.directionTrue, which the Ground Wind Direction calculation writes. Direction the wind comes from relative to true north, based on the wind over ground: the true heading plus environment.wind.angleTrueGround.'
+        }
+      },
       debounceDelay: 200,
       calculator: function (headingTrue: number, gwa: number) {
         if (!Number.isFinite(headingTrue) || !Number.isFinite(gwa)) {
