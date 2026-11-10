@@ -71,8 +71,3 @@ export const isPosition = (value: unknown): value is Position => {
     return false
   }
 }
-
-export const degreesToRadians = (value: number): number =>
-  (Math.PI / 180) * value
-export const radiansToDegrees = (value: number): number =>
-  (180 / Math.PI) * value

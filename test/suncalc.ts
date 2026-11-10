@@ -36,7 +36,7 @@ describe('suncalc branches', () => {
   const calc: any = require('../src/calcs/suncalc')
   const equator = { latitude: 0, longitude: 0 }
 
-  // 2024-06-21 at 0,0 (UTC, suncalc v2):
+  // 2024-06-21 at 0,0, approximate schedule (UTC):
   //   nauticalDawn 05:09 | dawn 05:35 | sunrise 05:58 | sunriseEnd 06:00
   //   sunsetStart 18:03 | sunset 18:05 | dusk 18:28 | nauticalDusk 18:54 | night 19:20
   const cases: Array<[string, string, string]> = [
