@@ -18,6 +18,7 @@ const factory: CalculationFactory = function (app, plugin): Calculation[] {
       derivedFrom: function () {
         return derivedFromList
       },
+      outputs: [economyPath],
       meta: {
         [economyPath]: {
           units: 'm/m3',

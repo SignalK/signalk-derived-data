@@ -74,6 +74,7 @@ const factory: CalculationFactory = function (app, plugin): Calculation {
       }
     },
     debounceDelay: 60 * 1000,
+    outputs: ['environment.moon'],
     calculator: function (datetime: string | undefined, position: unknown) {
       const input = astronomyInput(datetime, position)
       if (!input) return

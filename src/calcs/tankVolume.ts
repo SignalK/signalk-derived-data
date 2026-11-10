@@ -71,6 +71,8 @@ const factory: CalculationFactory = function (app, plugin): Calculation[] {
           }
         }
       },
+      outputs: [capacityPath, volumePath],
+      auto: false,
       calculator: function (level: number) {
         if (!Number.isFinite(level)) {
           return undefined

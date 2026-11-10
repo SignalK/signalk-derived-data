@@ -23,6 +23,7 @@
     "README.md",
     "LICENSE"
   ],
+  "signalk-plugin-enabled-by-default": true,
   "signalk": {
     "displayName": "SK Derived Data",
     "appIcon": "./logo.svg",

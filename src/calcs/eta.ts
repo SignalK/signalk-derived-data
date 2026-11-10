@@ -11,6 +11,7 @@ const factory: CalculationFactory = function (_app): Calculation {
       'navigation.courseRhumbline.nextPoint.distance',
       'navigation.courseRhumbline.nextPoint.velocityMadeGood'
     ],
+    outputs: ['navigation.courseGreatCircle.nextPoint.eta'],
     meta: {
       'navigation.courseGreatCircle.nextPoint.eta': {
         units: 'RFC 3339 (UTC)',

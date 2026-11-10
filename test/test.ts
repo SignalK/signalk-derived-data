@@ -503,3 +503,35 @@ describe('derived data converts', function () {
     })
   })
 })
+
+describe('calculation metadata', function () {
+  const calcs: any[] = load_calcs().flat()
+  const covers = (outputs: string[], p: string) =>
+    outputs.some((o) => p === o || p.startsWith(o + '.'))
+
+  it('every calculation but CPA declares its outputs', () => {
+    calcs
+      .filter((calc) => !calc.outputs)
+      .map((calc) => calc.optionKey)
+      .should.deep.equal(['CPA'])
+  })
+
+  calcs
+    .filter((calc) => calc.outputs && calc.tests)
+    .forEach((calc) => {
+      it(`${calc.title} lists every path its tests expect`, () => {
+        calc.tests.forEach((test: any) => {
+          const paths = [
+            ...(test.expected ?? []),
+            ...(test.expectedRange ?? [])
+          ].map((v: { path: string }) => v.path)
+          paths.forEach((p: string) => {
+            covers(calc.outputs, p).should.equal(
+              true,
+              `${p} is missing from outputs`
+            )
+          })
+        })
+      })
+    })
+})

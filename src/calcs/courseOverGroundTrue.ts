@@ -11,6 +11,7 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation {
     ],
     defaults: [undefined, 9999],
     debounceDelay: 200,
+    outputs: ['navigation.courseOverGroundTrue'],
     calculator: function (
       courseOverGroundMagnetic: number | null | undefined,
       magneticVariation: number | null | undefined

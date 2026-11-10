@@ -28,6 +28,8 @@ const factory: CalculationFactory = function (app, plugin): Calculation {
         })
       }
     },
+    outputs: ['notifications.windShift'],
+    auto: false,
     calculator: function (angleApparent: number) {
       const alarm = app.getSelfPath(
         'environment.wind.directionChangeAlarm.value'

@@ -6,6 +6,8 @@ const factory: CalculationFactory = function (app): Calculation {
     optionKey: 'belowKeel_2',
     title: 'Depth Below Keel (depth.transducerToKeel)',
     derivedFrom: ['environment.depth.belowTransducer'],
+    outputs: ['environment.depth.belowKeel'],
+    requires: ['environment.depth.transducerToKeel.value'],
     calculator: function (depthBelowTransducer: unknown) {
       const depthTransducerToKeel =
         (app.getSelfPath('environment.depth.transducerToKeel.value') as

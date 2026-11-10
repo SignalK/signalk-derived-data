@@ -10,6 +10,7 @@ const factory: CalculationFactory = function (_app): Calculation {
       'navigation.speedOverGround'
     ],
     debounceDelay: 200,
+    outputs: ['performance.velocityMadeGood'],
     calculator: function (trueWindAngle: number, speedOverGround: number) {
       const vmg_wind = Math.cos(trueWindAngle) * speedOverGround
       return [{ path: 'performance.velocityMadeGood', value: vmg_wind }]
