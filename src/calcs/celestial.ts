@@ -15,6 +15,16 @@ const factory: CalculationFactory = function (app, _plugin): Calculation {
     title: 'Sun, Moon and naked-eye planet altitude and azimuth',
     derivedFrom: ['navigation.datetime', 'navigation.position'],
     defaults: ['', undefined],
+    outputs: [
+      'environment.sunlight.altitude',
+      'environment.sunlight.azimuth',
+      'environment.moon.altitude',
+      'environment.moon.azimuth',
+      'environment.planets'
+    ],
+    // An opt-in extra: every boat with a position could run it, and it
+    // publishes fourteen sky paths nobody asked for.
+    auto: false,
     debounceDelay: 60 * 1000,
     calculator: function (datetime: string | undefined, position: unknown) {
       const input = astronomyInput(datetime, position)

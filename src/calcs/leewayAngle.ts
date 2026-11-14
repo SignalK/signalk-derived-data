@@ -15,6 +15,7 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation {
     title: 'Leeway Angle',
     derivedFrom: ['navigation.headingTrue', 'navigation.courseOverGroundTrue'],
     debounceDelay: 200,
+    outputs: ['navigation.leewayAngle'],
     calculator: function (hdg: number, cog: number) {
       let leewayAngle: number | null = null
       if (Number.isFinite(hdg) && Number.isFinite(cog)) {

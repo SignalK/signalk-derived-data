@@ -21,6 +21,7 @@ const factory: CalculationFactory = function (_app, plugin): Calculation[] {
       derivedFrom: function () {
         return derivedFromList
       },
+      outputs: [powerPath],
       calculator: function (v: number, a: number) {
         return [{ path: powerPath, value: v * a }]
       }

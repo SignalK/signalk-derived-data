@@ -53,6 +53,7 @@ function makeApp(errors: string[] = []): any {
     setPluginError: () => {},
     getSelfPath: () => undefined,
     registerDeltaInputHandler: () => {},
+    readPluginOptions: () => ({}),
     signalk: { self: 'vessels.self' }
   }
 }

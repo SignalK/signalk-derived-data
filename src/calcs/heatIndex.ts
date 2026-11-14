@@ -9,6 +9,7 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation {
       'environment.outside.temperature',
       'environment.outside.humidity'
     ],
+    outputs: ['environment.outside.heatIndexTemperature'],
     calculator: function (temp: number, humidity: number) {
       // NWS Heat Index Equation https://www.wpc.ncep.noaa.gov/html/heatindex_equation.shtml
       // test against the chart https://www.weather.gov/safety/heat-index

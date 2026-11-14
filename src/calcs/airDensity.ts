@@ -10,6 +10,7 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation {
       'environment.outside.humidity',
       'environment.outside.pressure'
     ],
+    outputs: ['environment.outside.airDensity'],
     calculator: function (temp: number, hum: number, press: number) {
       // SignalK temperature is Kelvin; humidity is a ratio in [0, 1];
       // pressure is Pa. Saturation pressure via Tetens comes out in

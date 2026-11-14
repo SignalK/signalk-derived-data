@@ -16,6 +16,7 @@ const factory: CalculationFactory = function (app, plugin): Calculation[] {
       derivedFrom: function () {
         return derivedFromList
       },
+      outputs: [statePath],
       calculator: function (revol: number | null | undefined) {
         const currentState =
           (app.getSelfPath(currentStatePath) as string | undefined) || 'none'
