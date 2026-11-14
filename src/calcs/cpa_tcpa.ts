@@ -73,7 +73,9 @@ const factory: CalculationFactory = function (app, plugin): Calculation {
     group: 'traffic',
     optionKey: 'CPA',
     title:
-      'Calculates closest point of approach distance and time. (based on navigation.position for vessels)',
+      'DEPRECATED (turn this off and install the Collision Alerts plugin from the App Store) Calculates closest point of approach distance and time. (based on navigation.position for vessels)',
+    retiredNote:
+      'CPA/TCPA collision alarms are now provided by the Collision Alerts plugin: install it from the App Store.',
     derivedFrom: [
       'navigation.position',
       'navigation.courseOverGroundTrue',
