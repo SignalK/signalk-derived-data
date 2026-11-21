@@ -2,7 +2,7 @@
 // calculator functions directly (calc.calculator.apply(null, input)) and
 // never exercises the stream pipeline. This file enables a calculation
 // through plugin.start() and pushes deltas into a mocked streambundle so
-// that the combineStreamsWith → .filter → .changes → .debounceImmediate
+// that the combineStreams → .changes → .debounceImmediate → calculator
 // chain actually runs end to end.
 //
 // Single-input calcs (depthBelowKeel, transducerToKeel, windShift, ...)
@@ -488,7 +488,7 @@ describe('plugin.start() stream pipeline', function () {
 
     // tankVolume's derivedFrom is a function returning a 1-element array.
     // This exercises both the dynamic-derivedFrom branch in plugin.start
-    // and the single-input combineStreamsWith path. We use the default
+    // and the single-input combineStreams path. We use the default
     // tank instance 'fuel.0' from defaultTanks.
     plugin.start({
       traffic: { notificationZones: [] },
@@ -609,5 +609,58 @@ describe('plugin.start() stream pipeline', function () {
         done(e as Error)
       }
     }, 100)
+  })
+
+  it('runs the calculator at most once per debounceDelay, not once per input', (done) => {
+    // Expensive calculators (sun, moon, celestial) set a long
+    // debounceDelay. The delay has to bound how often the calculator
+    // runs, not only how often its output is published: otherwise a
+    // 60 s debounce still runs the calculator on every position update.
+    //
+    // windShift (debounceDelay 200) reads directionChangeAlarm via
+    // getSelfPath on every call, which lets us count calculator runs.
+    const { app } = makeApp({
+      'environment.wind.directionChangeAlarm.value': 0.5
+    })
+    let calls = 0
+    const getSelfPath = app.getSelfPath
+    app.getSelfPath = (p: string) => {
+      if (p === 'environment.wind.directionChangeAlarm.value') calls++
+      return getSelfPath(p)
+    }
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const plugin = require('../../src')(app)
+    plugin.start({
+      traffic: { notificationZones: [] },
+      wind: { windShift: true }
+    })
+
+    const stream = app.streambundle.getSelfStream(
+      'environment.wind.angleApparent'
+    )
+    for (let i = 0; i < 50; i++) stream.push(0.1 + i * 0.001)
+
+    setTimeout(() => {
+      try {
+        // debounceImmediate passes the first value of the burst and drops
+        // the rest inside the 200 ms window.
+        calls.should.equal(1)
+        // After the window has passed, the next input runs it again.
+        stream.push(0.2)
+        setTimeout(() => {
+          try {
+            calls.should.equal(2)
+            plugin.stop()
+            done()
+          } catch (e) {
+            plugin.stop()
+            done(e as Error)
+          }
+        }, 20)
+      } catch (e) {
+        plugin.stop()
+        done(e as Error)
+      }
+    }, 250)
   })
 })

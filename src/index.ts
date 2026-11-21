@@ -39,27 +39,32 @@ import type {
   SignalKValue
 } from './types'
 
-// Combine N streams into a single Property whose values are fn(v1, v2, ...vN),
-// using only the instance-method .combine(other, fn) that exists on both
-// baconjs 1.x and 3.x. Avoids require('baconjs') in the plugin so that
-// the plugin never carries its own Bacon copy: all stream operations run on
-// the Bacon instance the host signalk-server created the streams with.
+// Combine N streams into a single Property whose values are the argument
+// arrays [v1, v2, ...vN], using only the instance-method .combine(other, fn)
+// that exists on both baconjs 1.x and 3.x. Avoids require('baconjs') in the
+// plugin so that the plugin never carries its own Bacon copy: all stream
+// operations run on the Bacon instance the host signalk-server created the
+// streams with.
+//
+// The calculator is deliberately NOT applied here. plugin.start() debounces
+// these argument arrays first and only then calls the calculator, so an
+// expensive calculator (sun/moon/celestial) runs at most once per
+// debounceDelay instead of on every input update.
 //
 // The seed of the reduce calls .toProperty() so the result is always a
 // Property even when there is only one input stream (no .combine call to
 // implicitly lift it). Downstream callers depend on .changes(), which is a
 // Property-only method.
-function combineStreamsWith(
-  streams: Array<BaconStream<unknown> | BaconProperty<unknown>>,
-  fn: (...args: unknown[]) => unknown
-): BaconProperty<unknown> {
+function combineStreams(
+  streams: Array<BaconStream<unknown> | BaconProperty<unknown>>
+): BaconProperty<unknown[]> {
   // Seed the reduce with streams[0] lifted to a Property<unknown[]> so
   // the running accumulator never holds null. Iterating streams.slice(1)
   // avoids the null-seeded branch that needed a `!` non-null assertion
   // and would have crashed downstream as `null.map` if a caller ever
   // passed an empty stream list.
   if (streams.length === 0) {
-    throw new Error('combineStreamsWith requires at least one stream')
+    throw new Error('combineStreams requires at least one stream')
   }
   const first = streams[0]!.toProperty().map((v: unknown): unknown[] => [v])
   return streams
@@ -71,7 +76,6 @@ function combineStreamsWith(
         ) as BaconProperty<unknown[]>,
       first
     )
-    .map((args: unknown[]) => fn.apply(null, args))
 }
 
 const defaultEngines = 'port, starboard'
@@ -306,14 +310,16 @@ const createPlugin = function (app: ServerApp): PluginState {
         return stream
       })
 
-      const combined = combineStreamsWith(
-        selfStreams,
-        calculation.calculator as (...args: unknown[]) => unknown
-      )
-      const changes = combined.changes!()
+      const calculator = calculation.calculator as (
+        ...args: unknown[]
+      ) => unknown
+      const changes = combineStreams(selfStreams).changes!()
+      // Debounce the raw inputs, then run the calculator, so debounceDelay
+      // bounds how often the calculator itself runs, not just how often
+      // its results are published.
       const debounced = changes.debounceImmediate!(
         calculation.debounceDelay || 20
-      )
+      ).map((args: unknown[]) => calculator.apply(null, args))
       // Only chain .skipDuplicates when there is actually a TTL to enforce;
       // createSkipFunction returns null when no TTL is configured, and a
       // no-op skipDuplicates is wasted work on the per-emit path.
