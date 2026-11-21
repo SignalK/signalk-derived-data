@@ -16,7 +16,7 @@ export type { Position } from '@signalk/server-api'
 
 // Bacon.js stream shape reduced to the methods the plugin uses. Both
 // baconjs 1.x and 3.x expose these, which is why the plugin avoids
-// requiring baconjs directly (see `combineStreamsWith` in index.ts).
+// requiring baconjs directly (see `combineStreams` in index.ts).
 export interface BaconStream<T = unknown> {
   toProperty: (seed?: T) => BaconProperty<T>
   map: <U>(fn: (value: T) => U) => BaconStream<U>
