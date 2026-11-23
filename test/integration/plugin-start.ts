@@ -663,4 +663,55 @@ describe('plugin.start() stream pipeline', function () {
       }
     }, 250)
   })
+
+  it('keeps running a calculator after it throws', (done) => {
+    // leeway (debounceDelay 200) throws on a null attitude. The exception
+    // must not leave the debounce window open: later valid inputs still
+    // have to produce output, and the error has to be logged.
+    const { app, handled } = makeApp()
+    const errors: string[] = []
+    app.error = (msg: string) => errors.push(msg)
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const plugin = require('../../src')(app)
+    plugin.start({
+      traffic: { notificationZones: [] },
+      heading: { leeway: true }
+    })
+    const attitude = app.streambundle.getSelfStream('navigation.attitude')
+    const stw = app.streambundle.getSelfStream('navigation.speedThroughWater')
+    // signalk-server pushes deltas inside a try/catch; mirror that so a
+    // throw that escapes the plugin fails the assertions, not the push.
+    const push = (stream: any, value: unknown) => {
+      try {
+        stream.push(value)
+      } catch {
+        // counted by the assertions below
+      }
+    }
+    const leeways = () =>
+      handled
+        .flatMap((d: any) => d.updates.flatMap((u: any) => u.values ?? []))
+        .filter((v: any) => v.path === 'performance.leeway').length
+
+    push(stw, 3)
+    push(attitude, { roll: 0.1, pitch: 0, yaw: 0 })
+    setTimeout(() => {
+      push(attitude, null) // leading edge of a new window: throws
+      setTimeout(() => {
+        push(attitude, { roll: 0.2, pitch: 0, yaw: 0 })
+        setTimeout(() => {
+          try {
+            leeways().should.equal(2)
+            errors.length.should.equal(1)
+            errors[0]!.should.contain('heading.leeway')
+            plugin.stop()
+            done()
+          } catch (e) {
+            plugin.stop()
+            done(e as Error)
+          }
+        }, 20)
+      }, 250)
+    }, 250)
+  })
 })

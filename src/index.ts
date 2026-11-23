@@ -313,13 +313,30 @@ const createPlugin = function (app: ServerApp): PluginState {
       const calculator = calculation.calculator as (
         ...args: unknown[]
       ) => unknown
+      // A calculator that throws must not take the stream down with it.
+      // debounceImmediate closes its window only after the leading value
+      // has been delivered, so an exception thrown downstream of it leaves
+      // the window open and every later input is dropped until the plugin
+      // restarts. Log the error and skip this result instead; the next
+      // input runs the calculator again.
+      const runCalculator = (args: unknown[]): unknown => {
+        try {
+          return calculator.apply(null, args)
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err)
+          app.error(
+            `${calculation.group ? calculation.group + '.' : ''}${calculation.optionKey} calculator failed: ${msg}`
+          )
+          return undefined
+        }
+      }
       const changes = combineStreams(selfStreams).changes!()
       // Debounce the raw inputs, then run the calculator, so debounceDelay
       // bounds how often the calculator itself runs, not just how often
       // its results are published.
       const debounced = changes.debounceImmediate!(
         calculation.debounceDelay || 20
-      ).map((args: unknown[]) => calculator.apply(null, args))
+      ).map(runCalculator)
       // Only chain .skipDuplicates when there is actually a TTL to enforce;
       // createSkipFunction returns null when no TTL is configured, and a
       // no-op skipDuplicates is wasted work on the per-emit path.
