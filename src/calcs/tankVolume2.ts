@@ -54,6 +54,7 @@ const factory: CalculationFactory = function (app, plugin): Calculation[] {
         return derivedFromList
       },
       defaults: seededDefaults,
+      outputs: [volumePath],
       calculator: function (level: number, capacity: number) {
         // Guard sensor inputs against NaN, Infinity, and physically
         // meaningless capacities (negative or zero). A negative

@@ -44,6 +44,7 @@ const factory: CalculationFactory = function (app, plugin): Calculation {
     },
     meta: sunTimesMeta(sunProps?.forecastDays ?? 1),
     debounceDelay: 60 * 1000,
+    outputs: ['environment.sunlight.times'],
     calculator: function (datetime: string | undefined, position: unknown) {
       const input = astronomyInput(datetime, position)
       if (!input) return

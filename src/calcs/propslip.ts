@@ -49,6 +49,8 @@ const factory: CalculationFactory = function (app, plugin): Calculation[] {
       derivedFrom: function () {
         return derivedFromList
       },
+      outputs: [slipPath],
+      requires: [gearRatioPath, pitchPath],
       meta: {
         [slipPath]: {
           units: 'ratio',

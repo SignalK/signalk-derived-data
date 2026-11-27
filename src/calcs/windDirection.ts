@@ -14,6 +14,7 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation[] {
         'environment.wind.angleApparent'
       ],
       debounceDelay: 200,
+      outputs: ['environment.wind.directionMagnetic'],
       calculator: function (headingMagnetic: number, awa: number) {
         if (!Number.isFinite(headingMagnetic) || !Number.isFinite(awa)) {
           return [{ path: 'environment.wind.directionMagnetic', value: null }]
@@ -55,6 +56,7 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation[] {
         'navigation.magneticVariation'
       ],
       debounceDelay: 200,
+      outputs: ['environment.wind.directionMagnetic'],
       calculator: function (directionTrue: number, magneticVariation: number) {
         if (
           !Number.isFinite(directionTrue) ||
@@ -114,6 +116,10 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation[] {
         'environment.wind.angleApparent'
       ],
       debounceDelay: 200,
+      outputs: [
+        'environment.wind.angleTrueWater',
+        'environment.wind.speedTrue'
+      ],
       calculator: function (stw: number, aws: number, awa: number) {
         let angle: number | null
         let speed: number | null
@@ -172,6 +178,7 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation[] {
         'environment.wind.angleTrueWater'
       ],
       debounceDelay: 200,
+      outputs: ['environment.wind.directionTrue'],
       calculator: function (headingTrue: number, twa: number) {
         if (!Number.isFinite(headingTrue) || !Number.isFinite(twa)) {
           return [{ path: 'environment.wind.directionTrue', value: null }]

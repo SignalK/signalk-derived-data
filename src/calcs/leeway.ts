@@ -16,6 +16,7 @@ const factory: CalculationFactory = function (_app, plugin): Calculation {
         default: 12
       }
     },
+    outputs: ['performance.leeway'],
     calculator: function (attitude: { roll: number }, stw: number) {
       const headingProps = plugin.properties?.['heading'] as
         { kFactor?: number } | undefined

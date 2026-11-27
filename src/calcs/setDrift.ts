@@ -59,6 +59,12 @@ const factory: CalculationFactory = function (_app, _plugin): Calculation {
     /**
      * Calculates set and drift vector from motion data
      */
+    outputs: [
+      'environment.current.drift',
+      'environment.current.setTrue',
+      'environment.current.setMagnetic',
+      'environment.current.driftImpact'
+    ],
     calculator(
       headingMagnetic: number,
       courseOverGroundTrue: number,

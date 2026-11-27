@@ -21,6 +21,7 @@ const factory: CalculationFactory = function (app, _plugin): Calculation {
       }
     },
     debounceDelay: 60 * 1000,
+    outputs: ['environment.sun', 'environment.mode'],
     calculator: function (datetime: string | undefined, position: unknown) {
       const input = astronomyInput(datetime, position)
       if (!input) return
